@@ -173,33 +173,7 @@ export default function AdvancedViewer3D({ quote }: { quote: QuoteData }) {
                 </div>
             )}
 
-            {/* Bottom Floating Toolbar */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
-                <div className="bg-white/95 backdrop-blur-md rounded-full shadow-lg border border-slate-100 p-1.5 flex items-center gap-1">
-                    <ToolbarItem icon={Home} label="Back to Origin" />
-                    <div onClick={() => setMode('rotate')}>
-                        <ToolbarItem icon={RotateCcw} label="Rotation" isActive={mode === 'rotate'} />
-                    </div>
-                    <ToolbarItem icon={Ruler} label="Measurement (M)" />
-                    <ToolbarItem icon={SlidersHorizontal} label="Model properties" />
-                    <div onClick={() => setMode('pan')}>
-                        <ToolbarItem icon={Hand} label="Pan" isActive={mode === 'pan'} />
-                    </div>
-                    <div className="w-[1px] h-8 bg-slate-200 mx-1" />
-                    <ToolbarItem icon={Scissors} label="Sectioning" />
-                    <ToolbarItem icon={Box} label="Bounding Box" />
-                    <ToolbarItem icon={Move} label="Drag" />
-                    <ToolbarItem icon={PaintBucket} label="Auto color Assignment" />
-                    <div className="w-[1px] h-8 bg-slate-200 mx-1" />
-                    <button onClick={() => setShowInfo(!showInfo)} className="flex flex-col items-center justify-center w-14 lg:w-16 gap-1.5 transition-colors cursor-pointer group hover:bg-slate-100 p-2 rounded-xl text-blue-600">
-                        <Info className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" />
-                        <span className="text-[9px] lg:text-[10px] font-bold text-blue-600 leading-none whitespace-nowrap">Basic Information</span>
-                    </button>
-                    <ToolbarItem icon={Maximize} label="Full Screen" />
-                    <ToolbarItem icon={Settings} label="Settings" />
-                </div>
-            </div>
-
+            {/* Toolbar ด้านล่างถูกนำออกตามคำขอ */}
         </div>
     );
 }

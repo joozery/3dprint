@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { useEffect } from "react";
+
 // ─── Step Indicator ──────────────────────────────────────────────────────────
 function StepHeader({ current }: { current: number }) {
     const steps = [
@@ -28,19 +30,19 @@ function StepHeader({ current }: { current: number }) {
                     <div key={step.n} className="flex items-center flex-1">
                         <div className={cn(
                             "flex items-center gap-2 py-3 px-4 rounded-xl transition-all",
-                            active ? "bg-blue-600 text-white shadow-md shadow-blue-200" :
-                                done ? "bg-green-50 text-green-600" : "bg-white text-slate-400 border"
+                            active ? "bg-slate-900 text-white shadow-lg shadow-slate-200" :
+                                done ? "bg-emerald-50 text-emerald-600" : "bg-white text-slate-400 border"
                         )}>
                             <div className={cn(
                                 "w-7 h-7 rounded-full flex items-center justify-center text-sm font-black shrink-0",
-                                active ? "bg-white/20" : done ? "bg-green-100" : "bg-slate-100"
+                                active ? "bg-white/20" : done ? "bg-emerald-100" : "bg-slate-100"
                             )}>
                                 {done ? <CheckCircle2 className="w-4 h-4" /> : step.n}
                             </div>
-                            <span className="text-sm font-bold">{step.label}</span>
+                            <span className="text-sm font-bold tracking-wide">{step.label}</span>
                         </div>
                         {idx < steps.length - 1 && (
-                            <div className={cn("h-0.5 flex-1 mx-2", done ? "bg-green-300" : "bg-slate-200")} />
+                            <div className={cn("h-0.5 flex-1 mx-2", done ? "bg-emerald-300" : "bg-slate-200")} />
                         )}
                     </div>
                 );
@@ -63,7 +65,7 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
 
     const handleSave = () => {
         if (!form.firstName || !form.lastName || !form.address || !form.postal || !form.phone) {
-            alert("กรุณากรอกข้อมูลที่จำเป็นให้ครบก่อนครับ");
+            alert("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
             return;
         }
         onNext({ ...form, type });
@@ -71,12 +73,9 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
 
     return (
         <div className="bg-white rounded-2xl border shadow-sm p-8">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-black">1</div>
-                <h2 className="text-lg font-bold text-slate-900">ที่อยู่จัดส่ง</h2>
-                <button className="ml-auto text-[11px] text-blue-600 font-bold flex items-center gap-1 hover:underline">
-                    <MapPin className="w-3 h-3" /> ระบุตำแหน่งปัจจุบัน
-                </button>
+            <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-black">1</div>
+                <h2 className="text-lg font-bold text-slate-900 tracking-wide">ข้อมูลการจัดส่ง</h2>
             </div>
 
             {/* Type Toggle */}
@@ -84,72 +83,74 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
                 <button
                     onClick={() => setType("company")}
                     className={cn(
-                        "flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-bold",
-                        type === "company" ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-200 text-slate-500"
+                        "flex items-center gap-2 p-4 rounded-xl border-2 transition-all text-sm font-bold",
+                        type === "company" ? "border-slate-900 bg-slate-50 text-slate-900" : "border-slate-200 text-slate-500 hover:border-slate-300"
                     )}
                 >
-                    <div className={cn("w-4 h-4 rounded-full border-2 shrink-0", type === "company" ? "border-blue-600 bg-blue-600" : "border-slate-300")} />
-                    <Building2 className="w-4 h-4" /> บริษัท / นิติบุคคล
+                    <div className={cn("w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center", type === "company" ? "border-slate-900" : "border-slate-300")}>
+                        {type === "company" && <div className="w-2 h-2 rounded-full bg-slate-900" />}
+                    </div>
+                    <Building2 className="w-4 h-4 shrink-0" /> บริษัท / นิติบุคคล
                 </button>
                 <button
                     onClick={() => setType("individual")}
                     className={cn(
-                        "flex items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-bold",
-                        type === "individual" ? "border-blue-600 bg-blue-50 text-blue-600" : "border-slate-200 text-slate-500"
+                        "flex items-center gap-2 p-4 rounded-xl border-2 transition-all text-sm font-bold",
+                        type === "individual" ? "border-slate-900 bg-slate-50 text-slate-900" : "border-slate-200 text-slate-500 hover:border-slate-300"
                     )}
                 >
-                    <div className={cn("w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center", type === "individual" ? "border-blue-600" : "border-slate-300")}>
-                        {type === "individual" && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                    <div className={cn("w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center", type === "individual" ? "border-slate-900" : "border-slate-300")}>
+                        {type === "individual" && <div className="w-2 h-2 rounded-full bg-slate-900" />}
                     </div>
-                    <User className="w-4 h-4" /> บุคคลทั่วไป
+                    <User className="w-4 h-4 shrink-0" /> บุคคลทั่วไป
                 </button>
             </div>
 
             {type === "company" && (
                 <div className="mb-4">
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">ชื่อบริษัท</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">ชื่อบริษัท <span className="text-red-500">*</span></label>
                     <input
                         placeholder="ชื่อบริษัท / นิติบุคคล"
                         value={form.company}
                         onChange={e => set("company", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
             )}
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">
                         ชื่อ <span className="text-red-500">*</span>
                     </label>
                     <input
-                        placeholder="ชื่อ"
+                        placeholder="ชื่อจริง"
                         value={form.firstName}
                         onChange={e => set("firstName", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">
                         นามสกุล <span className="text-red-500">*</span>
                     </label>
                     <input
                         placeholder="นามสกุล"
                         value={form.lastName}
                         onChange={e => set("lastName", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">ประเทศ <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">ประเทศ <span className="text-red-500">*</span></label>
                     <div className="relative">
                         <select
                             value={form.country}
                             onChange={e => set("country", e.target.value)}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 appearance-none"
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 appearance-none bg-white"
                         >
                             <option>Thailand</option>
                             <option>Singapore</option>
@@ -160,74 +161,73 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
                     </div>
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">จังหวัด <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">จังหวัด <span className="text-red-500">*</span></label>
                     <input
                         placeholder="จังหวัด"
                         value={form.state}
                         onChange={e => set("state", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">เขต/อำเภอ <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">เขต/อำเภอ <span className="text-red-500">*</span></label>
                     <input
                         placeholder="เขต / อำเภอ"
                         value={form.city}
                         onChange={e => set("city", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">ที่อยู่ <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">ที่อยู่จัดส่ง <span className="text-red-500">*</span></label>
                     <input
                         placeholder="เลขที่บ้าน / ถนน / ซอย"
                         value={form.address}
                         onChange={e => set("address", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">อาคาร / หมู่บ้าน</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">อาคาร / หมู่บ้าน</label>
                     <input
-                        placeholder="ชื่ออาคาร / หมู่บ้าน"
+                        placeholder="ชื่ออาคาร / หมู่บ้าน (ถ้ามี)"
                         value={form.building}
                         onChange={e => set("building", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">รหัสไปรษณีย์ <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">รหัสไปรษณีย์ <span className="text-red-500">*</span></label>
                     <input
                         placeholder="รหัสไปรษณีย์"
                         value={form.postal}
                         onChange={e => set("postal", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
                 <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
                     <div className="flex gap-2">
                         <select
                             value={form.countryCode}
                             onChange={e => set("countryCode", e.target.value)}
-                            className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-blue-500 w-20 shrink-0"
+                            className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-slate-900 w-20 shrink-0 bg-white"
                         >
                             <option>+66</option>
                             <option>+1</option>
-                            <option>+65</option>
                             <option>+81</option>
                         </select>
                         <input
                             placeholder="0xx-xxx-xxxx"
                             value={form.phone}
                             onChange={e => set("phone", e.target.value)}
-                            className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                            className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                         />
                     </div>
                 </div>
@@ -235,7 +235,7 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
 
             <Button
                 onClick={handleSave}
-                className="bg-blue-600 hover:bg-blue-700 rounded-full px-8 h-11 font-bold shadow-md shadow-blue-100"
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-12 font-bold shadow-md shadow-slate-200 w-full md:w-auto"
             >
                 บันทึกและดำเนินการต่อ
             </Button>
@@ -250,7 +250,7 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
         {
             id: "self",
             label: "รับด้วยตัวเองที่โรงงาน",
-            desc: "ถนนลาดพล้าว กรุงเทพฯ (จันทร์–ศุกร์ 09:00–18:00)",
+            desc: "ถนนลาดพร้าว กรุงเทพฯ (จันทร์–ศุกร์ 09:00–18:00)",
             price: 0,
             days: "–",
             logo: null,
@@ -259,7 +259,7 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
         {
             id: "kerry",
             label: "Kerry Express",
-            desc: "จัดส่งภายใน 1–3 วัน (ทั่วประเทศ)",
+            desc: "จัดส่งด่วนภายใน 1–3 วันทำการ",
             price: 50,
             days: "1–3",
             logo: "/shipping/kerryexpress.png",
@@ -268,7 +268,7 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
         {
             id: "flash",
             label: "Flash Express",
-            desc: "จัดส่งภายใน 1–2 วัน",
+            desc: "จัดส่งรวดเร็วภายใน 1–2 วัน",
             price: 45,
             days: "1–2",
             logo: "/shipping/fashexpress.png",
@@ -276,8 +276,8 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
         },
         {
             id: "ems",
-            label: "ไปรษณีย์ไทย EMS",
-            desc: "จัดส่งภายใน 2–5 วัน",
+            label: "ไปรษณีย์ไทย (EMS)",
+            desc: "จัดส่งมาตรฐาน 2–5 วันทำการ",
             price: 60,
             days: "2–5",
             logo: "/shipping/ems.jpeg",
@@ -288,9 +288,9 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-2xl border shadow-sm p-8">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-black">2</div>
-                    <h2 className="text-lg font-bold text-slate-900">วิธีจัดส่ง</h2>
+                <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+                    <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-black">2</div>
+                    <h2 className="text-lg font-bold text-slate-900 tracking-wide">ช่องทางการจัดส่ง</h2>
                 </div>
 
                 <div className="space-y-3">
@@ -300,22 +300,22 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
                             onClick={() => setSelected(m.id)}
                             className={cn(
                                 "w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all",
-                                selected === m.id ? "border-blue-600 bg-blue-50" : "border-slate-200 hover:border-slate-300 bg-white"
+                                selected === m.id ? "border-slate-900 bg-slate-50" : "border-slate-100 hover:border-slate-200 bg-white"
                             )}
                         >
                             {/* Radio */}
-                            <div className={cn("w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center", selected === m.id ? "border-blue-600" : "border-slate-300")}>
-                                {selected === m.id && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+                            <div className={cn("w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center", selected === m.id ? "border-slate-900" : "border-slate-300")}>
+                                {selected === m.id && <div className="w-2.5 h-2.5 rounded-full bg-slate-900" />}
                             </div>
 
                             {/* Logo / Icon */}
-                            <div className="w-14 h-10 flex items-center justify-center shrink-0">
+                            <div className="w-12 h-10 flex items-center justify-center shrink-0">
                                 {m.useIcon ? (
                                     <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
-                                        <Warehouse className="w-5 h-5 text-slate-500" />
+                                        <Warehouse className="w-5 h-5 text-slate-600" />
                                     </div>
                                 ) : (
-                                    <div className="w-14 h-10 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1">
+                                    <div className="w-12 h-10 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1">
                                         <img
                                             src={m.logo!}
                                             alt={m.label}
@@ -328,15 +328,15 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
                             {/* Label */}
                             <div className="flex-1">
                                 <p className="text-sm font-bold text-slate-900">{m.label}</p>
-                                <p className="text-xs text-slate-500">{m.desc}</p>
+                                <p className="text-xs text-slate-400 mt-0.5">{m.desc}</p>
                             </div>
 
                             {/* Price */}
                             <div className="text-right shrink-0">
-                                <p className="text-sm font-bold text-slate-900">
-                                    {m.price === 0 ? <span className="text-green-600">ฟรี</span> : `฿${m.price}`}
+                                <p className="text-sm font-black text-slate-900">
+                                    {m.price === 0 ? <span className="text-emerald-600">ฟรี</span> : `฿${m.price}`}
                                 </p>
-                                {m.days !== "–" && <p className="text-[10px] text-slate-400">{m.days} วัน</p>}
+                                {m.days !== "–" && <p className="text-[10px] text-slate-400 mt-0.5">{m.days} วัน</p>}
                             </div>
                         </button>
                     ))}
@@ -344,12 +344,12 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
             </div>
 
             <div className="flex gap-3">
-                <Button variant="outline" onClick={onBack} className="rounded-full px-6 border-slate-300 text-slate-600">
+                <Button variant="outline" onClick={onBack} className="rounded-full px-6 border-slate-200 text-slate-600 hover:bg-slate-50">
                     <ArrowLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
                 </Button>
                 <Button
                     onClick={() => onNext({ method: selected, price: methods.find(m => m.id === selected)?.price || 0 })}
-                    className="bg-blue-600 hover:bg-blue-700 rounded-full px-8 font-bold shadow-md shadow-blue-100 flex-1"
+                    className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 font-bold shadow-md shadow-slate-200 flex-1 h-11"
                 >
                     ดำเนินการต่อ <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -358,7 +358,6 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
     );
 }
 
-// ─── Step 3: Confirm ─────────────────────────────────────────────────────────
 function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: any; onBack: () => void }) {
     const [placed, setPlaced] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -366,20 +365,18 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
     const handleCheckout = async () => {
         setLoading(true);
         try {
-            // ดึงไฟล์ตะกร้า pending จาก API ก่อนเพื่อเก็บเฉพาะ ID ที่ค้างอยู่ในตะกร้าจริงๆ
             const resCart = await fetch("/api/checkout");
             const resData = await resCart.json();
             const pendingQuotes = resData.data || [];
             
             if (pendingQuotes.length === 0) {
-                alert("ไม่มีสินค้าในตะกร้าเหลือให้ชำระแล้วครับ");
+                alert("ไม่มีสินค้าในตะกร้าเหลือให้สั่งซื้อ");
                 setLoading(false);
                 return;
             }
 
             const quoteIds = pendingQuotes.map((q: any) => q._id);
 
-            // ยิง API สั่งซื้อจริงๆ
             const res = await fetch("/api/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -392,7 +389,7 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
                         province: address.state,
                         zipCode: address.postal
                     },
-                    paymentMethod: shipping.method === "kerry" ? "bank_transfer" : "promptpay",
+                    paymentMethod: "bank_transfer", // ตั้งเป็นมาตรฐาน
                     customerNotes: ""
                 })
             });
@@ -400,11 +397,11 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
             if (data.success) {
                 setPlaced(true);
             } else {
-                alert("ล้มเหลว: " + data.error);
+                alert("สร้างรายการสั่งซื้อไม่สำเร็จ: " + data.error);
             }
         } catch (error) {
             console.error(error);
-            alert("ระบบบกพร่อง ไม่สามารถสั่งซื้อได้");
+            alert("ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง");
         } finally {
             setLoading(false);
         }
@@ -412,15 +409,15 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
 
     if (placed) {
         return (
-            <div className="bg-white rounded-2xl border shadow-sm p-12 text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 className="w-10 h-10 text-green-500" />
+            <div className="bg-white rounded-2xl border shadow-sm p-12 text-center animate-in fade-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-emerald-100">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-2">บันทึกคำสั่งซื้อสำเร็จ! 🎉</h2>
-                <p className="text-slate-500 mb-8">ทีมงานได้รับออเดอร์แล้ว ตรวจสอบสถานะการชำระเงินได้ที่หน้า Dashboard ครับ</p>
+                <h2 className="text-xl font-black text-slate-900 mb-2">สร้างรายการสั่งซื้อสำเร็จ</h2>
+                <p className="text-sm text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">ข้อมูลของคุณได้รับการบันทึกแล้ว กรุณาไปที่หน้า Dashboard เพื่อเข้าชมและตรวจสอบสถานะการชำระเงินของคุณ</p>
                 <Link href="/profile">
-                    <Button className="rounded-full px-8 bg-blue-600 hover:bg-blue-700 font-bold shadow-md">
-                        ไปหน้าเช็คสถานะออเดอร์
+                    <Button className="rounded-full px-8 bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-lg shadow-slate-200">
+                        ไปที่แดชบอร์ด
                     </Button>
                 </Link>
             </div>
@@ -430,48 +427,51 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-2xl border shadow-sm p-8">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-black">3</div>
-                    <h2 className="text-lg font-bold text-slate-900">ยืนยันคำสั่งซื้อ</h2>
+                <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+                    <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-black">3</div>
+                    <h2 className="text-lg font-bold text-slate-900 tracking-wide">ตรวจสอบคำสั่งซื้อ</h2>
                 </div>
 
                 {/* Address Summary */}
-                <div className="bg-slate-50 rounded-xl p-5 mb-4">
+                <div className="bg-slate-50/80 rounded-xl p-5 mb-4 border border-slate-100">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">ที่อยู่จัดส่ง</p>
-                        <button onClick={onBack} className="text-[11px] text-blue-600 font-bold hover:underline">แก้ไข</button>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">ที่อยู่จัดส่ง</p>
+                        <button onClick={onBack} className="text-[11px] text-slate-900 font-bold hover:underline">แก้ไข</button>
                     </div>
                     <p className="text-sm font-bold text-slate-900">{address.firstName} {address.lastName}</p>
-                    <p className="text-sm text-slate-600">{address.address}{address.building ? `, ${address.building}` : ""}</p>
+                    <p className="text-sm text-slate-600 mt-1">{address.address}{address.building ? `, ${address.building}` : ""}</p>
                     <p className="text-sm text-slate-600">{address.city}, {address.state} {address.postal}</p>
-                    <p className="text-sm text-slate-600">{address.country}</p>
-                    <p className="text-sm text-slate-500 mt-1">{address.countryCode} {address.phone}</p>
+                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-1"><Phone className="w-3 h-3" /> {address.countryCode} {address.phone}</p>
                 </div>
 
                 {/* Shipping Summary */}
-                <div className="bg-slate-50 rounded-xl p-5 mb-6">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">วิธีจัดส่ง</p>
+                <div className="bg-slate-50/80 rounded-xl p-5 mb-6 border border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">ช่องทางการจัดส่ง</p>
                     <div className="flex items-center justify-between">
-                        <p className="text-sm font-bold text-slate-900">{shipping.method === "kerry" ? "Kerry Express" : shipping.method === "flash" ? "Flash Express" : shipping.method === "ems" ? "ไปรษณีย์ไทย EMS" : "รับด้วยตัวเอง"}</p>
-                        <p className="text-sm font-bold text-blue-600">{shipping.price === 0 ? "ฟรี" : `฿${shipping.price}`}</p>
+                        <p className="text-sm font-bold text-slate-900">
+                            {shipping.method === "kerry" ? "Kerry Express" : 
+                             shipping.method === "flash" ? "Flash Express" : 
+                             shipping.method === "ems" ? "ไปรษณีย์ไทย (EMS)" : "รับด้วยตนเอง"}
+                        </p>
+                        <p className="text-sm font-bold text-slate-900">{shipping.price === 0 ? <span className="text-emerald-600">ฟรี</span> : `฿${shipping.price}`}</p>
                     </div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 mb-6">
-                    <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700">กดยืนยันคำสั่งซื้อเพื่อสร้างใบแจ้งหนี้อย่างเป็นทางการ แล้วระบบจะพาไปอัปโหลดสลิปที่หน้า Profile</p>
+                <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3 mb-6">
+                    <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-800 leading-relaxed">ออเดอร์จะเสร็จสมบูรณ์เมื่อยื่นสลิปชำระเงิน เจ้าหน้าที่จะเริ่มทำการผลิตหลังการตรวจสอบสลิป</p>
                 </div>
 
                 <Button
                     onClick={handleCheckout}
                     disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 rounded-full py-6 text-base font-black shadow-lg shadow-blue-200"
+                    className="w-full bg-slate-900 hover:bg-slate-800 rounded-full py-6 text-base font-black text-white shadow-lg shadow-slate-200"
                 >
-                    {loading ? "กำลังดำเนินการ..." : "ยืนยันและสั่งซื้อสินค้า 🚀"}
+                    {loading ? "กำลังบันทึกข้อมูล..." : "ยืนยันและสั่งซื้อสินค้า"}
                 </Button>
             </div>
 
-            <Button variant="outline" onClick={onBack} disabled={loading} className="rounded-full px-6 border-slate-300 text-slate-600">
+            <Button variant="outline" onClick={onBack} disabled={loading} className="rounded-full px-6 border-slate-200 text-slate-600 hover:bg-slate-50">
                 <ArrowLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
             </Button>
         </div>
@@ -479,36 +479,34 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
 }
 
 // ─── Summary Panel ───────────────────────────────────────────────────────────
-function SummaryPanel({ shipping }: { shipping: any }) {
-    const price = 4.43;
+function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
+    const subtotal = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
     const shipFee = shipping?.price || 0;
-    const total = price + shipFee;
+    const total = subtotal + shipFee;
 
     return (
         <div className="bg-white border rounded-2xl shadow-sm p-6 sticky top-24">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Summary</h3>
-                <button className="text-xs font-bold text-blue-600 hover:underline">1 items &gt;</button>
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">สรุปคำสั่งซื้อ</h3>
+                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">{quotes.length} รายการ</span>
             </div>
 
-            <div className="space-y-2 mb-4">
+            <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-sm">
                     <span className="text-slate-500">ราคาชิ้นงาน</span>
-                    <span className="font-bold text-slate-900">฿{price.toFixed(2)}</span>
+                    <span className="font-bold text-slate-900">฿{subtotal.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
-                {shipFee > 0 && (
-                    <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">ค่าจัดส่ง</span>
-                        <span className="font-bold text-slate-900">฿{shipFee.toFixed(2)}</span>
-                    </div>
-                )}
-                <div className="border-t pt-2 flex justify-between">
-                    <span className="text-sm font-bold text-slate-900">ยอดรวม</span>
-                    <span className="text-xl font-black text-orange-500">฿{total.toFixed(2)}</span>
+                <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">ค่าจัดส่ง</span>
+                    <span className="font-bold text-slate-900">{shipFee > 0 ? `฿${shipFee.toFixed(2)}` : <span className="text-emerald-600">ฟรี</span>}</span>
+                </div>
+                <div className="border-t border-dashed pt-3 flex justify-between items-baseline">
+                    <span className="text-sm font-bold text-slate-900">ยอดชำระทั้งหมด</span>
+                    <span className="text-xl font-black text-slate-900">฿{total.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 bg-slate-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-[11px] text-slate-400 bg-slate-50 rounded-xl p-3">
                 <Package className="w-3.5 h-3.5 shrink-0" />
                 <span>ราคายังไม่รวม VAT 7%</span>
             </div>
@@ -517,10 +515,63 @@ function SummaryPanel({ shipping }: { shipping: any }) {
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────────────
 export default function CheckoutPage() {
     const [step, setStep] = useState(1);
     const [address, setAddress] = useState<any>(null);
     const [shipping, setShipping] = useState<any>(null);
+    const [quotes, setQuotes] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchQuotes = async () => {
+            try {
+                const res = await fetch("/api/checkout");
+                const data = await res.json();
+                if (data.success) {
+                    setQuotes(data.data || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch quotes:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchQuotes();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 font-sans flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900 mx-auto mb-4"></div>
+                    <p className="text-sm text-slate-500 font-bold">กำลังโหลดข้อมูล...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (quotes.length === 0) {
+        return (
+            <div className="min-h-screen bg-slate-50 font-sans">
+                <Navbar />
+                <main className="max-w-md mx-auto px-4 py-20 text-center">
+                    <div className="bg-white rounded-3xl border shadow-sm p-12">
+                        <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5 border">
+                            <Package className="w-8 h-8 text-slate-400" />
+                        </div>
+                        <h2 className="text-xl font-black text-slate-900 mb-2">ไม่มีสินค้าในตะกร้า</h2>
+                        <p className="text-sm text-slate-400 mb-8 leading-relaxed">ดูเหมือนคุณยังไม่ได้เพิ่มรายการพิมพ์ 3D หรือสินค้าถูกสั่งซื้อไปแล้วครับ</p>
+                        <Link href="/quote">
+                            <Button className="rounded-full px-8 bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-lg shadow-slate-200">
+                                ไปสั่งพิมพ์งาน 3D
+                            </Button>
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
@@ -528,7 +579,7 @@ export default function CheckoutPage() {
 
             <main className="max-w-5xl mx-auto px-4 py-10">
                 {/* Back */}
-                <Link href="/quote" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 font-bold mb-8 transition-colors">
+                <Link href="/quote" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 font-bold mb-8 transition-colors">
                     <ArrowLeft className="w-4 h-4" /> กลับไปที่ตะกร้า
                 </Link>
 
@@ -559,7 +610,7 @@ export default function CheckoutPage() {
 
                     {/* Right */}
                     <div className="col-span-12 lg:col-span-4">
-                        <SummaryPanel shipping={shipping} />
+                        <SummaryPanel shipping={shipping} quotes={quotes} />
                     </div>
                 </div>
             </main>

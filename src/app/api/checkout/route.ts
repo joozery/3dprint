@@ -12,8 +12,16 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
         await dbConnect();
+
+        let userId = (session.user as any).id;
+        if (!userId && session.user.email) {
+            const User = require("@/models/User").default;
+            const userDb = await User.findOne({ email: session.user.email });
+            if (userDb) userId = userDb._id;
+        }
+
         const quotes = await Quote.find({
-            userId: (session.user as any).id,
+            userId: userId,
             status: "pending"
         });
         return NextResponse.json({ success: true, data: quotes });
@@ -29,6 +37,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อ" }, { status: 401 });
         }
         await dbConnect();
+        
+        let userId = (session.user as any).id;
+        if (!userId && session.user.email) {
+            const User = require("@/models/User").default;
+            const userDb = await User.findOne({ email: session.user.email });
+            if (userDb) userId = userDb._id;
+        }
+
         const body = await req.json();
         const { quoteIds, shippingAddress, paymentMethod, customerNotes } = body;
 
@@ -41,7 +57,7 @@ export async function POST(req: NextRequest) {
 
         const quotes = await Quote.find({
             _id: { $in: quoteIds },
-            userId: (session.user as any).id,
+            userId: userId,
             status: "pending" 
         });
 
@@ -54,7 +70,7 @@ export async function POST(req: NextRequest) {
         const totalAmount = subtotal + shippingFee;
 
         const newOrder = await Order.create({
-            userId: (session.user as any).id,
+            userId: userId,
             quotes: quotes.map(q => q._id),
             shippingAddress,
             paymentDetails: {
