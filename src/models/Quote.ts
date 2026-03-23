@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const QuoteSchema = new mongoose.Schema(
     {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
         fileName: {
             type: String,
             required: true,

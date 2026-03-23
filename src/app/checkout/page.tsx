@@ -361,6 +361,54 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
 // ─── Step 3: Confirm ─────────────────────────────────────────────────────────
 function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: any; onBack: () => void }) {
     const [placed, setPlaced] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleCheckout = async () => {
+        setLoading(true);
+        try {
+            // ดึงไฟล์ตะกร้า pending จาก API ก่อนเพื่อเก็บเฉพาะ ID ที่ค้างอยู่ในตะกร้าจริงๆ
+            const resCart = await fetch("/api/checkout");
+            const resData = await resCart.json();
+            const pendingQuotes = resData.data || [];
+            
+            if (pendingQuotes.length === 0) {
+                alert("ไม่มีสินค้าในตะกร้าเหลือให้ชำระแล้วครับ");
+                setLoading(false);
+                return;
+            }
+
+            const quoteIds = pendingQuotes.map((q: any) => q._id);
+
+            // ยิง API สั่งซื้อจริงๆ
+            const res = await fetch("/api/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    quoteIds,
+                    shippingAddress: {
+                        fullName: `${address.firstName} ${address.lastName}`,
+                        phone: `${address.countryCode} ${address.phone}`,
+                        address: `${address.address} ${address.building || ""}`,
+                        province: address.state,
+                        zipCode: address.postal
+                    },
+                    paymentMethod: shipping.method === "kerry" ? "bank_transfer" : "promptpay",
+                    customerNotes: ""
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setPlaced(true);
+            } else {
+                alert("ล้มเหลว: " + data.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("ระบบบกพร่อง ไม่สามารถสั่งซื้อได้");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (placed) {
         return (
@@ -368,11 +416,11 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 className="w-10 h-10 text-green-500" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 mb-2">สั่งพิมพ์สำเร็จแล้วครับ! 🎉</h2>
-                <p className="text-slate-500 mb-8">ทีมงานจะตรวจสอบไฟล์และติดต่อยืนยันคำสั่งซื้อภายใน 24 ชั่วโมงครับ</p>
-                <Link href="/quote">
-                    <Button className="rounded-full px-8 bg-blue-600 hover:bg-blue-700 font-bold">
-                        สั่งพิมพ์อีกชิ้น
+                <h2 className="text-2xl font-black text-slate-900 mb-2">บันทึกคำสั่งซื้อสำเร็จ! 🎉</h2>
+                <p className="text-slate-500 mb-8">ทีมงานได้รับออเดอร์แล้ว ตรวจสอบสถานะการชำระเงินได้ที่หน้า Dashboard ครับ</p>
+                <Link href="/profile">
+                    <Button className="rounded-full px-8 bg-blue-600 hover:bg-blue-700 font-bold shadow-md">
+                        ไปหน้าเช็คสถานะออเดอร์
                     </Button>
                 </Link>
             </div>
@@ -411,18 +459,19 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
 
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 mb-6">
                     <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700">ราคาที่แสดงเป็นราคาประมาณการเบื้องต้น ทีมงานจะยืนยันราคาจริงอีกครั้งหลังตรวจสอบไฟล์ครับ</p>
+                    <p className="text-xs text-amber-700">กดยืนยันคำสั่งซื้อเพื่อสร้างใบแจ้งหนี้อย่างเป็นทางการ แล้วระบบจะพาไปอัปโหลดสลิปที่หน้า Profile</p>
                 </div>
 
                 <Button
-                    onClick={() => setPlaced(true)}
+                    onClick={handleCheckout}
+                    disabled={loading}
                     className="w-full bg-blue-600 hover:bg-blue-700 rounded-full py-6 text-base font-black shadow-lg shadow-blue-200"
                 >
-                    ยืนยันและสั่งพิมพ์ 🚀
+                    {loading ? "กำลังดำเนินการ..." : "ยืนยันและสั่งซื้อสินค้า 🚀"}
                 </Button>
             </div>
 
-            <Button variant="outline" onClick={onBack} className="rounded-full px-6 border-slate-300 text-slate-600">
+            <Button variant="outline" onClick={onBack} disabled={loading} className="rounded-full px-6 border-slate-300 text-slate-600">
                 <ArrowLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
             </Button>
         </div>

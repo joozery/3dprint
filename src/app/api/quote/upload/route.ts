@@ -5,10 +5,19 @@ import fs from "fs/promises";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
 import { analyzeFile } from "@/lib/slicer";
-import cloudinary from "@/lib/cloudinary";
+import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: NextRequest) {
     try {
+        const session = await getServerSession(authOptions);
+
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "Unauthorized: กรุณาเข้าสู่ระบบก่อนทำการอัปโหลดไฟล์" }, { status: 401 });
+        }
+
         const formData = await req.formData();
         const file = formData.get("file") as File;
 
@@ -43,23 +52,30 @@ export async function POST(req: NextRequest) {
         // Analyze the file
         const analysis = await analyzeFile(filePath);
 
-        console.log("4. Uploading to Cloudinary...");
-        // Upload to Cloudinary
-        let cloudinaryResponse = null;
+        console.log("4. Uploading to Cloudflare R2...");
+        let r2FileUrl = null;
+        let r2Key = null;
+        
         try {
-            cloudinaryResponse = await cloudinary.uploader.upload(filePath, {
-                resource_type: "raw", // Use raw for 3D files
-                folder: "3d-prints",
-            });
-        } catch (cldError: any) {
-            console.warn("Cloudinary Upload Skipped/Failed:", cldError.message);
-            // If it's just a size limit error, we don't want to crash the whole quote process
-            if (cldError.message?.includes("File size too large")) {
-                console.log("File is > 10MB, proceeding without Cloudinary storage.");
-            } else {
-                // For other errors (like config), we might still want to know, 
-                // but let's make it more resilient for now
-            }
+            r2Key = `3d-prints/${fileName}`;
+
+            // Read file buffer again for upload
+            const fileData = await fs.readFile(filePath);
+            
+            await r2Client.send(
+                new PutObjectCommand({
+                    Bucket: R2_BUCKET_NAME,
+                    Key: r2Key,
+                    Body: fileData,
+                    ContentType: "application/octet-stream",
+                })
+            );
+            
+            // If custom domain exists, use it. Otherwise use generic public bucket URL template
+            r2FileUrl = R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${r2Key}` : `https://pub-xxxxxx.r2.dev/${r2Key}`;
+            
+        } catch (r2Error: any) {
+            console.error("R2 Upload Failed:", r2Error.message || r2Error);
         }
 
         // Delete local file after analysis and upload
@@ -74,12 +90,21 @@ export async function POST(req: NextRequest) {
         const pricePerCm3 = 5; // บาทต่อ cm3
         const totalPrice = basePrice + (analysis.volumeCm3 * pricePerCm3);
 
+        // ดึง userId อย่างรัดกุม (กรณีคุกกี้เก่าไม่มี id ฝังอยู่)
+        let userId = (session?.user as any)?.id;
+        if (!userId && session?.user?.email) {
+            const User = require("@/models/User").default;
+            const userDb = await User.findOne({ email: session.user.email });
+            if (userDb) userId = userDb._id;
+        }
+
         const quote = await Quote.create({
+            userId: userId || null,
             fileName,
             originalName: file.name,
-            fileUrl: cloudinaryResponse?.secure_url || null,
-            cloudinaryId: cloudinaryResponse?.public_id || null,
-            isStoredInCloud: !!cloudinaryResponse,
+            fileUrl: r2FileUrl || null,
+            cloudinaryId: r2Key || null,
+            isStoredInCloud: !!r2FileUrl,
             technology: "sla",
             material: "9600",
             color: "ขาวด้าน (Matte White)",

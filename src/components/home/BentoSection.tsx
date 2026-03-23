@@ -2,103 +2,121 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, Palette, Cpu } from "lucide-react";
 
 export function BentoSection() {
     return (
-        <section className="bg-white py-20 px-4">
+        <section className="bg-white py-32 px-4 font-sans relative overflow-hidden">
+            {/* Soft background glow */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[100px] -z-10 translate-x-1/2 -translate-y-1/2" />
+            
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
-                <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
-                        <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">Why Choose Us</p>
-                        <h2 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight">
-                            ทำไมต้องเลือก<br />
-                            <span className="text-blue-600">3DEV</span>
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-600 font-bold text-xs uppercase tracking-widest mb-4">
+                            <Zap size={14} className="fill-blue-600" />
+                            Why Choose Us
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-[1.15] tracking-tight">
+                            ทำไมบริษัทชั้นนำถึง<br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                                เลือกใช้ 3DEV
+                            </span>
                         </h2>
                     </div>
-                    <Link
-                        href="/quote"
-                        className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors group"
-                    >
-                        เริ่มสั่งพิมพ์เลย
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
                 </div>
 
-                {/* Bento Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[240px]">
-
-                    {/* Card 1 — Large (md:col-span-2, top-left) */}
-                    <div className="md:col-span-2 relative rounded-2xl overflow-hidden bg-slate-900 group cursor-pointer">
-                        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950" />
-                        <div className="absolute bottom-0 right-0 w-[55%] h-[90%] opacity-90 transition-transform duration-500 group-hover:scale-105">
-                            <Image src="/showcase/metal.png" alt="Metal Print" fill className="object-contain object-right-bottom drop-shadow-2xl" />
+                {/* Bento Grid layout */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+                    
+                    {/* Card 1: Industrial Grade (Large) */}
+                    <div className="md:col-span-2 relative rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 group hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-500">
+                        <div className="absolute top-0 right-0 w-[60%] h-full md:w-[50%] transition-transform duration-700 group-hover:scale-105 group-hover:-translate-x-2">
+                            {/* Assuming gray background on image, using mix-blend-multiply to blend cleanly */}
+                            <Image src="/showcase/metal.png" alt="Metal Print" fill className="object-cover md:object-contain object-right mix-blend-multiply opacity-90" />
+                            {/* Gradient mask to gracefully fade image edges into the background */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-50 via-slate-50/20 to-transparent" />
                         </div>
-                        <div className="relative z-10 p-7 flex flex-col justify-end h-full">
-                            <div>
-                                <h3 className="text-xl font-black text-white leading-snug mb-2 max-w-[55%]">
-                                    พิมพ์ชิ้นงานด้วย<br />วัสดุระดับอุตสาหกรรม
-                                </h3>
-                                <p className="text-sm text-slate-400 max-w-[50%] leading-relaxed">
-                                    รองรับวัสดุหลากหลาย ทั้งเรซิ่น ไนลอน และโลหะ
-                                </p>
-                                <Link href="/quote" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors">
-                                    สั่งพิมพ์เลย <ArrowRight className="w-3 h-3" />
-                                </Link>
+                        <div className="relative z-10 p-10 flex flex-col h-full justify-center w-full md:w-[60%]">
+                            <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
+                                <Cpu size={24} strokeWidth={2.5}/>
                             </div>
+                            <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3">
+                                พิมพ์ชิ้นงานด้วย<br />วัสดุระดับอุตสาหกรรม
+                            </h3>
+                            <p className="text-slate-500 font-medium leading-relaxed mb-8 max-w-sm">
+                                รองรับวัสดุหลากหลาย ทั้งเรซิ่นคุณภาพสูง ไนลอนเหนียวทนทาน และโลหะ สำหรับชิ้นงานที่ต้องการความแกร่งเป็นพิเศษ
+                            </p>
+                            <Link href="/quote" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700 w-fit group/btn">
+                                สั่งพิมพ์เลย <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                            </Link>
                         </div>
                     </div>
 
-                    {/* Card 2 — Small (top-right) */}
-                    <div className="relative rounded-2xl overflow-hidden bg-slate-800 group cursor-pointer">
-                        <div className="absolute inset-0 bg-gradient-to-bl from-slate-700 to-slate-900" />
-                        <div className="absolute top-4 right-4 w-[60%] h-[60%] opacity-85 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                            <Image src="/showcase/black.png" alt="Black Resin Print" fill className="object-contain drop-shadow-2xl" />
+                    {/* Card 2: Instant Quote (Small) */}
+                    <div className="relative rounded-3xl overflow-hidden bg-blue-600 text-white group hover:shadow-2xl hover:shadow-blue-600/20 transition-all duration-500 flex flex-col justify-between">
+                        <div className="absolute inset-0 bg-gradient-to-b from-blue-500 to-blue-700 opacity-50" />
+                        {/* Giant faded icon in background */}
+                        <div className="absolute -bottom-6 -right-6 text-white/5 group-hover:scale-110 group-hover:text-white/10 transition-all duration-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 16 4-4 4 4"/></svg>
                         </div>
-                        <div className="relative z-10 p-6 flex flex-col justify-end h-full">
-                            <h3 className="text-base font-black text-white leading-snug mb-1.5 max-w-[70%]">
+                        <div className="relative p-8 z-10">
+                            <h3 className="text-2xl font-black leading-tight mb-3">
                                 อัปโหลดไฟล์<br />รับราคาทันที
                             </h3>
-                            <p className="text-xs text-slate-400 leading-relaxed max-w-[80%]">
-                                ระบบวิเคราะห์ไฟล์อัตโนมัติ ไม่ต้องรอราคา
+                            <p className="text-blue-100 text-sm font-medium leading-relaxed">
+                                ระบบ AI วิเคราะห์ไฟล์สามมิติอัตโนมัติ คำนวณราคาให้คุณทันทีแบบไม่ต้องรอ
                             </p>
+                        </div>
+                        <div className="relative px-8 pb-8 z-10 w-full mt-auto">
+                            <Link href="/quote" className="w-full inline-flex items-center justify-center gap-2 bg-white text-blue-600 font-bold text-sm py-3 px-4 rounded-xl hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/50">
+                                เริ่มอัปโหลดไฟล์
+                            </Link>
                         </div>
                     </div>
 
-                    {/* Card 3 — Small (bottom-left) */}
-                    <div className="relative rounded-2xl overflow-hidden bg-slate-100 group cursor-pointer">
-                        <div className="absolute top-4 right-4 w-[55%] h-[60%] transition-transform duration-500 group-hover:scale-110">
-                            <Image src="/showcase/resin.png" alt="Color Resin" fill className="object-contain drop-shadow-xl" />
+                    {/* Card 3: Variety of Colors (Small) */}
+                    <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-white to-rose-50/50 border border-slate-200 group hover:border-rose-200 hover:shadow-xl hover:shadow-rose-900/5 transition-all duration-500 flex flex-col justify-center">
+                        <div className="absolute -top-6 -right-6 text-rose-500/5 group-hover:scale-110 group-hover:text-rose-500/10 transition-all duration-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
                         </div>
-                        <div className="relative z-10 p-6 flex flex-col justify-end h-full">
-                            <h3 className="text-base font-black text-slate-900 leading-snug mb-1.5 max-w-[70%]">
-                                สี & พื้นผิว<br />หลากหลาย
-                            </h3>
-                            <p className="text-xs text-slate-500 leading-relaxed max-w-[80%]">
-                                Full Color จนถึงผิวด้านระดับ Pro
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Card 4 — Large (bottom-right, md:col-span-2) */}
-                    <div className="md:col-span-2 relative rounded-2xl overflow-hidden bg-slate-700 group cursor-pointer">
-                        <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-900" />
-                        <div className="absolute -bottom-4 left-[40%] w-[55%] h-[110%] opacity-90 transition-transform duration-500 group-hover:scale-105">
-                            <Image src="/showcase/sls.png" alt="SLS Nylon" fill className="object-contain object-bottom drop-shadow-2xl" />
-                        </div>
-                        <div className="relative z-10 p-7 flex flex-col justify-end h-full">
-                            <div className="max-w-[42%]">
-                                <h3 className="text-xl font-black text-white leading-snug mb-2">
-                                    คุณภาพสูง<br />ผ่านการตรวจสอบทุกชิ้น
-                                </h3>
-                                <p className="text-sm text-slate-400 leading-relaxed">
-                                    ทีมงานตรวจสอบคุณภาพก่อนส่งมอบทุกครั้ง รับประกันความพอใจ
-                                </p>
-                                <Link href="/quote" className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors">
-                                    ดูตัวอย่างงาน <ArrowRight className="w-3 h-3" />
-                                </Link>
+                        <div className="relative p-8 z-10 flex flex-col items-start h-full justify-between">
+                            <div className="w-14 h-14 bg-white shadow-sm border border-rose-100 rounded-2xl flex items-center justify-center text-rose-500 mb-8 group-hover:scale-110 transition-transform">
+                                <Palette size={28} strokeWidth={2.5}/>
                             </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3">
+                                    สี & พื้นผิว<br />หลากหลาย
+                                </h3>
+                                <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                                    เลือกชิ้นงานได้ตั้งแต่ Full Color จนถึงผิวด้านระดับ Premium
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card 4: High Quality (Large) */}
+                    <div className="md:col-span-2 relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 group hover:border-slate-700 hover:shadow-2xl hover:shadow-slate-900/50 transition-all duration-500">
+                        <div className="absolute top-0 right-0 w-[55%] h-full opacity-60 mix-blend-luminosity group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-700">
+                            <Image src="/showcase/sls.png" alt="SLS Nylon" fill className="object-cover md:object-contain object-right" />
+                            {/* Mask the left edge of the image to fade into black */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/60 to-transparent" />
+                        </div>
+                        
+                        <div className="relative z-10 p-10 flex flex-col h-full justify-center w-full md:w-[65%]">
+                            <div className="w-12 h-12 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
+                                <ShieldCheck size={24} strokeWidth={2.5}/>
+                            </div>
+                            <h3 className="text-2xl font-black text-white leading-tight mb-3">
+                                คุณภาพระดับโรงงาน<br />ผ่านการตรวจสอบทุกชิ้น
+                            </h3>
+                            <p className="text-slate-400 font-medium leading-relaxed mb-8 max-w-sm">
+                                ทีมวิศวกรตรวจสอบไฟล์และชิ้นงานอย่างละเอียดก่อนส่งมอบทุกครั้ง เพื่อให้มั่นใจว่าคุณได้รับชิ้นงานที่สมบูรณ์แบบที่สุด
+                            </p>
+                            <Link href="/quote" className="inline-flex items-center gap-2 text-sm font-bold text-white hover:text-emerald-400 w-fit group/btn transition-colors">
+                                ขอดูตัวอย่างงาน <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                            </Link>
                         </div>
                     </div>
 

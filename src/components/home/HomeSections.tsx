@@ -92,62 +92,94 @@ export function TechSection() {
 export function HowItWorks() {
     const steps = [
         {
-            title: "อัปโหลดโมเดล",
-            desc: "รองรับไฟล์ .STL, .OBJ, .STEP ระบบจะตรวจสอบความสมบูรณ์อัตโนมัติ",
-            icon: <UploadCloud className="h-6 w-6" />,
-            color: "bg-blue-500"
+            title: "อัปโหลดไฟล์ 3D",
+            desc: "รองรับไฟล์ .STL, .OBJ, .STEP ระบบจะตรวจสอบและซ่อมแซมวิเคราะห์ความสมบูรณ์ให้แบบอัตโนมัติ",
+            icon: <UploadCloud className="h-6 w-6 text-blue-600" />,
+            color: "blue",
+            delay: "0"
         },
         {
-            title: "ระบุข้อกำหนด",
-            desc: "เลือกวัสดุ, สี และความละเอียดที่ต้องการ เพื่อรับราคาทันที",
-            icon: <Settings2 className="h-6 w-6" />,
-            color: "bg-cyan-500"
+            title: "เลือกวัสดุและสี",
+            desc: "เลือกวัสดุที่เหมาะสม ทั้งเรซิ่น ไนลอน โลหะ และเปรียบเทียบราคาแบบเรียลไทม์",
+            icon: <Settings2 className="h-6 w-6 text-indigo-600" />,
+            color: "indigo",
+            delay: "100"
         },
         {
-            title: "เริ่มการผลิต",
-            desc: "Admin ยืนยันไฟล์งาน และส่งเข้าคิวพิมพ์ด้วยเครื่องระดับโปร",
-            icon: <Printer className="h-6 w-6" />,
-            color: "bg-indigo-500"
+            title: "สั่งพิมพ์ระดับอุตสาหกรรม",
+            desc: "วิศวกรตรวจสอบไฟล์และเริ่มการพิมพ์ด้วยเครื่องจักร High-end มาตรฐานสากล",
+            icon: <Printer className="h-6 w-6 text-violet-600" />,
+            color: "violet",
+            delay: "200"
         },
         {
-            title: "จัดส่งถึงมือ",
-            desc: "บรรจุอย่างดี พร้อมส่งผ่าน Flash, DHL หรือ FedEx ทั่วโลก",
-            icon: <Truck className="h-6 w-6" />,
-            color: "bg-blue-600"
+            title: "จัดส่งรวดเร็วถึงมือคุณ",
+            desc: "ผ่านกระบวนการ QC อย่างเข้มงวด บรรจุให้อย่างดี และจัดส่งตรงเวลา",
+            icon: <Truck className="h-6 w-6 text-sky-600" />,
+            color: "sky",
+            delay: "300"
         }
     ];
 
     return (
-        <section className="py-24 bg-white">
-            <div className="mx-auto max-w-7xl px-6">
-                <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-4">
-                    <div className="max-w-xl">
-                        <Badge className="bg-blue-100 text-blue-600 hover:bg-blue-100 border-none mb-4">FLOW</Badge>
-                        <h2 className="text-3xl font-bold text-slate-900 lg:text-4xl">ขั้นตอนการสั่งพิมพ์</h2>
+        <section className="py-28 bg-slate-50 relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-1/2 w-full max-w-7xl -translate-x-1/2 h-full opacity-50 pointer-events-none">
+                <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-blue-300/20 blur-[120px] rounded-full" />
+                <div className="absolute bottom-10 right-10 w-[600px] h-[600px] bg-indigo-300/20 blur-[120px] rounded-full" />
+            </div>
+
+            <div className="mx-auto max-w-7xl px-6 relative z-10">
+                <div className="text-center mb-20">
+                    <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-blue-100/60 border border-blue-200/60 mb-6 backdrop-blur-sm">
+                        <span className="text-[11px] font-black text-blue-700 tracking-[0.2em] uppercase">Workflow</span>
                     </div>
-                    <p className="text-slate-500 max-w-md">
-                        สั่งงานง่ายๆ ภายในไม่กี่นาที ด้วยระบบคำนวณราคาอัตโนมัติที่เราพัฒนาขึ้นมาโดยเฉพาะ
+                    <h2 className="text-3xl font-black text-slate-900 md:text-5xl mb-6 tracking-tight leading-tight">
+                        ขั้นตอนการสั่งพิมพ์ที่ง่าย<br className="hidden md:block" />
+                        <span className="text-blue-600 drop-shadow-sm">และเป็นมืออาชีพ</span>
+                    </h2>
+                    <p className="text-slate-500 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
+                        เราเปลี่ยนกระบวนการผลิตงานอุตสาหกรรมที่ซับซ้อน ให้กลายเป็นเรื่องง่ายด้วยระบบแพลตฟอร์มอัตโนมัติของเรา
                     </p>
                 </div>
 
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12 relative">
-                    {/* Connector line (desktop only) */}
-                    <div className="hidden lg:block absolute top-12 left-0 right-0 h-0.5 bg-slate-100 -z-10" />
-
-                    {steps.map((step, idx) => (
-                        <div key={step.title} className="flex flex-col items-center text-center">
-                            <div className={`h-16 w-16 rounded-2xl ${step.color} text-white flex items-center justify-center shadow-lg mb-6 relative`}>
-                                <span className="absolute -top-3 -left-3 h-7 w-7 rounded-full bg-white text-slate-900 text-xs font-bold flex items-center justify-center border shadow-sm">
-                                    {idx + 1}
-                                </span>
-                                {step.icon}
+                <div className="relative mt-10">
+                    {/* Connecting Line (Desktop Only) */}
+                    <div className="hidden lg:block absolute top-[48px] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-slate-200 via-blue-200 to-slate-200" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+                        {steps.map((step, idx) => (
+                            <div key={idx} className="relative group" style={{ transitionDelay: `${step.delay}ms` }}>
+                                {/* Step Content */}
+                                <div className="flex flex-col items-center text-center relative z-10">
+                                    
+                                    {/* Icon Box */}
+                                    <div className="relative mb-8">
+                                        <div className="w-24 h-24 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col items-center justify-center transform transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:border-blue-100">
+                                            <div className={`w-14 h-14 rounded-2xl bg-${step.color}-50 flex items-center justify-center transition-transform duration-500 group-hover:scale-110`}>
+                                                {step.icon}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Step Number Badge */}
+                                        <div className={`absolute -top-3 -right-3 w-8 h-8 rounded-full bg-${step.color}-600 text-white font-black flex items-center justify-center text-sm shadow-md shadow-${step.color}-300 border-2 border-white transform transition-transform duration-300 group-hover:scale-110`}>
+                                            {idx + 1}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Text Content */}
+                                    <div className="bg-white/40 md:bg-transparent backdrop-blur-sm md:backdrop-blur-none p-4 md:p-0 rounded-2xl border border-white/50 md:border-none">
+                                        <h3 className="text-xl font-bold text-slate-900 mb-3 transition-colors duration-300 group-hover:text-blue-600">
+                                            {step.title}
+                                        </h3>
+                                        <p className="text-sm text-slate-500 leading-relaxed max-w-[280px] mx-auto">
+                                            {step.desc}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h3>
-                            <p className="text-sm text-slate-500 leading-relaxed leading-relaxed px-4">
-                                {step.desc}
-                            </p>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
         </section>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
     NavigationMenu,
@@ -12,7 +13,15 @@ import {
     NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
-import { Search, ShoppingCart, Menu, X } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, User as UserIcon, LogOut } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
     {
@@ -49,6 +58,7 @@ const navLinks = [
 
 export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
+    const { data: session } = useSession();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/90 backdrop-blur-md shadow-sm">
@@ -130,13 +140,61 @@ export default function Navbar() {
                         <Link href="/quote">สั่งพิมพ์เลย</Link>
                     </Button>
 
-                    <Button
-                        size="sm"
-                        className="hidden lg:inline-flex bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 shadow-md shadow-blue-200"
-                        asChild
-                    >
-                        <Link href="/login">เข้าสู่ระบบ</Link>
-                    </Button>
+                    {/* Auth Status (Desktop) */}
+                    {session ? (
+                        <div className="hidden lg:flex items-center ml-2 pl-2 border-l border-slate-200">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="flex items-center gap-2.5 h-10 px-2 bg-transparent hover:bg-slate-100 rounded-full select-none outline-none">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-blue-200 shrink-0">
+                                            {session.user?.image ? (
+                                                <Image src={session.user.image} alt={session.user.name || "User"} width={32} height={32} className="object-cover" />
+                                            ) : (
+                                                session.user?.name?.charAt(0).toUpperCase() || <UserIcon size={16} />
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-semibold text-slate-700 max-w-[120px] truncate hide-mobile pr-1">
+                                            {session.user?.name || "Member"}
+                                        </span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-60 mt-2 rounded-xl p-2 shadow-xl border-slate-100">
+                                    <DropdownMenuLabel className="font-normal px-2 py-1.5 pb-2">
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-bold leading-none text-slate-800 truncate">{session.user?.name}</p>
+                                            <p className="text-xs leading-none text-slate-500 truncate">{session.user?.email}</p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-slate-100 mb-1" />
+                                    <DropdownMenuItem className="cursor-pointer rounded-lg hover:bg-blue-50 focus:bg-blue-50 py-2.5" asChild>
+                                        <Link href="/profile" className="flex items-center w-full text-slate-700 font-medium h-full">
+                                            <UserIcon className="w-4 h-4 mr-2.5 text-slate-400" />
+                                            บัญชีของฉัน
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="cursor-pointer rounded-lg hover:bg-blue-50 focus:bg-blue-50 py-2.5" asChild>
+                                        <Link href="/orders" className="flex items-center w-full text-slate-700 font-medium h-full">
+                                            <ShoppingCart className="w-4 h-4 mr-2.5 text-slate-400" />
+                                            ออเดอร์ของฉัน
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                                    <DropdownMenuItem className="cursor-pointer rounded-lg text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700 py-2.5 font-medium" onClick={() => signOut({ callbackUrl: "/" })}>
+                                        <LogOut className="w-4 h-4 mr-2.5" />
+                                        ออกจากระบบ
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    ) : (
+                        <Button
+                            size="sm"
+                            className="hidden lg:inline-flex bg-blue-600 hover:bg-blue-700 text-white rounded-full px-5 ml-2 shadow-md shadow-blue-200"
+                            asChild
+                        >
+                            <Link href="/login">เข้าสู่ระบบ</Link>
+                        </Button>
+                    )}
 
                     {/* Mobile Menu Toggle */}
                     <button
@@ -150,8 +208,25 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             {mobileOpen && (
-                <div className="lg:hidden border-t border-slate-100 bg-white px-4 pb-4">
+                <div className="lg:hidden border-t border-slate-100 bg-white px-4 pb-4 shadow-xl absolute w-full top-16 left-0">
                     <nav className="flex flex-col gap-1 pt-3">
+                        {/* User info on Mobile if logged in */}
+                        {session && (
+                            <div className="flex items-center gap-3 px-3 py-3 mb-2 bg-slate-50 rounded-lg border border-slate-100">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-blue-200">
+                                    {session.user?.image ? (
+                                        <Image src={session.user.image} alt={session.user.name || "User"} width={40} height={40} className="object-cover" />
+                                    ) : (
+                                        session.user?.name?.charAt(0).toUpperCase() || <UserIcon size={20} />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-slate-800">{session.user?.name}</div>
+                                    <div className="text-xs text-slate-500 truncate max-w-[200px]">{session.user?.email}</div>
+                                </div>
+                            </div>
+                        )}
+
                         {navLinks.map((link) => (
                             <Link
                                 key={link.label}
@@ -162,13 +237,22 @@ export default function Navbar() {
                                 {link.label}
                             </Link>
                         ))}
-                        <div className="mt-3 flex gap-2">
-                            <Button variant="outline" size="sm" className="flex-1 border-blue-600 text-blue-600" asChild>
-                                <Link href="/quote">สั่งพิมพ์เลย</Link>
+
+                        <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
+                            <Button variant="outline" size="sm" className="w-full border-blue-600 text-blue-600 h-10" asChild>
+                                <Link href="/quote" onClick={() => setMobileOpen(false)}>สั่งพิมพ์ 3D เลย</Link>
                             </Button>
-                            <Button size="sm" className="flex-1 bg-blue-600 text-white" asChild>
-                                <Link href="/login">เข้าสู่ระบบ</Link>
-                            </Button>
+                            
+                            {session ? (
+                                <Button size="sm" variant="ghost" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 h-10" onClick={() => signOut({ callbackUrl: "/" })}>
+                                    <LogOut className="w-4 h-4 mr-2" />
+                                    ออกจากระบบ
+                                </Button>
+                            ) : (
+                                <Button size="sm" className="w-full bg-blue-600 text-white h-10" asChild>
+                                    <Link href="/login" onClick={() => setMobileOpen(false)}>เข้าสู่ระบบ / สมัครสมาชิก</Link>
+                                </Button>
+                            )}
                         </div>
                     </nav>
                 </div>
