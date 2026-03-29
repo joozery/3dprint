@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import VerificationCode from "@/models/VerificationCode";
-import { sendOTP } from "@/lib/email";
+import { sendPasswordResetOTP } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const { email } = await req.json();
 
     if (!email) {
       return NextResponse.json({ message: "กรุณาระบุอีเมล" }, { status: 400 });
@@ -15,10 +14,18 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    // เช็คว่ามีผู้ใช้นี้อยู่แล้วหรือไม่
+    // เช็คว่ามีผู้ใช้นี้อยู่หรือไม่
     const existingUser = await User.findOne({ email });
-    if (existingUser && existingUser.isVerified) {
-      return NextResponse.json({ message: "อีเมลนี้มีการใช้งานแล้วในระบบ" }, { status: 422 });
+    if (!existingUser) {
+      // แม้ว่าจะไม่เจออีเมล ก็ส่ง response กลับไปแบบเดิมเพื่อป้องกัน User Enumeration Attack (Security Best Practice)
+      return NextResponse.json({ 
+        message: "หากพบอีเมลนี้ในระบบ เราได้จัดส่งรหัส OTP ให้แล้ว",
+        email 
+      }, { status: 200 });
+    }
+
+    if (existingUser.provider !== "credentials") {
+        return NextResponse.json({ message: `บัญชีนี้เชื่อมต่อผ่าน ${existingUser.provider} ไม่สามารถแก้ไขรหัสผ่านได้` }, { status: 400 });
     }
 
     // สร้างรหัส OTP 6 หลัก
@@ -31,35 +38,19 @@ export async function POST(req: Request) {
 
     // ส่งอีเมล
     try {
-      await sendOTP(email, otp);
+      await sendPasswordResetOTP(email, otp);
     } catch (emailError) {
       console.error("Email Error:", emailError);
       return NextResponse.json({ message: "ไม่สามารถส่งอีเมลรหัส OTP ได้ โปรดติดต่อแอดมินหรือลองใหม่อีกครั้ง" }, { status: 500 });
     }
 
-    // ถ้าเป็น user ใหม่ที่ยังไม่ยืนยัน ให้เตรียมข้อมูลไว้
-    if (!existingUser) {
-      if (!name || !password) {
-        return NextResponse.json({ message: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 });
-      }
-      const hashedPassword = await bcrypt.hash(password, 12);
-      await User.create({
-        name,
-        email,
-        password: hashedPassword,
-        provider: "credentials",
-        isVerified: false,
-        verificationStatus: "pending"
-      });
-    }
-
     return NextResponse.json({ 
-      message: "ส่งรหัส OTP เรียบร้อยแล้ว โปรดตรวจสอบอีเมลของคุณ",
+      message: "ระบบได้จัดส่งรหัส OTP สำหรับรีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว",
       email 
     }, { status: 200 });
 
   } catch (error: any) {
-    console.error("OTP Generate Error:", error);
+    console.error("Forgot Password OTP Error:", error);
     return NextResponse.json({ message: "เกิดข้อผิดพลาดในการส่งรหัส OTP โปรดลองใหม่อีกครั้ง" }, { status: 500 });
   }
 }

@@ -19,10 +19,10 @@ interface Viewer3DProps {
     fileUrl: string | null;
     fileName?: string | null;
     file?: File | null;
-    displayColor?: string;
+    color?: string;
 }
 
-function Model({ url, fileName, displayColor = "#3b82f6", onError }: { url: string; fileName?: string | null; displayColor?: string; onError: (err: any) => void }) {
+function Model({ url, fileName, color = "#3b82f6", onError }: { url: string; fileName?: string | null; color?: string; onError: (err: any) => void }) {
     const ext = fileName?.split('.').pop()?.toLowerCase();
 
     // Use useLoader but handle errors via Suspense & Error Boundary
@@ -35,7 +35,7 @@ function Model({ url, fileName, displayColor = "#3b82f6", onError }: { url: stri
         if (!object) return;
 
         const material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(displayColor),
+            color: new THREE.Color(color),
             roughness: 0.4,
             metalness: 0.1
         });
@@ -53,7 +53,7 @@ function Model({ url, fileName, displayColor = "#3b82f6", onError }: { url: stri
                 }
             });
         }
-    }, [object, displayColor]);
+    }, [object, color]);
 
     if (!object) return null;
 
@@ -61,7 +61,7 @@ function Model({ url, fileName, displayColor = "#3b82f6", onError }: { url: stri
         return (
             <Center top>
                 <mesh geometry={object} castShadow receiveShadow>
-                    <meshStandardMaterial color={displayColor} roughness={0.4} metalness={0.1} />
+                    <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
                 </mesh>
             </Center>
         );
@@ -74,7 +74,7 @@ function Model({ url, fileName, displayColor = "#3b82f6", onError }: { url: stri
     );
 }
 
-export function Viewer3D({ fileUrl, fileName, file, displayColor }: Viewer3DProps) {
+export function Viewer3D({ fileUrl, fileName, file, color }: Viewer3DProps) {
     const [objectUrl, setObjectUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -118,7 +118,7 @@ export function Viewer3D({ fileUrl, fileName, file, displayColor }: Viewer3DProp
                 <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.2}>
                     <ErrorBoundary onError={(e) => setError("ไม่สามารถดึงข้อมูลโมเดล 3D ได้ (โครงสร้างไฟล์ซับซ้อนเกินไป)")}>
                         <React.Suspense fallback={null}>
-                            <Model url={objectUrl} fileName={file?.name || fileName} displayColor={displayColor} onError={(e) => setError("โครงสร้างไฟล์ 3D ไม่ถูกต้อง")} />
+                            <Model url={objectUrl} fileName={file?.name || fileName} color={color} onError={(e) => setError("โครงสร้างไฟล์ 3D ไม่ถูกต้อง")} />
                         </React.Suspense>
                     </ErrorBoundary>
                 </Stage>

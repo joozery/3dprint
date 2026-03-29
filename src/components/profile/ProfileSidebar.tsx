@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
@@ -9,50 +10,118 @@ import {
   Settings, 
   HelpCircle, 
   Plus,
+  Headset,
+  ChevronRight
 } from "lucide-react";
-import { cn } from "@/lib/utils"; // สมมติว่ามีฟังก์ชันนี้ ถ้าไม่มีให้ใช้ string template ก็ได้
 
 export function ProfileSidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="w-full md:w-[260px] bg-white border-r border-slate-200 flex flex-col flex-shrink-0 min-h-screen">
-            <div className="p-6 pb-4">
-                <Link href="/" className="inline-flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black shadow-sm shadow-blue-600/20">
-                        3D
+        <aside className="w-full md:w-[280px] bg-white/70 backdrop-blur-3xl border-r border-slate-200/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] flex flex-col flex-shrink-0 h-screen overflow-hidden rounded-none relative">
+            
+            {/* Header / Logo */}
+            <div className="px-8 pt-8 pb-5">
+                <Link href="/" className="inline-flex items-center gap-3 group relative w-full">
+                    {/* Glowing effect behind logo */}
+                    <div className="absolute top-1/2 left-4 -translate-y-1/2 w-10 h-10 bg-blue-500/20 blur-xl rounded-full group-hover:bg-blue-500/30 transition-all duration-500"></div>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-white to-slate-50 shadow-sm border border-slate-200 flex items-center justify-center relative overflow-hidden shrink-0 group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-300">
+                        <Image src="/logo/PDM_Logo_Icon_40x40px.svg" alt="PDM Logo" fill className="object-contain p-2" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-slate-800">3DEV</span>
+                    <span className="text-[20px] font-black tracking-tight text-slate-800">PDM <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">PRO</span></span>
                 </Link>
             </div>
 
-            <div className="px-4 py-2">
+            {/* CTA Button */}
+            <div className="px-6 py-2 pb-6 border-b border-slate-100/60 relative">
                 <Link 
                     href="/quote" 
-                    className="flex items-center justify-center gap-2 w-full bg-slate-900 text-white hover:bg-slate-800 hover:shadow-lg transition-all rounded-xl py-2.5 font-semibold text-sm shadow-sm"
+                    className="group relative flex items-center justify-center gap-2 w-full bg-slate-900 text-white rounded-[1rem] py-3.5 font-bold text-[13px] tracking-wide shadow-[0_8px_20px_rgba(15,23,42,0.15)] hover:shadow-[0_12px_25px_rgba(59,130,246,0.3)] hover:-translate-y-0.5 transition-all duration-500 overflow-hidden"
                 >
-                    <Plus size={16} strokeWidth={2.5} /> New Project
+                    {/* Animated gradient background on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    {/* Light sweep animation */}
+                    <div className="absolute inset-0 -translate-x-full group-hover:animate-[sweep_1.5s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 z-10 w-1/2"></div>
+                    
+                    <Plus size={18} strokeWidth={3} className="relative z-20 group-hover:rotate-90 transition-transform duration-500" /> 
+                    <span className="relative z-20">สร้างโปรเจกต์ใหม่</span>
                 </Link>
             </div>
 
-            <nav className="flex-1 px-3 py-4 space-y-1">
-                <Link href="/profile" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${pathname === '/profile' ? 'bg-slate-50 text-blue-600 font-semibold' : 'text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900'}`}>
-                    <LayoutDashboard size={18} /> Overview
+            {/* Navigation Menu */}
+            <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto w-full no-scrollbar">
+                <p className="px-4 text-[10px] font-black tracking-[0.2em] text-slate-400/80 uppercase mb-3 text-left">เมนูหลัก</p>
+                
+                <Link href="/profile" className={`relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group ${pathname === '/profile' ? 'text-blue-700 bg-blue-50/50 shadow-[0_1px_4px_rgba(59,130,246,0.05)] border border-blue-100/50' : 'text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50'}`}>
+                    {pathname === '/profile' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>}
+                    <div className="flex items-center gap-3.5 relative z-10">
+                        <LayoutDashboard size={18} className={`${pathname === '/profile' ? 'text-blue-600' : 'text-slate-400'} group-hover:scale-110 transition-transform duration-300`} /> 
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">ภาพรวมการใช้งาน</span>
+                    </div>
                 </Link>
-                <Link href="/orders" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${pathname === '/orders' ? 'bg-slate-50 text-blue-600 font-semibold' : 'text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900'}`}>
-                    <History size={18} /> Order History
-                </Link>
-                <Link href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 font-medium text-sm hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                    <FileText size={18} /> Invoices
-                </Link>
-                <Link href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 font-medium text-sm hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                    <Settings size={18} /> Settings
-                </Link>
-            </nav>
 
-            <div className="p-4 mt-auto">
-                <Link href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 font-medium text-sm hover:text-slate-900 transition-colors">
-                    <HelpCircle size={18} /> Support
+                <Link href="/orders" className={`relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group ${pathname === '/orders' ? 'text-blue-700 bg-blue-50/50 shadow-[0_1px_4px_rgba(59,130,246,0.05)] border border-blue-100/50' : 'text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50'}`}>
+                    {pathname === '/orders' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>}
+                    <div className="flex items-center gap-3.5 relative z-10">
+                        <History size={18} className={`${pathname === '/orders' ? 'text-blue-600' : 'text-slate-400'} group-hover:scale-110 transition-transform duration-300`} /> 
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">ประวัติการสั่งซื้อ</span>
+                    </div>
+                </Link>
+
+                <div className="w-full h-px bg-slate-100/80 my-3"></div>
+                <p className="px-4 text-[10px] font-black tracking-[0.2em] text-slate-400/80 uppercase mb-3 text-left">บัญชีและการเงิน</p>
+
+                <Link href="#" className="relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50">
+                    <div className="flex items-center gap-3.5 relative z-10">
+                        <FileText size={18} className="text-slate-400 group-hover:text-amber-500 group-hover:-rotate-3 transition-all duration-300" /> 
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">ใบแจ้งหนี้</span>
+                    </div>
+                </Link>
+
+                <Link href="#" className="relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50">
+                    <div className="flex items-center gap-3.5 relative z-10">
+                        <Settings size={18} className="text-slate-400 group-hover:text-slate-700 group-hover:rotate-45 transition-all duration-500" /> 
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">ตั้งค่าบัญชี</span>
+                    </div>
+                </Link>
+            </div>
+
+            {/* Engineer Support Card (Call-To-Action) */}
+            <div className="px-6 py-4 mt-auto">
+                <div className="bg-gradient-to-br from-indigo-50 to-blue-50/50 border border-indigo-100/60 rounded-2xl p-4.5 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow cursor-pointer">
+                    {/* Background decor */}
+                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-600/5 rounded-full blur-2xl group-hover:bg-blue-600/10 transition-colors"></div>
+                    
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-indigo-100 flex items-center justify-center mb-3 text-indigo-600 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 relative z-10">
+                        <Headset size={20} />
+                    </div>
+                    
+                    <h4 className="text-[13px] font-black tracking-wide text-slate-800 mb-1.5 relative z-10">ปรึกษาวิศวกร 3D</h4>
+                    <p className="text-[10px] font-bold text-slate-500 leading-relaxed mb-4 relative z-10">
+                        ต้องการคำแนะนำเรื่องวัสดุ หรือตรวจสอบไฟล์ก่อนพิมพ์? เราพร้อมช่วยคุณ
+                    </p>
+                    
+                    <a 
+                        href="https://line.me/ti/p/@3dev" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block w-full text-center py-3.5 bg-indigo-600 rounded-xl text-xs font-bold text-white shadow-lg shadow-indigo-600/20 active:scale-[0.98] transition-all relative z-10"
+                    >
+                        เริ่มแชทบน LINE (@3dev)
+                    </a>
+                </div>
+            </div>
+
+            {/* Bottom Support Section */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+                <Link href="#" className="relative flex items-center justify-between px-4 py-3 rounded-2xl text-[13px] font-bold transition-all overflow-hidden group text-slate-500 hover:text-slate-900 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-slate-200/60 hover:border-slate-300 hover:shadow-md">
+                    <div className="flex items-center gap-3">
+                        <HelpCircle size={18} className="text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all duration-300" /> 
+                        <span>ศูนย์ช่วยเหลือ 24/7</span>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-600 group-hover:translate-x-1 transition-all duration-300" />
                 </Link>
             </div>
         </aside>

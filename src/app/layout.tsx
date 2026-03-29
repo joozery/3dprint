@@ -12,8 +12,22 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "3D Print Pro",
-  description: "Professional 3D Printing Service Platform",
+  title: "PDM 3D Print Thailand | แพลตฟอร์มสั่งพิมพ์ 3 มิติครบวงจร",
+  description: "บริการพิมพ์ 3 มิติระดับอุตสาหกรรม รวดเร็ว แม่นยำ และเป็นมืออาชีพที่สุดในไทย",
+  icons: {
+    icon: "/logo/PDM_Logo_Icon_40x40px.svg",
+    apple: "/logo/PDM_Logo_Icon_40x40px.svg",
+  },
+};
+
+import { CookieConsent } from "@/components/layout/CookieConsent";
+import EmailCheckModal from "@/components/auth/EmailCheckModal";
+import { Viewport } from "next";
+
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -27,7 +41,9 @@ export default function RootLayout({
         <AuthProvider>
           <TooltipProvider>
             {children}
+            <EmailCheckModal />
             <Toaster richColors position="top-right" />
+            <CookieConsent />
           </TooltipProvider>
         </AuthProvider>
       </body>

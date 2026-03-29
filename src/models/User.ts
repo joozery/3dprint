@@ -6,6 +6,8 @@ export interface IUser extends Document {
   password?: string;
   image?: string;
   provider?: string;
+  isVerified: boolean;
+  verificationStatus: "pending" | "verified";
   role: "admin" | "user";
 }
 
@@ -31,6 +33,15 @@ const UserSchema = new Schema(
     provider: {
       type: String,
       default: "credentials",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "verified"],
+      default: "pending",
     },
     role: {
       type: String,

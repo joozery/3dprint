@@ -28,12 +28,12 @@ export default function FloatingSidebar() {
                 aria-label="Contact Sales"
             >
                 {/* Avatar */}
-                <div className="relative h-8 w-8 overflow-hidden rounded-full border-2 border-white shadow-md">
+                <div className="relative h-8 w-8 overflow-hidden rounded-full border-2 border-white shadow-md bg-white">
                     <Image
-                        src="/logo/3dev.png"
-                        alt="Sales Agent"
+                        src="/logo/PDM_Logo_Icon_40x40px.svg"
+                        alt="PDM Sales"
                         fill
-                        className="object-cover object-top"
+                        className="object-contain p-[2px]"
                     />
                 </div>
 

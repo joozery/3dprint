@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { Upload, Info, Trash2, ChevronDown, CheckCircle2, AlertCircle, Layers, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -148,19 +147,11 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
                     <div className="grid grid-cols-12 gap-8">
                         {/* Left: Preview */}
                         <div className="col-span-12 md:col-span-3 space-y-4">
-                            <div className="aspect-square bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200 relative overflow-hidden shadow-inner group">
+                            <div className="aspect-square bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200 relative overflow-hidden shadow-inner">
                                 <Viewer3D file={rawFile} fileUrl={quote.fileUrl} fileName={quote.originalName} displayColor={getModelColor()} />
                                 {!rawFile && !quote.fileUrl && <Layers className="w-12 h-12 text-slate-300" />}
-                                <div className="absolute top-2 right-2 flex gap-1 z-10 transition-opacity">
+                                <div className="absolute top-2 right-2">
                                     <Badge variant="secondary" className="bg-white/80 backdrop-blur-sm text-[9px] py-0 px-1 h-4">3D View</Badge>
-                                    <Link 
-                                        href={`/viewer/${quote._id}`} 
-                                        target="_blank" 
-                                        title="เปิด 3D Viewer แบบเต็มจอ"
-                                        className="bg-white/80 backdrop-blur-md hover:bg-white text-slate-600 hover:text-blue-600 rounded flex items-center justify-center w-5 h-4 shadow-sm transition-colors border border-slate-200"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
-                                    </Link>
                                 </div>
                             </div>
                             <div className="space-y-1">
@@ -307,7 +298,6 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
 
         try {
             const response = await axios.post("/api/quote/upload", formData, {
-                withCredentials: true,
                 onUploadProgress: (progressEvent) => {
                     const pct = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
                     setProgress(pct);

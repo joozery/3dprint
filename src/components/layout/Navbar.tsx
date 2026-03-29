@@ -13,7 +13,7 @@ import {
     NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
-import { Search, ShoppingCart, Menu, X, User as UserIcon, LogOut } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, User as UserIcon, LogOut, ArrowRight } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -65,15 +65,18 @@ export default function Navbar() {
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-6">
 
                 {/* Logo */}
-                <Link href="/" className="flex items-center">
+                <Link href="/" className="flex items-center gap-2.5 group">
                     <Image
-                        src="/logo/3dev.png"
-                        alt="3DEV Logo"
-                        width={120}
-                        height={36}
+                        src="/logo/PDM_Logo_Icon_40x40px.svg"
+                        alt="PDM Logo"
+                        width={40}
+                        height={40}
                         priority
-                        className="h-9 w-auto object-contain"
+                        className="h-10 w-auto object-contain transition-transform group-hover:scale-110"
                     />
+                    <span className="font-black text-2xl tracking-[0.2em] text-slate-900 group-hover:text-blue-600 transition-colors uppercase ml-1">
+                        PDM
+                    </span>
                 </Link>
 
                 {/* Desktop Nav */}
@@ -212,18 +215,46 @@ export default function Navbar() {
                     <nav className="flex flex-col gap-1 pt-3">
                         {/* User info on Mobile if logged in */}
                         {session && (
-                            <div className="flex items-center gap-3 px-3 py-3 mb-2 bg-slate-50 rounded-lg border border-slate-100">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-blue-200">
-                                    {session.user?.image ? (
-                                        <Image src={session.user.image} alt={session.user.name || "User"} width={40} height={40} className="object-cover" />
-                                    ) : (
-                                        session.user?.name?.charAt(0).toUpperCase() || <UserIcon size={20} />
-                                    )}
+                            <div className="flex flex-col gap-1 mb-2">
+                                <Link 
+                                    href="/profile" 
+                                    className="flex items-center gap-3 px-3 py-4 bg-gradient-to-br from-blue-50 to-white rounded-2xl border border-blue-100/60 shadow-sm active:scale-[0.98] transition-all"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg overflow-hidden border-2 border-white shadow-md shadow-blue-200 shrink-0">
+                                        {session.user?.image ? (
+                                            <Image src={session.user.image} alt={session.user.name || "User"} width={48} height={48} className="object-cover" />
+                                        ) : (
+                                            session.user?.name?.charAt(0).toUpperCase() || <UserIcon size={24} />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                        <div className="text-[15px] font-black text-slate-800 leading-tight">แดชบอร์ดของฉัน</div>
+                                        <div className="text-xs font-bold text-blue-600 mt-0.5">{session.user?.name}</div>
+                                        <div className="text-[10px] text-slate-400 truncate mt-0.5">{session.user?.email}</div>
+                                    </div>
+                                    <ArrowRight size={18} className="text-blue-400 ml-2" />
+                                </Link>
+
+                                <div className="grid grid-cols-2 gap-2 mt-2 px-1">
+                                    <Link 
+                                        href="/profile" 
+                                        className="flex flex-col gap-1.5 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 transition-colors"
+                                        onClick={() => setMobileOpen(false)}
+                                    >
+                                        <UserIcon size={18} className="text-blue-500" />
+                                        <span className="text-xs font-bold text-slate-700">บัญชีของฉัน</span>
+                                    </Link>
+                                    <Link 
+                                        href="/orders" 
+                                        className="flex flex-col gap-1.5 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 transition-colors"
+                                        onClick={() => setMobileOpen(false)}
+                                    >
+                                        <ShoppingCart size={18} className="text-indigo-500" />
+                                        <span className="text-xs font-bold text-slate-700">ออเดอร์</span>
+                                    </Link>
                                 </div>
-                                <div>
-                                    <div className="text-sm font-bold text-slate-800">{session.user?.name}</div>
-                                    <div className="text-xs text-slate-500 truncate max-w-[200px]">{session.user?.email}</div>
-                                </div>
+                                <div className="h-px bg-slate-100 my-3 mx-2"></div>
                             </div>
                         )}
 

@@ -4,10 +4,14 @@ import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
 import { redirect } from "next/navigation";
 import { History, ListFilter, Download, Search } from "lucide-react";
+import Link from "next/link";
 
 // Sub Components
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
+import DashboardHeader from "@/components/profile/DashboardHeader";
 import { RecentOrdersTable } from "@/components/profile/RecentOrdersTable";
+import { MobileBottomNav } from "@/components/profile/MobileBottomNav";
+import EmailCheckModal from "@/components/auth/EmailCheckModal";
 
 export const dynamic = "force-dynamic";
 
@@ -24,14 +28,27 @@ export default async function OrdersPage() {
   const allQuotes = JSON.parse(JSON.stringify(rawQuotes));
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans relative overflow-hidden">
       
-      {/* ── Left Sidebar ── */}
-      <ProfileSidebar />
+      {/* ── Modal: ขออีเมลเพิ่ม (สำหรับคนเข้าทางลัด LINE/SSO) ── */}
+      <EmailCheckModal />
+
+      {/* Background Ambient Glows */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
+
+      {/* ── Left Sidebar (Flush Layout) ── */}
+      <div className="hidden md:flex h-screen z-40 shrink-0 flex-col relative">
+          <ProfileSidebar />
+      </div>
 
       {/* ── Main Orders Content ── */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#F1F5F9]/50 h-screen overflow-y-auto w-full">
-        <div className="p-6 md:p-10 max-w-6xl w-full mx-auto">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto w-full relative z-10 no-scrollbar">
+        
+        {/* ── Top Header Navbar ── */}
+        <DashboardHeader />
+
+        <div className="p-6 md:p-10 max-w-[1200px] w-full mx-auto pb-24 relative z-10">
             
             {/* Header Area */}
             <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -81,13 +98,19 @@ export default async function OrdersPage() {
             )}
 
             {/* Footer */}
-            <div className="mt-12 pt-6 border-t border-slate-200/60 pb-8 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 font-medium">
-                <div>© 2026 3DEV Manufacturing Platform. All rights reserved.</div>
+            <div className="mt-16 pt-8 border-t border-slate-200/60 pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center text-[13px] text-slate-400 font-medium">
+                <div>© 2026 PDM 3D Print Thailand. สงวนลิขสิทธิ์</div>
+                <div className="flex flex-wrap justify-center sm:justify-end gap-x-5 gap-y-2 mt-3 sm:mt-0 font-bold">
+                    <Link href="/privacy" className="hover:text-blue-600 transition-colors">นโยบายความเป็นส่วนตัว</Link>
+                    <Link href="/terms" className="hover:text-blue-600 transition-colors">ข้อกำหนดการให้บริการ</Link>
+                    <Link href="/cookies" className="hover:text-blue-600 transition-colors">นโยบายคุกกี้</Link>
+                </div>
             </div>
 
         </div>
       </main>
 
+      <MobileBottomNav />
     </div>
   );
 }

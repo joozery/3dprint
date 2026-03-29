@@ -45,7 +45,7 @@ export default async function ViewerPage(props: { params: Promise<{ id: string }
     };
 
     return (
-        <div className="w-full h-screen overflow-hidden bg-[#EAECEE] relative">
+        <div className="w-full h-screen overflow-hidden bg-slate-200 relative">
             <AdvancedViewer3D quote={quoteData} />
         </div>
     );

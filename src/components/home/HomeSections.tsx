@@ -314,12 +314,12 @@ export function Footer() {
                 {/* Bottom Section */}
                 <div className="pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-6">
                     <p className="text-sm text-slate-500">
-                        © {currentYear} 3DEV Corporation. All rights reserved.
+                        © {currentYear} PDM 3D Print Thailand. สงวนลิขสิทธิ์
                     </p>
-                    <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
-                        <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Cookie Policy</Link>
+                    <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500 font-bold">
+                        <Link href="/privacy" className="hover:text-blue-400 transition-colors">นโยบายความเป็นส่วนตัว</Link>
+                        <Link href="/terms" className="hover:text-blue-400 transition-colors">ข้อกำหนดการให้บริการ</Link>
+                        <Link href="/cookies" className="hover:text-blue-400 transition-colors">นโยบายคุกกี้</Link>
                     </div>
                 </div>
             </div>

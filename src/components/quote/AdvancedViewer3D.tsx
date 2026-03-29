@@ -100,15 +100,20 @@ export default function AdvancedViewer3D({ quote }: { quote: QuoteData }) {
                 </button>
             </div>
 
-            {/* Top Right View Cube Icon (Mock) */}
-            <div className="absolute top-6 right-6 z-10">
-                <div className="w-12 h-12 bg-white/70 backdrop-blur-md rounded-lg shadow-sm flex items-center justify-center border border-white p-1 text-slate-300">
-                    <Box className="w-8 h-8 opacity-50 stroke-[1.5]" />
+            {/* Top Right PDM Logo */}
+            <div className="absolute top-6 right-6 z-10 pointer-events-none">
+                <div className="w-12 h-12 bg-white/70 backdrop-blur-md rounded-lg shadow-sm flex items-center justify-center border border-white text-slate-300 relative overflow-hidden">
+                    <Image
+                        src="/logo/PDM_Logo_Icon_40x40px.svg"
+                        alt="PDM Logo"
+                        fill
+                        className="object-contain p-1.5 opacity-80"
+                    />
                 </div>
             </div>
 
             {/* Canvas Area */}
-            <div className="flex-1 w-full bg-[#EAECEE] cursor-move">
+            <div className="flex-1 w-full bg-slate-200 cursor-move">
                 <Canvas shadows camera={{ position: [0, 80, 150], fov: 40 }} gl={{ preserveDrawingBuffer: true, antialias: true }}>
                     <Environment preset="studio" environmentIntensity={0.8} />
                     <ambientLight intensity={0.4} />

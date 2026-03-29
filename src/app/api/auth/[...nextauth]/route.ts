@@ -22,7 +22,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         await dbConnect();
-        const user = await User.findOne({ email: credentials.email });
+        // ดึง user ใหม่สดๆ จาก DB เพื่อข้าม Cache
+        const user = await User.findOne({ email: credentials.email }).select("+password").lean();
 
         if (!user || user.provider !== "credentials") {
           throw new Error("ไม่พบบัญชีผู้ใช้ หรือกรุณาเข้าสู่ระบบด้วยช่องทางเดิมที่คุณเคยสมัครไว้");
@@ -33,50 +34,81 @@ export const authOptions: NextAuthOptions = {
           throw new Error("รหัสผ่านไม่ถูกต้อง");
         }
 
-        return { id: user._id.toString(), name: user.name, email: user.email, image: user.image };
+        if (!user.isVerified) {
+          console.error(`Auth Blocked: User ${user.email} exists but isVerified is false in DB`);
+          throw new Error("ACCOUNT_NOT_VERIFIED");
+        }
+
+        return { id: user._id.toString(), name: user.name, email: user.email, image: user.image, isVerified: user.isVerified };
       },
     }),
     
     // 2. SSO: Google
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     }),
 
     // 3. SSO: Facebook
     FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID || "",
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
+      clientId: process.env.FACEBOOK_CLIENT_ID as string,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
     }),
 
     // 4. SSO: LINE
     LineProvider({
-      clientId: process.env.LINE_CLIENT_ID || "",
-      clientSecret: process.env.LINE_CLIENT_SECRET || "",
+      clientId: process.env.LINE_CLIENT_ID as string,
+      clientSecret: process.env.LINE_CLIENT_SECRET as string,
+      authorization: {
+        params: {
+          scope: "openid profile email",
+          prompt: "consent",
+        },
+      },
     })
   ],
 
   callbacks: {
     // Callback ตรวจจับตอนมีคนกดเข้าสู่ระบบ
-    async signIn({ user, account, profile }) {
-      // ถ้าเป็นการ Login ผ่าน SSO (Google, FB, LINE) ให้ออโต้ Register ลง MongoDB
+    async signIn({ user, account, profile }: any) {
       if (account?.provider !== "credentials") {
         await dbConnect();
-        const existingUser = await User.findOne({ email: user.email });
+        
+        // 1. ดึงข้อมูลพื้นฐาน (พยายามหาอีเมลจากทุกช่องทาง)
+        let email = user.email || profile?.email;
+        const name = user.name || profile?.name || profile?.displayName || "SSO User";
+        const image = user.image || profile?.pictureUrl || profile?.picture;
+        const providerId = account?.provider; // google, facebook, line
+
+        // 2. [แผนสำรอง] ถ้าไม่มีอีเมลจริงๆ (เช่น LINE ยังไม่กดยืนยัน หรือไม่ได้เปิดสิทธิ์)
+        // เราจะสร้าง Fake Email จาก Provider ID เพื่อให้ระบบ DB รับรองได้ (MongoDB Schema ของเราบังคับมี Email)
+        if (!email) {
+          const ssoId = user.id || profile?.sub || account?.providerAccountId;
+          email = `${providerId}_${ssoId}@sso.com`;
+          console.log(`Fallback: Created fake email for ${providerId} user: ${email}`);
+        }
+
+        const existingUser = await User.findOne({ email });
         
         if (!existingUser) {
           const newUser = await User.create({
-             name: user.name || profile?.name || "SSO User",
-             email: user.email,
-             image: user.image,
-             provider: account?.provider,
+             name: name,
+             email: email,
+             image: image,
+             provider: providerId,
+             isVerified: true,
+             verificationStatus: "verified"
           });
           user.id = newUser._id.toString(); 
+          (user as any).isVerified = true;
         } else {
-          // มีในระบบแล้ว อัปเดตรูปภาพ
-          existingUser.image = user.image;
-          await existingUser.save();
+          // มีในระบบแล้ว อัปเดตรูปภาพ (ถ้ามีรูปใหม่มา)
+          if (image) {
+            existingUser.image = image;
+            await existingUser.save();
+          }
           user.id = existingUser._id.toString();
+          (user as any).isVerified = existingUser.isVerified;
         }
       }
       return true;
@@ -86,6 +118,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.provider = account?.provider;
+        token.isVerified = (user as any).isVerified;
       }
       return token;
     },
@@ -94,6 +127,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.provider = token.provider as string;
+        session.user.isVerified = token.isVerified as boolean;
       }
       return session;
     },
