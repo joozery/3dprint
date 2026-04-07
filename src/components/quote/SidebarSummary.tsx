@@ -2,9 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Info, Ticket } from "lucide-react";
+import { Info, Loader2, FileText, ShoppingCart, ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface SidebarSummaryProps {
     quotes: any[];
@@ -12,11 +13,46 @@ interface SidebarSummaryProps {
 
 export function SidebarSummary({ quotes }: SidebarSummaryProps) {
     const [agreed, setAgreed] = useState(true);
+    const [requestLoading, setRequestLoading] = useState(false);
+    const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
     const router = useRouter();
+    const { data: session } = useSession();
 
     const totalPrice = quotes.reduce((sum, q) => sum + (q?.priceDetail?.totalPrice || 0), 0);
     const weight = quotes.reduce((sum, q) => sum + (q?.weightGrams || 0), 0);
     const hasQuotes = quotes.length > 0;
+
+    // ── ขอใบเสนอราคา ──────────────────────────────────────────────
+    const handleRequestQuote = async () => {
+        if (!hasQuotes || !agreed) return;
+
+        // ถ้ายังไม่ login
+        if (!session?.user) {
+            router.push("/login?callbackUrl=/quote");
+            return;
+        }
+
+        setRequestLoading(true);
+        setFeedback(null);
+
+        try {
+            const res = await fetch("/api/quote/request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ quotes }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
+
+            // redirect ไปหน้ากรอกข้อมูลพร้อม ids
+            const ids = data.ids.join(",");
+            router.push(`/quote/request?ids=${ids}`);
+        } catch (err: any) {
+            setFeedback({ text: err.message, type: "error" });
+        } finally {
+            setRequestLoading(false);
+        }
+    };
 
     return (
         <div className="space-y-4 sticky top-24">
@@ -37,7 +73,8 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                     อาจมีค่าใช้จ่ายเพิ่มเติมสำหรับ <span className="underline cursor-pointer">กรณีพิเศษ</span>
                 </p>
 
-                <div className="flex items-start space-x-2 mb-6">
+                {/* Terms */}
+                <div className="flex items-start space-x-2 mb-5">
                     <Checkbox
                         id="terms"
                         checked={agreed}
@@ -49,22 +86,57 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                     </label>
                 </div>
 
+                {/* Feedback */}
+                {feedback && (
+                    <div className={`flex items-start gap-2 p-3 rounded-lg mb-4 text-xs ${feedback.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+                        {feedback.type === "success"
+                            ? <CheckCircle2 size={14} className="shrink-0 mt-0.5" />
+                            : <AlertCircle size={14} className="shrink-0 mt-0.5" />}
+                        <span className="leading-relaxed">{feedback.text}</span>
+                    </div>
+                )}
+
+                {/* Buttons */}
                 <div className="space-y-3">
+                    {/* ขอใบเสนอราคา — primary action */}
+                    <button
+                        disabled={!hasQuotes || !agreed || requestLoading}
+                        onClick={handleRequestQuote}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-200 disabled:opacity-40 disabled:shadow-none transition-all active:scale-95"
+                    >
+                        {requestLoading
+                            ? <Loader2 size={16} className="animate-spin" />
+                            : <FileText size={16} />}
+                        {requestLoading ? "กำลังส่ง..." : "ขอใบเสนอราคา"}
+                    </button>
+
+                    {/* สั่งพิมพ์เลย */}
                     <Button
                         disabled={!hasQuotes || !agreed}
                         onClick={() => router.push("/checkout")}
-                        className="w-full bg-blue-600 hover:bg-blue-700 py-6 text-base font-bold rounded-full shadow-lg shadow-blue-200 disabled:opacity-50 disabled:shadow-none"
+                        className="w-full py-6 text-base font-bold rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-none disabled:opacity-40"
                     >
+                        <ShoppingBag size={16} className="mr-2" />
                         สั่งพิมพ์เลย
                     </Button>
+
+                    {/* บันทึกลงตะกร้า */}
                     <Button
                         variant="outline"
                         disabled={!hasQuotes}
-                        className="w-full py-6 text-base font-bold rounded-full border-blue-600 text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                        className="w-full py-6 text-base font-bold rounded-full border-blue-600 text-blue-600 hover:bg-blue-50 disabled:opacity-40"
                     >
+                        <ShoppingCart size={16} className="mr-2" />
                         บันทึกลงตะกร้า
                     </Button>
                 </div>
+
+                {/* Login hint */}
+                {!session?.user && hasQuotes && (
+                    <p className="text-center text-[10px] text-slate-400 mt-3">
+                        ต้องเข้าสู่ระบบก่อนขอใบเสนอราคา
+                    </p>
+                )}
             </div>
 
             {/* Shipping Estimate */}

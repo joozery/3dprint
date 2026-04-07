@@ -66,6 +66,25 @@ const QuoteSchema = new mongoose.Schema(
             enum: ["pending", "ordered", "cancelled"],
             default: "pending",
         },
+        billing: {
+            type: {
+                type: String,
+                enum: ["individual", "company"],
+            },
+            firstName:   { type: String },
+            lastName:    { type: String },
+            idCard:      { type: String },
+            companyName: { type: String },
+            taxId:       { type: String },
+            contactName: { type: String },
+            address:     { type: String },
+            district:    { type: String },
+            province:    { type: String },
+            postalCode:  { type: String },
+            phone:       { type: String },
+            email:       { type: String },
+            note:        { type: String },
+        },
     },
     { timestamps: true }
 );

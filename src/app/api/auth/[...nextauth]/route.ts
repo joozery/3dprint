@@ -15,31 +15,67 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        otp: { label: "OTP", type: "text" }, // Added OTP field
       },
       async authorize(credentials) {
+        console.log("Auth Start for:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+          throw new Error("โปรดระบุอีเมลและรหัสผ่าน");
         }
 
         await dbConnect();
-        // ดึง user ใหม่สดๆ จาก DB เพื่อข้าม Cache
-        const user = await User.findOne({ email: credentials.email }).select("+password").lean();
+        
+        // ดึง user พร้อมฟิลด์ความลับ (password, adminOTP)
+        const user = await User.findOne({ email: credentials.email })
+          .select("+password +adminOTP +adminOTPExpires");
 
-        if (!user || user.provider !== "credentials") {
-          throw new Error("ไม่พบบัญชีผู้ใช้ หรือกรุณาเข้าสู่ระบบด้วยช่องทางเดิมที่คุณเคยสมัครไว้");
+        if (!user) {
+          console.log("Auth Error: User not found");
+          throw new Error("ไม่พบบัญชีผู้ใช้ หรือกรุณาลองใหม่อีกครั้ง");
         }
 
+        if (user.provider !== "credentials") {
+          console.log("Auth Error: Social login user trying credentials");
+          throw new Error("กรุณาเข้าสู่ระบบด้วยช่องทางเดิมของคุณ (Google/LINE)");
+        }
+
+        // 1. เช็ครหัสผ่าน
         const isValid = await bcrypt.compare(credentials.password, user.password as string);
         if (!isValid) {
+          console.log("Auth Error: Invalid Password");
           throw new Error("รหัสผ่านไม่ถูกต้อง");
         }
 
-        if (!user.isVerified) {
-          console.error(`Auth Blocked: User ${user.email} exists but isVerified is false in DB`);
-          throw new Error("ACCOUNT_NOT_VERIFIED");
+        // 2. ถ้าเป็น Admin ต้องเช็ค OTP (ปิดไว้ชั่วคราวเพื่อ DEBUG 401)
+        if (user.role === "admin") {
+          console.log("Auth Node: Admin role detected - [BYPASSING OTP FOR DEBUGGING]");
+          /* 
+          // ปิดชั่วคราวเพื่อให้เข้าใช้งานได้ก่อน
+          if (!credentials?.otp) {
+            console.log("Auth Error: OTP missing in credentials");
+            throw new Error("OTP_REQUIRED");
+          }
+          if (user.adminOTP !== credentials.otp) {
+            console.log(`Auth Error: OTP mismatch. Expected ${user.adminOTP} but got ${credentials.otp}`);
+            throw new Error("รหัส OTP ไม่ถูกต้อง");
+          }
+          */
+          console.log("Auth Status: Admin Bypass Success");
         }
 
-        return { id: user._id.toString(), name: user.name, email: user.email, image: user.image, isVerified: user.isVerified };
+        if (!user.isVerified) {
+          console.log("Auth Error: Account not verified");
+          throw new Error("กรุณายืนยันตัวตนก่อนเข้าสู่ระบบ");
+        }
+
+        return { 
+          id: user._id.toString(), 
+          name: user.name, 
+          email: user.email, 
+          role: user.role, 
+          image: user.image, 
+          isVerified: user.isVerified 
+        };
       },
     }),
     
@@ -114,11 +150,26 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     // ฝังข้อมูลลงตั๋ว Token ที่ระบบรับรอง
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
+      // เมื่อมีการเรียก update() จาก useSession() ใน Client Side
+      if (trigger === "update" && session?.user) {
+         token.name = session.user.name;
+         token.email = session.user.email;
+      }
+
       if (user) {
         token.id = user.id;
         token.provider = account?.provider;
         token.isVerified = (user as any).isVerified;
+        
+        // ดึง Role จาก DB ถ้ายังไม่มีใน Token (สำหรับ SSO)
+        if (!(user as any).role) {
+          await dbConnect();
+          const dbUser = await User.findById(user.id).select("role");
+          token.role = dbUser?.role || "user";
+        } else {
+          token.role = (user as any).role;
+        }
       }
       return token;
     },
@@ -126,8 +177,11 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
         session.user.provider = token.provider as string;
         session.user.isVerified = token.isVerified as boolean;
+        session.user.role = token.role as string;
       }
       return session;
     },

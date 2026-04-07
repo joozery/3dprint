@@ -48,6 +48,25 @@ const UserSchema = new Schema(
       enum: ["admin", "user"],
       default: "user",
     },
+    // สิทธิ์การยืนยันรหัสผ่านแอดมินด้วย OTP
+    adminOTP: { type: String },
+    adminOTPExpires: { type: Date },
+    // ข้อมูลสำหรับออกใบเสนอราคา (บันทึกไว้)
+    billing: {
+      type:        { type: String, enum: ["individual", "company"] },
+      firstName:   String,
+      lastName:    String,
+      idCard:      String,
+      companyName: String,
+      taxId:       String,
+      contactName: String,
+      address:     String,
+      district:    String,
+      province:    String,
+      postalCode:  String,
+      phone:       String,
+      email:       String,
+    },
   },
   { timestamps: true }
 );

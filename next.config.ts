@@ -23,7 +23,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.svgrepo.com',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: '*.r2.dev',
+      },
     ],
   },
 };

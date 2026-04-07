@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 
 import { CookieConsent } from "@/components/layout/CookieConsent";
 import EmailCheckModal from "@/components/auth/EmailCheckModal";
+import TawkChat from "@/components/home/TawkChat";
 import { Viewport } from "next";
 
 export const viewport: Viewport = {
@@ -44,6 +45,7 @@ export default function RootLayout({
             <EmailCheckModal />
             <Toaster richColors position="top-right" />
             <CookieConsent />
+            <TawkChat />
           </TooltipProvider>
         </AuthProvider>
       </body>

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, Clock, Box, FileBox, ExternalLink, Activity } from "lucide-react";
+import { ArrowRight, Clock, Box, FileBox, ExternalLink, Activity, CheckCircle2, XCircle } from "lucide-react";
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js';
@@ -24,14 +24,14 @@ function MiniModel({ url, fileName }: { url: string; fileName: string; }) {
     useFrame(() => {
         if (ref.current) {
             ref.current.rotation.y += 0.02;
-            ref.current.rotation.x = 0.5; // slight top-down angle
+            ref.current.rotation.x = 0.5;
         }
     });
 
     React.useEffect(() => {
         if (!object) return;
         const material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color("#3b82f6"), // blue-500
+            color: new THREE.Color("#3b82f6"),
             roughness: 0.3,
             metalness: 0.2,
         });
@@ -77,17 +77,16 @@ function ModelThumbnail({ quote }: { quote: any }) {
 
     return (
         <div 
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.25rem] bg-indigo-50/50 border border-indigo-100/60 flex items-center justify-center flex-shrink-0 shadow-sm relative overflow-hidden group-hover:border-blue-300 transition-all duration-300 group-hover:shadow-[0_4px_20px_rgba(59,130,246,0.15)]"
+            className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm relative overflow-hidden group-hover:border-blue-200 transition-all duration-300"
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
         >
             {!hover ? (
-                <div className="flex flex-col items-center justify-center pointer-events-none">
-                    <Box size={24} className="text-indigo-400/80 group-hover:scale-110 group-hover:text-blue-500 transition-all duration-300 mb-0.5" />
-                    <span className="text-[8px] font-bold text-indigo-300 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Preview</span>
+                <div className="flex flex-col items-center justify-center pointer-events-none text-slate-300 group-hover:text-blue-500 transition-colors">
+                    <Box size={20} />
                 </div>
             ) : (
-                <div className="absolute inset-0 w-full h-full bg-indigo-50 animate-in fade-in duration-300">
+                <div className="absolute inset-0 w-full h-full bg-slate-50/50 animate-in fade-in duration-300">
                     <Canvas camera={{ position: [0, 0, 150], fov: 40 }} gl={{ preserveDrawingBuffer: false, antialias: false }}>
                         <ambientLight intensity={1} />
                         <directionalLight position={[10, 10, 10]} intensity={1.5} />
@@ -102,104 +101,128 @@ function ModelThumbnail({ quote }: { quote: any }) {
 }
 
 // ----------------------------------------------------
-// 3. Main Table Component
+// 3. Main Component
 // ----------------------------------------------------
 interface RecentOrdersTableProps {
     quotes: any[];
 }
 
+const statusMap: Record<string, { label: string; color: string; icon: any }> = {
+  pending:   { label: "รอดำเนินการ", color: "text-amber-600 bg-amber-50 border-amber-200",   icon: Clock },
+  ordered:   { label: "สั่งซื้อแล้ว", color: "text-emerald-600 bg-emerald-50 border-emerald-200", icon: CheckCircle2 },
+  cancelled: { label: "ยกเลิกแล้ว",  color: "text-red-500 bg-red-50 border-red-200",          icon: XCircle },
+};
+
 export function RecentOrdersTable({ quotes }: RecentOrdersTableProps) {
     return (
-        <div className="bg-white/70 backdrop-blur-2xl border border-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col">
-            <div className="px-8 py-6 border-b border-slate-200/50 flex justify-between items-center bg-transparent">
-                <h3 className="text-[14px] font-black tracking-widest text-slate-800 uppercase flex items-center gap-2">
-                    <Activity size={18} className="text-blue-600" /> กิจกรรมล่าสุด
-                </h3>
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-sm">
+                        <Activity size={14} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 leading-none">ใบเสนอราคาล่าสุด</h3>
+                        <p className="text-slate-400 text-[11px] mt-1">แสดงรายการอัปโหลดและประเมินราคา 10 รายการล่าสุด</p>
+                    </div>
+                </div>
+                {quotes.length > 0 && (
+                    <Link href="/profile/quotes" className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                        ดูทั้งหมด
+                    </Link>
+                )}
             </div>
             
             {quotes.length === 0 ? (
-                <div className="p-16 text-center flex flex-col items-center bg-slate-50/50">
-                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-5 border border-slate-200 shadow-sm hover:scale-105 transition-transform">
-                        <FileBox size={32} className="text-slate-300" />
+                <div className="p-12 text-center flex flex-col items-center">
+                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                        <FileBox size={24} className="text-slate-300" />
                     </div>
-                    <h3 className="text-slate-800 font-black text-xl mb-2 tracking-tight">ยังไม่มีการสั่งซื้อ</h3>
-                    <p className="text-slate-500 font-medium text-sm max-w-[280px]">คุณยังไม่ได้อัปโหลดโมเดล 3 มิติใดๆ เริ่มต้นโปรเจกต์งานพิมพ์ของคุณได้ที่นี่</p>
-                    <Link href="/quote" className="mt-8 font-bold text-[13px] tracking-wide text-white bg-blue-600 px-6 py-3.5 rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all">
-                        อัปโหลดโมเดลแรกของคุณ
+                    <h3 className="text-slate-800 font-bold text-base mb-1">ยังไม่มีการสั่งซื้อ</h3>
+                    <p className="text-slate-400 text-xs max-w-[280px]">อัปโหลดโมเดล 3 มิติ เพื่อรับการประเมินราคาได้ทันที</p>
+                    <Link href="/quote" className="mt-6 font-semibold text-xs text-white bg-slate-900 px-5 py-2.5 rounded-lg shadow-md hover:bg-blue-600 transition-all flex items-center gap-2">
+                        <ArrowRight size={14} /> เริ่มต้นขอใบเสนอราคา
                     </Link>
                 </div>
             ) : (
-                <div className="flex flex-col p-4 space-y-2">
+                <div className="flex flex-col p-4 space-y-1">
                     {/* Header Row (Hidden on mobile) */}
-                    <div className="hidden md:flex items-center px-4 py-2 text-[11px] font-black justify-between text-slate-400 uppercase tracking-widest mb-1">
-                        <div className="w-[35%]">ไฟล์โมเดล</div>
-                        <div className="w-[20%]">วันที่อัปโหลด</div>
-                        <div className="w-[25%]">รายละเอียด & ราคาประเมิน</div>
-                        <div className="w-[15%]">สถานะงาน</div>
-                        <div className="w-[5%] text-right">จัดการ</div>
+                    <div className="hidden md:flex items-center px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/50 rounded-lg mb-2">
+                        <div className="w-[40%]">รายการไฟล์</div>
+                        <div className="w-[20%]">วันที่ส่งคำขอ</div>
+                        <div className="w-[15%] text-center">ราคาประเมิน</div>
+                        <div className="w-[15%] text-center">สถานะ</div>
+                        <div className="w-[10%] text-right">เพิ่มเติม</div>
                     </div>
 
-                    {/* Order Rows */}
-                    {quotes.map((quote: any) => (
-                        <div key={quote._id} className="group relative bg-transparent hover:bg-white/80 border border-transparent hover:border-slate-200/60 rounded-2xl flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 transition-all duration-300 cursor-default hover:shadow-sm">
-                            
-                            {/* 1. Model File */}
-                            <div className="w-full md:w-[35%] flex items-center gap-4 mb-4 md:mb-0">
-                                <ModelThumbnail quote={quote} />
-                                <div className="flex flex-col">
-                                    <Link href={`/viewer/${quote._id}`} target="_blank" className="text-[15px] font-black text-slate-900 group-hover:text-blue-600 flex items-center gap-1.5 transition-colors line-clamp-1 break-all pr-4">
-                                        {quote.originalName || "Unnamed_File.stl"} 
-                                        <ExternalLink size={14} className="text-slate-300 group-hover:text-blue-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity -ml-1" />
-                                    </Link>
-                                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">#{quote._id.toString().slice(-8).toUpperCase()}</span>
+                    {/* Rows */}
+                    {quotes.map((quote: any) => {
+                        const status = statusMap[quote.status] || statusMap.pending;
+                        const StatusIcon = status.icon;
+                        
+                        return (
+                            <div key={quote._id} className="group relative bg-white hover:bg-blue-50/30 border border-slate-100 hover:border-blue-100 rounded-xl flex flex-col md:flex-row md:items-center px-4 py-4 md:py-3 transition-all duration-200">
+                                
+                                {/* 1. Model File */}
+                                <div className="w-full md:w-[40%] flex items-center gap-3 mb-4 md:mb-0">
+                                    <ModelThumbnail quote={quote} />
+                                    <div className="flex flex-col min-w-0 pr-4">
+                                        <div className="text-sm font-bold text-slate-800 truncate mb-0.5" title={quote.originalName || quote.fileName}>
+                                            {quote.originalName || quote.fileName}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
+                                            <span>{quote.technology?.toUpperCase()} · {quote.material}</span>
+                                            <span>•</span>
+                                            <span className="text-slate-500">{quote.volumeCm3?.toFixed(2)} cm³</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* 2. Date */}
-                            <div className="w-full md:w-[20%] mb-3 md:mb-0 hidden md:block">
-                                <span className="text-[13px] text-slate-600 font-bold">
-                                    {new Date(quote.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                </span>
-                            </div>
+                                {/* 2. Date */}
+                                <div className="w-full md:w-[20%] mb-3 md:mb-0 md:flex flex-col justify-center hidden">
+                                    <span className="text-[12px] font-semibold text-slate-600">
+                                        {new Date(quote.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400">
+                                        {new Date(quote.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+                                    </span>
+                                </div>
 
-                            {/* 3. Detail & Price */}
-                            <div className="w-full md:w-[25%] flex justify-between md:flex-col mb-3 md:mb-0">
-                                <span className="text-[14px] font-black text-slate-900">{quote.volumeCm3?.toFixed(2) || "0"} <span className="text-[11px] text-slate-400 font-bold">cm³</span></span>
-                                <span className="text-[13px] sm:text-[11px] font-bold text-blue-600 mt-0.5 md:mt-1 bg-blue-50/50 px-2.5 py-1 rounded-lg md:w-fit border border-blue-100 flex items-center gap-1.5 shadow-sm">
-                                    {quote.totalPrice ? (
-                                        <>฿{quote.totalPrice.toLocaleString()}</>
+                                {/* 3. Price */}
+                                <div className="w-full md:w-[15%] md:flex justify-center mb-3 md:mb-0 hidden">
+                                    {quote.priceDetail?.totalPrice ? (
+                                        <span className="text-[12px] font-bold text-slate-800">
+                                            ฿{quote.priceDetail.totalPrice.toLocaleString()}
+                                        </span>
                                     ) : (
-                                        <>
-                                            <Clock size={12} className="text-blue-500 animate-spin-slow" />
-                                            กำลังประเมินราคา
-                                        </>
+                                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-semibold whitespace-nowrap">
+                                            รอประเมิน
+                                        </span>
                                     )}
-                                </span>
-                            </div>
+                                </div>
 
-                            {/* 4. Status */}
-                            <div className="w-full md:w-[15%] flex items-center justify-between md:justify-start mb-3 md:mb-0 border-t border-slate-100 pt-3 md:pt-0 md:border-t-0">
-                                <span className="md:hidden text-[11px] font-bold text-slate-400">สถานะ:</span>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200/60 shadow-sm relative overflow-hidden group-hover:border-amber-300 transition-colors">
-                                    <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.5)_50%,transparent_75%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_infinite] pointer-events-none"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse relative z-10"></div>
-                                    <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest relative z-10">วิเคราะห์ข้อมูล</span>
+                                {/* 4. Status */}
+                                <div className="w-full md:w-[15%] flex justify-between md:justify-center items-center mb-0">
+                                    <span className="md:hidden text-[11px] font-semibold text-slate-400">สถานะ:</span>
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${status.color}`}>
+                                        <StatusIcon size={10} />
+                                        {status.label}
+                                    </span>
+                                </div>
+
+                                {/* 5. Action */}
+                                <div className="hidden w-full md:w-[10%] md:flex justify-end relative">
+                                    <Link 
+                                        href={`/viewer/${quote._id}`} 
+                                        target="_blank" 
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                    >
+                                        <ExternalLink size={15} />
+                                    </Link>
                                 </div>
                             </div>
-
-                            {/* 5. Action */}
-                            <div className="w-full md:w-[5%] flex justify-end md:justify-end">
-                                <Link 
-                                    href={`/viewer/${quote._id}`} 
-                                    target="_blank" 
-                                    className="inline-flex items-center justify-center w-full md:w-10 md:h-10 py-2 md:py-0 rounded-xl text-slate-500 bg-slate-50 border border-slate-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-700 transition-all shadow-sm hover:shadow-md hover:scale-105"
-                                >
-                                    <span className="md:hidden text-[13px] font-bold mr-2">ดูรายละเอียด</span>
-                                    <ArrowRight size={18} />
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

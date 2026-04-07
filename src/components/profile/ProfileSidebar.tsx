@@ -71,19 +71,21 @@ export function ProfileSidebar() {
                 </Link>
 
                 <div className="w-full h-px bg-slate-100/80 my-3"></div>
-                <p className="px-4 text-[10px] font-black tracking-[0.2em] text-slate-400/80 uppercase mb-3 text-left">บัญชีและการเงิน</p>
+                <p className="px-4 text-[10px] font-black tracking-[0.2em] text-slate-400/80 uppercase mb-3 text-left">เอกสารและตั้งค่า</p>
 
-                <Link href="#" className="relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50">
+                <Link href="/profile/quotes" className={`relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group ${pathname === '/profile/quotes' ? 'text-blue-700 bg-blue-50/50 border border-blue-100/50' : 'text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50'}`}>
+                    {pathname === '/profile/quotes' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full"></div>}
                     <div className="flex items-center gap-3.5 relative z-10">
-                        <FileText size={18} className="text-slate-400 group-hover:text-amber-500 group-hover:-rotate-3 transition-all duration-300" /> 
-                        <span className="group-hover:translate-x-1 transition-transform duration-300">ใบแจ้งหนี้</span>
+                        <FileText size={18} className={`${pathname === '/profile/quotes' ? 'text-blue-600' : 'text-slate-400'} group-hover:text-amber-500 transition-all duration-300`} /> 
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">ใบเสนอราคาของฉัน</span>
                     </div>
                 </Link>
 
-                <Link href="#" className="relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50">
+                <Link href="/profile/billing" className={`relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group ${pathname === '/profile/billing' ? 'text-blue-700 bg-blue-50/50 border border-blue-100/50' : 'text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50'}`}>
+                    {pathname === '/profile/billing' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full"></div>}
                     <div className="flex items-center gap-3.5 relative z-10">
-                        <Settings size={18} className="text-slate-400 group-hover:text-slate-700 group-hover:rotate-45 transition-all duration-500" /> 
-                        <span className="group-hover:translate-x-1 transition-transform duration-300">ตั้งค่าบัญชี</span>
+                        <Settings size={18} className={`${pathname === '/profile/billing' ? 'text-blue-600' : 'text-slate-400'} group-hover:text-slate-700 group-hover:rotate-45 transition-all duration-500`} /> 
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">ข้อมูลใบเสนอราคา</span>
                     </div>
                 </Link>
             </div>

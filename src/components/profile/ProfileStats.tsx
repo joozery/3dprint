@@ -1,4 +1,4 @@
-import { Box, Package, TrendingUp, Zap, Clock, ShieldCheck } from "lucide-react";
+import { Box, Package, TrendingUp, Zap, Clock, ShieldCheck, User } from "lucide-react";
 
 interface ProfileStatsProps {
     totalQuotes: number;
@@ -8,76 +8,72 @@ interface ProfileStatsProps {
 
 export function ProfileStats({ totalQuotes, totalVolume, userName }: ProfileStatsProps) {
     return (
-        <div className="mb-8">
+        <div className="mb-10">
+            {/* Header Greeting */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">ยินดีต้อนรับกลับมา, <span className="text-blue-600">{userName}</span></h1>
-                    <p className="text-slate-500 mt-2 font-medium">นี่คือภาพรวมกิจกรรมการพิมพ์ 3 มิติล่าสุดของคุณ</p>
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-900/20">
+                        <User size={24} />
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-800 tracking-tight">สวัสดี, <span className="text-blue-600">{userName}</span></h1>
+                        <p className="text-slate-500 text-sm mt-1 font-medium">ภาพรวมบัญชีและการสั่งพิมพ์ 3 มิติของคุณ</p>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm font-bold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100 shadow-sm">
-                    <span className="relative flex h-2.5 w-2.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-full border border-emerald-200">
+                    <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                     ระบบประเมินราคาพร้อมใช้งาน
                 </div>
             </div>
 
+            {/* Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {/* Stat 1 */}
-                <div className="bg-white/70 backdrop-blur-2xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="text-slate-500 font-bold text-sm">งานที่กำลังดำเนินการ</div>
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 shadow-sm">
-                            <Package size={22} />
+                {/* Stat 1: Total Quotes */}
+                <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-lg transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <Box size={20} />
                         </div>
+                        <span className="px-2 py-1 bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-slate-100">ทั้งหมด</span>
                     </div>
                     <div>
-                        <div className="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight mb-2">{totalQuotes}</div>
-                        <div className="text-[13px] text-emerald-600 font-bold mt-2 flex items-center gap-1.5 bg-emerald-50/80 inline-flex px-2.5 py-1.5 rounded-lg border border-emerald-100/50">
-                            <TrendingUp size={14} /> กำลังติดตามสถานะ
-                        </div>
+                        <div className="text-slate-500 text-xs font-semibold mb-1">ใบเสนอราคาที่ขอไว้</div>
+                        <div className="text-4xl font-black text-slate-800 tracking-tight">{totalQuotes}</div>
                     </div>
                 </div>
 
-                {/* Stat 2 */}
-                <div className="bg-white/70 backdrop-blur-2xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between group hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="text-slate-500 font-bold text-sm">รายการงานรอตรวจสอบ</div>
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300 shadow-sm">
-                            <Clock size={22} />
+                {/* Stat 2: Pending/Actionable (Simplified for now using totalQuotes) */}
+                <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-lg transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                            <Clock size={20} />
                         </div>
+                        <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-amber-100">ตรวจสอบ</span>
                     </div>
                     <div>
-                        <div className="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight mb-2">{totalQuotes} <span className="text-xl sm:text-2xl text-slate-400">รายการ</span></div>
-                        <div className="text-[13px] text-amber-600 font-bold mt-2 bg-amber-50/80 inline-flex px-2.5 py-1.5 rounded-lg border border-amber-100/50">
-                            ทีมงานกำลังประเมินราคา
-                        </div>
+                        <div className="text-slate-500 text-xs font-semibold mb-1">รายการรอประเมินราคา</div>
+                        <div className="text-4xl font-black text-slate-800 tracking-tight">{totalQuotes}</div>
                     </div>
                 </div>
 
-                {/* Stat 3 (Premium Black Card) */}
-                <div className="bg-gradient-to-br from-slate-900 via-[#0f172a] to-blue-950 p-8 rounded-[2rem] border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col justify-between group hover:shadow-[0_20px_40px_rgba(30,58,138,0.2)] hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden">
-                    {/* Decorative glow */}
-                    <div className="absolute top-0 right-0 -mx-10 -my-10 w-40 h-40 bg-blue-500/20 rounded-full blur-[50px] group-hover:bg-blue-400/30 transition-all"></div>
-                    <div className="absolute bottom-0 left-0 -mx-10 -my-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] group-hover:bg-emerald-500/20 transition-all"></div>
+                {/* Stat 3: Total Volume / Activity */}
+                <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.12)] flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/20 blur-[30px] rounded-full group-hover:bg-blue-500/30 transition-all"></div>
                     
-                    <div className="flex justify-between items-center mb-6 relative z-10">
-                        <div className="text-slate-300 font-bold text-sm tracking-wide">สถานะบัญชี</div>
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 border border-white/10">
-                            <ShieldCheck size={22} />
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-slate-800 text-blue-400 flex items-center justify-center border border-slate-700">
+                            <Package size={20} />
                         </div>
+                        <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1.5 rounded-lg border border-emerald-500/20">
+                            <ShieldCheck size={14} /> บัญชีระดับพื้นฐาน
+                        </span>
                     </div>
-                    <div className="relative z-10 flex flex-col justify-end h-full mt-4">
-                        <div className="text-3xl sm:text-4xl font-black text-white mb-2 tracking-tight">ยืนยันตัวตนแล้ว</div>
-                        
-                        <div className="text-[13px] text-slate-300 font-bold tracking-wide mt-4 flex items-center gap-2">
-                           <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-emerald-400">พร้อมสั่งผลิตชิ้นงาน 3 มิติ</span>
-                        </div>
+                    <div className="relative z-10">
+                        <div className="text-slate-400 text-xs font-semibold mb-1">ปริมาตรการพิมพ์รวม (cm³)</div>
+                        <div className="text-4xl font-black text-white tracking-tight">{totalVolume.toFixed(0)}</div>
                     </div>
                 </div>
             </div>

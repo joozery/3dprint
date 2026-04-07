@@ -58,7 +58,7 @@ const navLinks = [
 
 export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/90 backdrop-blur-md shadow-sm">
@@ -144,7 +144,11 @@ export default function Navbar() {
                     </Button>
 
                     {/* Auth Status (Desktop) */}
-                    {session ? (
+                    {status === "loading" ? (
+                        <div className="hidden lg:flex items-center ml-2 pl-2 border-l border-slate-200">
+                            <div className="w-24 h-10 bg-slate-100 rounded-full animate-pulse ml-2" />
+                        </div>
+                    ) : session ? (
                         <div className="hidden lg:flex items-center ml-2 pl-2 border-l border-slate-200">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -214,7 +218,9 @@ export default function Navbar() {
                 <div className="lg:hidden border-t border-slate-100 bg-white px-4 pb-4 shadow-xl absolute w-full top-16 left-0">
                     <nav className="flex flex-col gap-1 pt-3">
                         {/* User info on Mobile if logged in */}
-                        {session && (
+                        {status === "loading" ? (
+                            <div className="h-20 w-full bg-slate-100 rounded-2xl animate-pulse mb-3 mt-3"></div>
+                        ) : session ? (
                             <div className="flex flex-col gap-1 mb-2">
                                 <Link 
                                     href="/profile" 
@@ -256,7 +262,7 @@ export default function Navbar() {
                                 </div>
                                 <div className="h-px bg-slate-100 my-3 mx-2"></div>
                             </div>
-                        )}
+                        ) : null}
 
                         {navLinks.map((link) => (
                             <Link
@@ -274,7 +280,9 @@ export default function Navbar() {
                                 <Link href="/quote" onClick={() => setMobileOpen(false)}>สั่งพิมพ์ 3D เลย</Link>
                             </Button>
                             
-                            {session ? (
+                            {status === "loading" ? (
+                                <div className="h-10 w-full bg-slate-100 rounded-md animate-pulse"></div>
+                            ) : session ? (
                                 <Button size="sm" variant="ghost" className="w-full text-red-500 hover:bg-red-50 hover:text-red-700 h-10" onClick={() => signOut({ callbackUrl: "/" })}>
                                     <LogOut className="w-4 h-4 mr-2" />
                                     ออกจากระบบ
