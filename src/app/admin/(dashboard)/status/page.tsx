@@ -12,8 +12,6 @@ import {
   Clock, 
   Cloud,
   Layers,
-  CpuIcon,
-  PulseIcon as Pulse,
   History,
   ShieldCheck,
   Package,

@@ -111,7 +111,7 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
                 <div className="p-4 flex items-center justify-between group">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shrink-0">
-                            <Viewer3D file={rawFile} fileUrl={quote.fileUrl} fileName={quote.originalName} displayColor={getModelColor()} />
+                            <Viewer3D file={rawFile} fileUrl={quote.fileUrl} fileName={quote.originalName} color={getModelColor()} />
                         </div>
                         <div>
                             <p className="text-sm font-bold text-slate-900">{quote.originalName}</p>
@@ -148,7 +148,7 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
                         {/* Left: Preview */}
                         <div className="col-span-12 md:col-span-3 space-y-4">
                             <div className="aspect-square bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200 relative overflow-hidden shadow-inner">
-                                <Viewer3D file={rawFile} fileUrl={quote.fileUrl} fileName={quote.originalName} displayColor={getModelColor()} />
+                                <Viewer3D file={rawFile} fileUrl={quote.fileUrl} fileName={quote.originalName} color={getModelColor()} />
                                 {!rawFile && !quote.fileUrl && <Layers className="w-12 h-12 text-slate-300" />}
                                 <div className="absolute top-2 right-2">
                                     <Badge variant="secondary" className="bg-white/80 backdrop-blur-sm text-[9px] py-0 px-1 h-4">3D View</Badge>

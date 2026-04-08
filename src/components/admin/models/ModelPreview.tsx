@@ -4,14 +4,16 @@ import { useState, Suspense, useMemo } from "react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { OrbitControls, Stage, Center } from "@react-three/drei";
 import * as THREE from "three";
+// @ts-ignore
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
+// @ts-ignore
 import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader";
 import JSZip from "jszip";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 // Robust library injection for 3MFLoader
 try {
-  (ThreeMFLoader.prototype as any).addLibrary = (ThreeMFLoader.prototype as any).addLibrary || function(lib: any) { 
+  (ThreeMFLoader.prototype as any).addLibrary = (ThreeMFLoader.prototype as any).addLibrary || function(this: any, lib: any) { 
     this.library = lib; 
   };
 } catch (e) {
@@ -102,7 +104,7 @@ export default function ModelPreview({ url, name }: { url: string; name: string 
           <color attach="background" args={["#f8faff"]} />
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={1} />
-          <Stage environment="city" intensity={0.6} contactShadow={false} center>
+          <Stage environment="city" intensity={0.6} center={{}}>
              <ModelRenderer url={url} />
           </Stage>
           <OrbitControls 

@@ -6,10 +6,10 @@ import User from "@/models/User";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(session?.user as any)?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await dbConnect();
-  const caller = await User.findById(session.user.id).lean();
+  const caller = await User.findById((session!.user as any).id).lean();
   if ((caller as any)?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const q = req.nextUrl.searchParams.get("q") || "";

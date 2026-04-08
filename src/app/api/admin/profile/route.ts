@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
+    if (!session || (session.user as any).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -16,7 +16,7 @@ export async function PUT(req: Request) {
 
     await dbConnect();
 
-    const user = await User.findById(session.user.id);
+    const user = await User.findById((session.user as any).id);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

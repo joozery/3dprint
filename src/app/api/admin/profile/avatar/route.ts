@@ -11,7 +11,7 @@ import User from "@/models/User";
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
+    if (!session || (session.user as any).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Update User in DB
     await dbConnect();
-    await User.findByIdAndUpdate(session.user.id, { image: imageUrl });
+    await User.findByIdAndUpdate((session.user as any).id, { image: imageUrl });
 
     return NextResponse.json({ success: true, imageUrl });
   } catch (error: any) {

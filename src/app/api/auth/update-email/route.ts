@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     // อัปเดตอีเมลของผู้ใช้ปัจจุบัน (ค้นหาจาก ID ใน Session)
-    const user = await User.findById(session.user.id);
+    const user = await User.findById((session.user as any).id);
     if (!user) {
       return NextResponse.json({ message: "ไม่พบผู้ใช้ในระบบ" }, { status: 404 });
     }
