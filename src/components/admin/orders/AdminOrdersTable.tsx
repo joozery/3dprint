@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, RefreshCw, Filter, ShoppingBag } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, RefreshCw, Filter, ShoppingBag, FileText } from "lucide-react";
 
 interface Order {
   _id: string;
@@ -13,6 +14,7 @@ interface Order {
   userId?: { name?: string; email?: string } | null;
   createdAt: string;
   trackingNumber?: string;
+  quotes?: { _id: string; originalName?: string; fileName?: string }[];
 }
 
 interface Props {
@@ -127,7 +129,7 @@ export default function AdminOrdersTable({ orders, total, page, totalPages, curr
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-blue-50">
-                  <th className="px-6 py-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">เลขออเดอร์</th>
+                  <th className="px-6 py-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">เลขออเดอร์ / โปรเจค</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">ข้อมูลลูกค้า</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">ชำระเงิน</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">สถานะปัจจุบัน</th>
@@ -141,8 +143,20 @@ export default function AdminOrdersTable({ orders, total, page, totalPages, curr
                   return (
                     <tr key={order._id} className="hover:bg-blue-50/30 transition-all group">
                       <td className="px-6 py-5">
-                        <span className="text-blue-600 font-black text-[13px] tracking-tight">#{order.orderNumber}</span>
-                        <p className="text-slate-400 text-[10px] mt-0.5 font-bold">{new Date(order.createdAt).toLocaleDateString("th-TH")}</p>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-blue-600 font-black text-[13px] tracking-tight">#{order.orderNumber}</span>
+                          <span className="text-slate-400 text-[10px] font-bold">{new Date(order.createdAt).toLocaleDateString("th-TH")}</span>
+                        </div>
+                        {order.quotes && order.quotes.length > 0 && (
+                          <div className="mt-2 space-y-1.5 border-t border-slate-100 pt-2">
+                            {order.quotes.map(q => (
+                              <Link key={q._id} href={`/profile/quotes/${q._id}`} target="_blank" className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-blue-600 transition-colors w-max max-w-[200px]" title="ดูใบเสนอราคา">
+                                <FileText size={13} className="shrink-0 text-slate-400" />
+                                <span className="truncate font-medium">{q.originalName || q.fileName || 'ใบเสนอราคา'}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-5">
                         <p className="text-slate-900 font-black text-[13px]">{order.userId?.name || "—"}</p>

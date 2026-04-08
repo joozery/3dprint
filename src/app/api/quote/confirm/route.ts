@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   await dbConnect();
   const body = await req.json();
-  const { ids, billing } = body;
+  const { ids, billing, shipping } = body;
 
   if (!ids || ids.length === 0) {
     return NextResponse.json({ error: "ไม่มีรายการ" }, { status: 400 });
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       {
         $set: {
           billing,
+          shipping,
           status: "pending",
         },
       }

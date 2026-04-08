@@ -85,8 +85,18 @@ const QuoteSchema = new mongoose.Schema(
             email:       { type: String },
             note:        { type: String },
         },
+        shipping: {
+            fullName: { type: String },
+            phone: { type: String },
+            address: { type: String },
+            province: { type: String },
+            zipCode: { type: String },
+        },
     },
     { timestamps: true }
 );
 
+if (mongoose.models.Quote) {
+    delete mongoose.models.Quote;
+}
 export default mongoose.models.Quote || mongoose.model("Quote", QuoteSchema);

@@ -11,7 +11,8 @@ import {
   HelpCircle, 
   Plus,
   Headset,
-  ChevronRight
+  ChevronRight,
+  Truck
 } from "lucide-react";
 
 export function ProfileSidebar() {
@@ -86,6 +87,14 @@ export function ProfileSidebar() {
                     <div className="flex items-center gap-3.5 relative z-10">
                         <Settings size={18} className={`${pathname === '/profile/billing' ? 'text-blue-600' : 'text-slate-400'} group-hover:text-slate-700 group-hover:rotate-45 transition-all duration-500`} /> 
                         <span className="group-hover:translate-x-1 transition-transform duration-300">ข้อมูลใบเสนอราคา</span>
+                    </div>
+                </Link>
+
+                <Link href="/profile/shipping" className={`relative flex items-center justify-between px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-300 overflow-hidden group ${pathname === '/profile/shipping' ? 'text-blue-700 bg-blue-50/50 border border-blue-100/50' : 'text-slate-500 hover:text-slate-900 border border-transparent hover:bg-slate-50'}`}>
+                    {pathname === '/profile/shipping' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-600 rounded-r-full"></div>}
+                    <div className="flex items-center gap-3.5 relative z-10">
+                        <Truck size={18} className={`${pathname === '/profile/shipping' ? 'text-blue-600' : 'text-slate-400'} group-hover:text-sky-500 group-hover:translate-x-1 transition-all duration-500`} /> 
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">ข้อมูลการจัดส่ง</span>
                     </div>
                 </Link>
             </div>

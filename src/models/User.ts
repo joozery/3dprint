@@ -67,9 +67,21 @@ const UserSchema = new Schema(
       phone:       String,
       email:       String,
     },
+    // ข้อมูลสำหรับจัดส่ง (บันทึกไว้)
+    shippingAddress: {
+      fullName: String,
+      phone: String,
+      address: String,
+      province: String,
+      zipCode: String,
+    },
   },
   { timestamps: true }
 );
 
-// ป้องกัน error เวลา compile ใหม่บน Next.js
+// ป้องกัน error เวลา compile ใหม่บน Next.js และอัปเดต Schema ใหม่เวลามีการเพิ่มฟิลด์
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
 export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

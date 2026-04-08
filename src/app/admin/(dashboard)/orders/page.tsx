@@ -26,6 +26,7 @@ async function getOrders(searchParams: SearchParams) {
       .skip(skip)
       .limit(limit)
       .populate("userId", "name email image")
+      .populate("quotes", "originalName fileName")
       .lean(),
     Order.countDocuments(filter),
   ]);

@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import { Footer } from "@/components/home/HomeSections";
 import {
   Building2, User, ChevronRight, Loader2,
-  CheckCircle2, AlertCircle, FileText, MapPin, Phone, Mail, Hash, ArrowLeft, Save,
+  CheckCircle2, AlertCircle, FileText, MapPin, Phone, Mail, Hash, ArrowLeft, Save, Truck
 } from "lucide-react";
 
 type BillingType = "individual" | "company";
@@ -25,6 +25,22 @@ const empty: BillingForm = {
   companyName: "", taxId: "", contactName: "",
   address: "", district: "", province: "", postalCode: "",
   phone: "", email: "", note: "",
+};
+
+interface ShippingForm {
+  fullName: string;
+  phone: string;
+  address: string;
+  province: string;
+  zipCode: string;
+}
+
+const emptyShipping: ShippingForm = {
+  fullName: "",
+  phone: "",
+  address: "",
+  province: "",
+  zipCode: "",
 };
 
 /* ── Success Modal ─────────────────────────────────────────────── */
@@ -59,6 +75,9 @@ function QuoteRequestForm() {
 
   const [billingType, setBillingType] = useState<BillingType>("individual");
   const [form, setForm] = useState<BillingForm>(empty);
+  const [shippingForm, setShippingForm] = useState<ShippingForm>(emptyShipping);
+  const [sameAsBilling, setSameAsBilling] = useState(true);
+  
   const [saveBilling, setSaveBilling] = useState(true);
   const [loading, setLoading] = useState(false);
   const [fetchingBilling, setFetchingBilling] = useState(true);
@@ -68,18 +87,27 @@ function QuoteRequestForm() {
   const set = (key: keyof BillingForm, value: string) =>
     setForm(prev => ({ ...prev, [key]: value }));
 
-  // โหลด billing ที่บันทึกไว้ autofill
+  const setShipping = (key: keyof ShippingForm, value: string) =>
+    setShippingForm(prev => ({ ...prev, [key]: value }));
+
+  // โหลด billing & shipping ที่บันทึกไว้
   useEffect(() => {
-    fetch("/api/profile/billing")
-      .then(r => r.json())
-      .then(({ billing }) => {
-        if (billing) {
-          setForm({ ...empty, ...billing, note: "" });
-          setBillingType(billing.type || "individual");
-        }
-      })
-      .catch(() => {})
-      .finally(() => setFetchingBilling(false));
+    Promise.all([
+      fetch("/api/profile/billing").then(r => r.ok ? r.json() : {}),
+      fetch("/api/profile/shipping").then(r => r.ok ? r.json() : {})
+    ])
+    .then(([billingData, shippingData]: [any, any]) => {
+      if (billingData.billing) {
+        setForm({ ...empty, ...billingData.billing, note: "" });
+        setBillingType(billingData.billing.type || "individual");
+      }
+      if (shippingData.shippingAddress) {
+        setShippingForm({ ...emptyShipping, ...shippingData.shippingAddress });
+        setSameAsBilling(false);
+      }
+    })
+    .catch(() => {})
+    .finally(() => setFetchingBilling(false));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,22 +117,37 @@ function QuoteRequestForm() {
     const payload = { ...form, type: billingType };
 
     try {
-      // 1. ยืนยัน quote + บันทึก billing
+      const finalShipping = sameAsBilling ? {
+        fullName: billingType === "company" ? form.contactName : `${form.firstName} ${form.lastName}`.trim() || form.companyName,
+        phone: form.phone,
+        address: `${form.address} ${form.district} ${form.province} ${form.postalCode}`.trim(),
+        province: form.province,
+        zipCode: form.postalCode,
+      } : shippingForm;
+
+      // 1. ยืนยัน quote + บันทึก billing และ shipping ใน quote
       const res = await fetch("/api/quote/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: ids.split(",").filter(Boolean), billing: payload }),
+        body: JSON.stringify({ ids: ids.split(",").filter(Boolean), billing: payload, shipping: finalShipping }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
 
-      // 2. บันทึก billing ไว้ใน profile (ถ้าเลือก)
+      // 2. บันทึก billing และ shipping ไว้ใน profile (ถ้าเลือก)
       if (saveBilling) {
-        await fetch("/api/profile/billing", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ billing: { ...payload, note: undefined } }),
-        });
+        await Promise.all([
+          fetch("/api/profile/billing", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ billing: { ...payload, note: undefined } }),
+          }),
+          fetch("/api/profile/shipping", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ shippingAddress: finalShipping }),
+          })
+        ]);
       }
 
       setShowSuccess(true);
@@ -122,7 +165,18 @@ function QuoteRequestForm() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
 
-      {showSuccess && <SuccessModal onClose={() => router.push("/profile/quotes")} />}
+      {showSuccess && (
+        <SuccessModal 
+          onClose={() => {
+            const idArray = ids.split(",").filter(Boolean);
+            if (idArray.length === 1) {
+              router.push(`/profile/quotes/${idArray[0]}`);
+            } else {
+              router.push("/profile/quotes");
+            }
+          }} 
+        />
+      )}
 
       <main className="flex-grow py-10">
         <div className="max-w-2xl mx-auto px-4">
@@ -241,6 +295,48 @@ function QuoteRequestForm() {
                   <textarea placeholder="รายละเอียดเพิ่มเติม..." value={form.note} onChange={e => set("note", e.target.value)} rows={3}
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 focus:outline-none transition-all resize-none placeholder:text-slate-300" />
                 </div>
+              </div>
+
+              {/* Shipping Flow */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)] space-y-4">
+                <p className="text-slate-700 text-sm font-semibold flex items-center gap-2"><Truck size={14} className="text-blue-500" /> ข้อมูลสำหรับการจัดส่ง</p>
+                
+                <label className="flex items-center gap-3 cursor-pointer select-none border-b border-slate-100 pb-4">
+                  <div onClick={() => setSameAsBilling(v => !v)}
+                    className={`w-10 h-5 rounded-full flex items-center transition-all cursor-pointer ${sameAsBilling ? "bg-blue-600" : "bg-slate-200"}`}>
+                    <div className={`w-4 h-4 rounded-full bg-white shadow transition-all ${sameAsBilling ? "ml-auto mr-0.5" : "ml-0.5"}`} />
+                  </div>
+                  <span className="text-slate-700 text-sm font-medium">จัดส่งไปที่อยู่เดียวกันกับเอกสารใบเสนอราคา</span>
+                </label>
+
+                {!sameAsBilling && (
+                  <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelClass}>ชื่อผู้รับ <span className="text-red-400">*</span></label>
+                        <input required type="text" placeholder="ชื่อผู้รับสินค้า" value={shippingForm.fullName} onChange={e => setShipping("fullName", e.target.value)} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>เบอร์โทร <span className="text-red-400">*</span></label>
+                        <input required type="tel" placeholder="0X-XXXX-XXXX" value={shippingForm.phone} onChange={e => setShipping("phone", e.target.value)} className={inputClass} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelClass}>ที่อยู่จัดส่ง <span className="text-red-400">*</span></label>
+                      <input required type="text" placeholder="บ้านเลขที่ ถนน ซอย แขวง เขต" value={shippingForm.address} onChange={e => setShipping("address", e.target.value)} className={inputClass} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelClass}>จังหวัด <span className="text-red-400">*</span></label>
+                        <input required type="text" placeholder="จังหวัด" value={shippingForm.province} onChange={e => setShipping("province", e.target.value)} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>รหัสไปรษณีย์ <span className="text-red-400">*</span></label>
+                        <input required type="text" placeholder="10000" value={shippingForm.zipCode} onChange={e => setShipping("zipCode", e.target.value)} className={inputClass} maxLength={5} />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Save billing toggle */}

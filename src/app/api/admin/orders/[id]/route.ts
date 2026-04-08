@@ -4,13 +4,14 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
 import Order from "@/models/Order";
 import User from "@/models/User";
+import AdminLog from "@/models/AdminLog";
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return null;
+  if (!(session?.user as any)?.id) return null;
   await dbConnect();
-  const user = await User.findById(session.user.id).lean();
-  return user?.role === "admin" ? user : null;
+  const user = await User.findById((session?.user as any)?.id).lean();
+  return (user as any)?.role === "admin" ? user : null;
 }
 
 export async function PATCH(
@@ -39,6 +40,18 @@ export async function PATCH(
   if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
+
+  const actType = update.status ? `UPDATE_ORDER_STATUS` : `UPDATE_ORDER_TRACKING`;
+  let details = `Admin updated order`;
+  if (update.status) details += ` status to ${update.status}`;
+  if (update.trackingNumber) details += ` tracking to ${update.trackingNumber}`;
+
+  await AdminLog.create({
+    adminId: (admin as any)._id,
+    action: actType,
+    details: details.trim(),
+    targetId: order._id.toString()
+  });
 
   return NextResponse.json({ success: true, order });
 }

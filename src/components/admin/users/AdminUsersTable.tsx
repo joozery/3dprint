@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Search, RefreshCw, Mail } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Search, RefreshCw, Mail, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface User {
   _id: string;
@@ -64,6 +65,7 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
   const [isPending, startTransition] = useTransition();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [verifyModal, setVerifyModal] = useState<{isOpen: boolean, userId: string | null}>({isOpen: false, userId: null});
 
   const setPage = (p: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -80,6 +82,33 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
         body: JSON.stringify({ role: currentRole === "admin" ? "user" : "admin" }),
       });
       router.refresh();
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const toggleVerify = (userId: string) => {
+    setVerifyModal({ isOpen: true, userId });
+  };
+
+  const confirmVerifyUser = async () => {
+    const userId = verifyModal.userId;
+    if (!userId) return;
+
+    setTogglingId(userId + "_verify");
+    setVerifyModal({ isOpen: false, userId: null });
+    
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify" }),
+      });
+      if (!res.ok) throw new Error("ไม่สามารถยืนยันผู้ใช้ได้");
+      toast.success("ยืนยันตัวตนสำเร็จ");
+      router.refresh();
+    } catch (e: any) {
+      toast.error(e.message || "เกิดข้อผิดพลาด");
     } finally {
       setTogglingId(null);
     }
@@ -162,14 +191,26 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
 
                       {/* Verified */}
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${
-                          user.isVerified
-                            ? "text-emerald-600 bg-emerald-50 border-emerald-200"
-                            : "text-slate-400 bg-slate-50 border-slate-200"
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${user.isVerified ? "bg-emerald-400 animate-pulse" : "bg-slate-300"}`} />
-                          {user.isVerified ? "ยืนยันแล้ว" : "รอยืนยัน"}
-                        </span>
+                        {user.isVerified ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border text-emerald-600 bg-emerald-50 border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            ยืนยันแล้ว
+                          </span>
+                        ) : (
+                          <button 
+                            onClick={() => toggleVerify(user._id)}
+                            disabled={togglingId === user._id + "_verify"}
+                            className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 text-slate-400 bg-slate-50 border-slate-200"
+                            title="คลิกเพื่อยืนยันตัวตน (Manual Verify)"
+                          >
+                            {togglingId === user._id + "_verify" ? (
+                              <RefreshCw size={10} className="animate-spin text-emerald-500" />
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-emerald-400" />
+                            )}
+                            รอยืนยัน
+                          </button>
+                        )}
                       </td>
 
                       {/* Role */}
@@ -242,6 +283,37 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
           </div>
         )}
       </div>
+
+      {/* Modern Verify Confirm Modal */}
+      {verifyModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setVerifyModal({isOpen: false, userId: null})} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="absolute top-4 right-4">
+              <button onClick={() => setVerifyModal({isOpen: false, userId: null})} className="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-full transition-colors">
+                 <X size={16} />
+              </button>
+            </div>
+            <div className="p-6 text-center space-y-4">
+               <div className="mx-auto w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center border-4 border-white shadow-sm ring-1 ring-emerald-100">
+                 <CheckCircle2 size={32} className="text-emerald-500" />
+               </div>
+               <div className="space-y-1">
+                 <h3 className="text-lg font-bold text-slate-800">ยืนยันการตั้งค่าผู้ใช้</h3>
+                 <p className="text-sm text-slate-500">ต้องการ<span className="font-semibold text-emerald-600 px-1">อนุมัติและยืนยันตัวตน</span>ให้ผู้ใช้คนนี้เข้าสู่ระบบแบบแมนนวลใช่หรือไม่?</p>
+               </div>
+               <div className="pt-4 flex items-center gap-3">
+                 <button onClick={() => setVerifyModal({isOpen: false, userId: null})} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors">
+                    ยกเลิก
+                 </button>
+                 <button onClick={confirmVerifyUser} className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20">
+                    ยืนยันตัวตน
+                 </button>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

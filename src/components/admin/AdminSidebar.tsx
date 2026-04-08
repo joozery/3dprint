@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  ClipboardList,
   X
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -28,6 +29,7 @@ const menuItems = [
   { label: "คลังไฟล์โมเดล", icon: Database, href: "/admin/models", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },
+  { label: "ประวัติระบบ", icon: ClipboardList, href: "/admin/logs", badge: null },
   { label: "ตั้งค่าระบบ", icon: Settings, href: "/admin/settings", badge: null },
 ];
 
