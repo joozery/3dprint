@@ -25,7 +25,7 @@ type Slide = {
     cta2: { label: string; href: string };
 };
 
-const slides: Slide[] = [
+const defaultSlides: Slide[] = [
     {
         id: 1,
         type: "image" as const,
@@ -79,12 +79,26 @@ const slides: Slide[] = [
 const AUTOPLAY_INTERVAL = 5000;
 
 export default function HeroSection() {
+    const [slides, setSlides] = useState<any[]>(defaultSlides);
     const [current, setCurrent] = useState(0);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [progress, setProgress] = useState(0);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+    useEffect(() => {
+        fetch("/api/public/banners")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.banners && data.banners.length > 0) {
+                    // Map _id to id to avoid breaking old component keys if needed
+                    const fetchedSlides = data.banners.map((b: any) => ({ ...b, id: b._id }));
+                    setSlides(fetchedSlides);
+                }
+            })
+            .catch(console.error);
+    }, []);
 
     const goTo = useCallback((index: number) => {
         if (isTransitioning) return;

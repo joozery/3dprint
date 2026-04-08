@@ -1,9 +1,9 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import { Bell, LogOut, ChevronDown, Search, Settings, User, Globe } from "lucide-react";
+import { Bell, LogOut, ChevronDown, Search, Settings, User, Globe, Activity } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface AdminTopbarProps {
@@ -16,6 +16,18 @@ interface AdminTopbarProps {
 
 export default function AdminTopbar({ user }: AdminTopbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/logs?limit=3")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.logs) {
+          setRecentLogs(data.logs);
+        }
+      });
+  }, []);
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-50 sticky top-0 shadow-sm transition-all duration-300">
@@ -44,15 +56,67 @@ export default function AdminTopbar({ user }: AdminTopbarProps) {
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-all">
-           <Bell size={18} />
-           <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full border-2 border-white" />
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => { setNotifOpen(!notifOpen); setMenuOpen(false); }}
+            className={`p-2 rounded-lg transition-all relative ${notifOpen ? "text-blue-600 bg-blue-50" : "text-slate-400 hover:text-blue-600 hover:bg-slate-50"}`}
+          >
+             <Bell size={18} />
+             {recentLogs.length > 0 && (
+               <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white border-2 border-white shadow-sm">
+                 {recentLogs.length > 9 ? '9+' : recentLogs.length}
+               </span>
+             )}
+          </button>
+
+          {notifOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+              <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                 <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                    <p className="text-slate-900 text-sm font-bold">แจ้งเตือนล่าสุด</p>
+                    <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold">จากระบบ</span>
+                 </div>
+                 <div className="max-h-64 overflow-y-auto">
+                    {recentLogs.length > 0 ? (
+                      <div className="divide-y divide-slate-50">
+                        {recentLogs.map((log: any) => (
+                          <div key={log._id} className="p-3 hover:bg-slate-50 transition-colors">
+                             <div className="flex gap-3">
+                                <div className="mt-0.5 bg-blue-50 p-1.5 rounded-full shrink-0 h-fit text-blue-600">
+                                   <Activity size={12} />
+                                </div>
+                                <div>
+                                   <p className="text-xs text-slate-700 font-medium line-clamp-2">{log.details}</p>
+                                   <p className="text-[10px] text-slate-400 mt-1">{new Date(log.createdAt).toLocaleString("th-TH")}</p>
+                                </div>
+                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-8 text-center">
+                        <Bell size={24} className="text-slate-200 mx-auto mb-2" />
+                        <p className="text-slate-500 text-xs">ไม่มีการแจ้งเตือนใหม่</p>
+                      </div>
+                    )}
+                 </div>
+                 <Link 
+                   href="/admin/logs"
+                   onClick={() => setNotifOpen(false)}
+                   className="block w-full text-center px-4 py-2.5 text-blue-600 hover:bg-blue-50 text-[11px] font-bold uppercase tracking-widest border-t border-slate-50 transition-all"
+                 >
+                   ดูประวัติระบบทั้งหมด (System Logs)
+                 </Link>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* User Profile */}
         <div className="relative">
            <button
-             onClick={() => setMenuOpen(!menuOpen)}
+             onClick={() => { setMenuOpen(!menuOpen); setNotifOpen(false); }}
              className={`flex items-center gap-3 pl-1 pr-3 py-1 rounded-full bg-white border transition-all ${
                menuOpen ? "border-blue-500 bg-slate-50" : "border-slate-200"
              }`}
