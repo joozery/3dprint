@@ -17,6 +17,8 @@ import {
   PanelLeftOpen,
   Search,
   ClipboardList,
+  Box,
+  Image as ImageIcon,
   X
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -27,6 +29,8 @@ const menuItems = [
   { label: "ใบเสนอราคาใหม่", icon: FileText, href: "/admin/quotes", badge: "3", badgeColor: "bg-blue-600" },
   { label: "รายการสั่งซื้อ", icon: ShoppingBag, href: "/admin/orders", badge: "New", badgeColor: "bg-emerald-500" },
   { label: "คลังไฟล์โมเดล", icon: Database, href: "/admin/models", badge: null },
+  { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
+  { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },
   { label: "ประวัติระบบ", icon: ClipboardList, href: "/admin/logs", badge: null },

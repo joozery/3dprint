@@ -18,20 +18,6 @@ const technologies = [
     { id: "bj", label: "BJ(Metal)" },
 ];
 
-const materials = [
-    { id: "9600", label: "เรซิ่น 9600", badge: "ยอดนิยม" },
-    { id: "black", label: "เรซิ่นสีดำ" },
-    { id: "imagine", label: "Imagine Black" },
-    { id: "8228", label: "เรซิ่น 8228" },
-    { id: "ledo6060", label: "เรซิ่น LEDO 6060" },
-    { id: "8001", label: "เรซิ่น 8001" },
-    { id: "cby", label: "เรซิ่น CBY" },
-    { id: "x", label: "เรซิ่น X" },
-    { id: "jlc_black", label: "JLC Black Resin" },
-    { id: "grey", label: "เรซิ่นสีเทา" },
-    { id: "temp", label: "เรซิ่นทนร้อน JLC", badge: "ใหม่" },
-];
-
 interface QuoteFormProps {
     quotes: any[];
     onAdd: (quote: any) => void;
@@ -40,11 +26,12 @@ interface QuoteFormProps {
 }
 
 // ─── Individual Quote Card ───────────────────────────────────────────────────
-function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
+function QuoteCard({ quote, onUpdate, onRemove, rawFile, materials }: {
     quote: any;
     onUpdate: (q: any) => void;
     onRemove: (id: string) => void;
     rawFile?: File | null;
+    materials: any[];
 }) {
     const [selectedTech, setSelectedTech] = useState(quote.technology || "sla");
     const [selectedMaterial, setSelectedMaterial] = useState(quote.material || "9600");
@@ -115,7 +102,7 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
                         </div>
                         <div>
                             <p className="text-sm font-bold text-slate-900">{quote.originalName}</p>
-                            <p className="text-xs text-slate-500">{materials.find(m => m.id === selectedMaterial)?.label} · {color}</p>
+                            <p className="text-xs text-slate-500">{materials.find(m => m.systemId === selectedMaterial)?.name || selectedMaterial} · {color}</p>
                             <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">{selectedTech}</p>
                         </div>
                     </div>
@@ -158,7 +145,7 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <h3 className="text-sm font-bold text-slate-900 truncate" title={quote.originalName}>{quote.originalName}</h3>
                                     <Badge className="bg-blue-50 text-blue-600 border-blue-100 text-[10px] py-0 px-1.5 h-4 hover:bg-blue-50">
-                                        {selectedTech.toUpperCase()} | {materials.find(m => m.id === selectedMaterial)?.label}
+                                        {selectedTech.toUpperCase()} | {materials.find(m => m.systemId === selectedMaterial)?.name || selectedMaterial}
                                     </Badge>
                                 </div>
                                 <p className="text-xs text-slate-500">
@@ -205,18 +192,18 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
                             <div>
                                 <label className="text-xs font-bold text-slate-500 block mb-3 uppercase tracking-wider">วัสดุ</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {materials.map((mat) => (
+                                    {materials.filter(m => m.technology === selectedTech).map((mat) => (
                                         <button
-                                            key={mat.id}
-                                            onClick={() => handleMaterialChange(mat.id)}
+                                            key={mat.systemId}
+                                            onClick={() => handleMaterialChange(mat.systemId)}
                                             className={cn(
                                                 "relative px-3 py-2 rounded-md text-sm transition-all border text-left flex items-center justify-between shadow-sm",
-                                                selectedMaterial === mat.id
+                                                selectedMaterial === mat.systemId
                                                     ? "border-blue-600 text-blue-600 bg-blue-50 font-bold"
                                                     : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
                                             )}
                                         >
-                                            <span>{mat.label}</span>
+                                            <span className="truncate mr-2">{mat.name}</span>
                                             {mat.badge && (
                                                 <span className={cn(
                                                     "text-[9px] px-1 rounded font-bold uppercase",
@@ -227,6 +214,11 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile }: {
                                             )}
                                         </button>
                                     ))}
+                                    {materials.filter(m => m.technology === selectedTech).length === 0 && (
+                                        <div className="col-span-4 p-3 text-xs text-slate-400 bg-slate-50 rounded-md border text-center">
+                                            ไม่มีฟิลเตอร์วัสดุสำหรับเทคโนโลยีนี้
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -283,6 +275,19 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
     // Keep track of raw files per quoteId for instant 3D preview
     const [rawFiles, setRawFiles] = useState<Record<string, File>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [dbMaterials, setDbMaterials] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Fetch materials
+        fetch("/api/admin/materials")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setDbMaterials(data.materials.filter((m: any) => m.isActive));
+                }
+            })
+            .catch(err => console.error("Failed to load materials", err));
+    }, []);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -420,6 +425,7 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
                     onUpdate={onUpdate}
                     onRemove={onRemove}
                     rawFile={rawFiles[q._id]}
+                    materials={dbMaterials}
                 />
             ))}
 

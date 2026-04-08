@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
+import Material from "@/models/Material";
 
 export async function GET(
     req: NextRequest,
@@ -36,16 +37,25 @@ export async function PATCH(
             return NextResponse.json({ error: "Quote not found" }, { status: 404 });
         }
 
-        // ราคาพื้นฐาน
-        let basePricePerUnit = 50;
+        // Calc dynamic price
         const volume = quote.volumeCm3 || 0;
+        let basePricePerUnit = 50;
+        let setupFee = 0;
+        let weight = quote.weightGrams || 0;
 
-        // Logic คำนวณราคาคร่าวๆ (Mock)
-        if (technology === "fdm") basePricePerUnit = 2 + (volume * 1.5);
-        else if (technology === "sla") basePricePerUnit = 10 + (volume * 5.0);
-        else basePricePerUnit = 100 + (volume * 15.0);
+        const matConfig = await Material.findOne({ systemId: material || quote.material });
+        if (matConfig) {
+            weight = volume * (matConfig.density || 1.15);
+            basePricePerUnit = weight * matConfig.pricePerGram;
+            setupFee = matConfig.setupFee || 0;
+        } else {
+            // fallback
+            if (technology === "fdm") basePricePerUnit = 2 + (volume * 1.5);
+            else if (technology === "sla") basePricePerUnit = 10 + (volume * 5.0);
+            else basePricePerUnit = 100 + (volume * 15.0);
+        }
 
-        const pricePerUnit = basePricePerUnit;
+        const pricePerUnit = basePricePerUnit + setupFee;
         const finalQuantity = quantity || quote.quantity || 1;
         const totalPrice = pricePerUnit * finalQuantity;
 
@@ -56,8 +66,10 @@ export async function PATCH(
                 material: material || quote.material,
                 color: color || quote.color,
                 quantity: finalQuantity,
+                weightGrams: weight,
                 "priceDetail.pricePerUnit": pricePerUnit,
                 "priceDetail.totalPrice": totalPrice,
+                "priceDetail.setupFee": setupFee,
             },
             { new: true }
         );

@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
+import Material from "@/models/Material";
 import { analyzeFile } from "@/lib/slicer";
 import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -85,10 +86,32 @@ export async function POST(req: NextRequest) {
             console.warn("Failed to delete local temp file:", err);
         }
 
-        // Initial price calculation (placeholder logic)
-        const basePrice = 50; // ราคาตั้งต้น
-        const pricePerCm3 = 5; // บาทต่อ cm3
-        const totalPrice = basePrice + (analysis.volumeCm3 * pricePerCm3);
+        // Dynamic price calculation
+        const defaultMat = await Material.findOne({ isActive: true }).sort({ createdAt: 1 });
+        let selTech = "sla";
+        let selMat = "9600";
+        let selColor = "ขาวด้าน (Matte White)";
+        let unitPrice = 0;
+        let setupPrice = 0;
+
+        if (defaultMat) {
+            selTech = defaultMat.technology;
+            selMat = defaultMat.systemId;
+            selColor = defaultMat.color || "ขาวด้าน (Matte White)";
+            
+            // Calc unit price based on default material config (Density is applied on the slicer side for Grams. Here we use WeightGrams directly if possible)
+            // Weight = Volume * Density (or we use analysis.weightGrams directly but ideally update it based on material density)
+            const weight = analysis.volumeCm3 * (defaultMat.density || 1.15);
+            unitPrice = weight * defaultMat.pricePerGram;
+            setupPrice = defaultMat.setupFee || 0;
+        } else {
+            // fallback
+            const basePrice = 50; 
+            const pricePerCm3 = 5; 
+            unitPrice = basePrice + (analysis.volumeCm3 * pricePerCm3);
+        }
+
+        const totalPrice = unitPrice + setupPrice;
 
         // ดึง userId อย่างรัดกุม (กรณีคุกกี้เก่าไม่มี id ฝังอยู่)
         let userId = (session?.user as any)?.id;
@@ -105,18 +128,18 @@ export async function POST(req: NextRequest) {
             fileUrl: r2FileUrl || null,
             cloudinaryId: r2Key || null,
             isStoredInCloud: !!r2FileUrl,
-            technology: "sla",
-            material: "9600",
-            color: "ขาวด้าน (Matte White)",
+            technology: selTech,
+            material: selMat,
+            color: selColor,
             quantity: 1,
             volumeCm3: analysis.volumeCm3,
-            weightGrams: analysis.weightGrams,
+            weightGrams: defaultMat ? (analysis.volumeCm3 * (defaultMat.density || 1.15)) : analysis.weightGrams,
             printTime: analysis.printTime,
             dimensions: analysis.dimensions,
             priceDetail: {
                 pricePerUnit: totalPrice,
                 totalPrice: totalPrice,
-                setupFee: basePrice,
+                setupFee: setupPrice,
             }
         });
 
