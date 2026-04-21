@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Noto_Sans_Thai } from "next/font/google";
+import { Sarabun } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
-const notoSansThai = Noto_Sans_Thai({
-  variable: "--font-noto-sans-thai",
+const sarabun = Sarabun({
+  variable: "--font-sarabun",
   subsets: ["thai", "latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th" suppressHydrationWarning>
-      <body className={`${notoSansThai.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${sarabun.variable} font-sans antialiased`} suppressHydrationWarning>
         <AuthProvider>
           <TooltipProvider>
             {children}

@@ -144,7 +144,7 @@ export default function AdminOrdersTable({ orders, total, page, totalPages, curr
                     <tr key={order._id} className="hover:bg-blue-50/30 transition-all group">
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-blue-600 font-black text-[13px] tracking-tight">#{order.orderNumber}</span>
+                          <Link href={`/admin/orders/${order._id}`} className="text-blue-600 font-black text-[13px] tracking-tight hover:underline">#{order.orderNumber}</Link>
                           <span className="text-slate-400 text-[10px] font-bold">{new Date(order.createdAt).toLocaleDateString("th-TH")}</span>
                         </div>
                         {order.quotes && order.quotes.length > 0 && (

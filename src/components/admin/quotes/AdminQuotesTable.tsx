@@ -1,11 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, RefreshCw, ExternalLink, FileText, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, ExternalLink, FileText, SlidersHorizontal, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Quote {
   _id: string;
+  quoteNumber?: string;
   originalName: string;
   technology: string;
   material: string;
@@ -15,6 +17,8 @@ interface Quote {
   weightGrams: number;
   priceDetail: { pricePerUnit: number; totalPrice: number };
   status: string;
+  internalStatus?: string;
+  internalComments?: string;
   userId?: { name?: string; email?: string } | null;
   fileUrl?: string;
   createdAt: string;
@@ -46,6 +50,7 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -58,6 +63,24 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", p.toString());
     startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/admin/quotes/${id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("เปลี่ยนสถานะไม่สำเร็จ");
+      toast.success("อัปเดตสถานะหลักของออเดอร์เรียบร้อยแล้ว");
+      router.refresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   return (
@@ -104,12 +127,13 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/40">
-                  <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">ชื่อไฟล์ / วันที่</th>
+                  <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">เลขที่ / ชื่อไฟล์</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">ลูกค้า</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">เทคโนโลยี</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">ปริมาณ / น้ำหนัก</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">ราคารวม</th>
-                  <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">สถานะ</th>
+                  <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">สถานะออเดอร์</th>
+                  <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">การติดต่อ (Internal)</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">จัดการ</th>
                 </tr>
               </thead>
@@ -122,9 +146,11 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                   };
                   return (
                     <tr key={q._id} className="hover:bg-slate-50/60 transition-colors group">
-                      {/* File / date */}
                       <td className="px-6 py-4">
-                        <p className="text-slate-800 font-semibold text-sm truncate max-w-[200px] group-hover:text-blue-600 transition-colors">
+                         <a href={`/admin/quotes/${q._id}`} className="inline-block text-blue-600 font-black text-[12px] tracking-tight hover:underline mb-0.5">
+                           {q.quoteNumber || `QT-${q._id.toString().slice(-6).toUpperCase()}`}
+                         </a>
+                        <p className={`text-slate-800 ${q.quoteNumber ? 'font-medium text-xs' : 'font-semibold text-sm'} truncate max-w-[200px] group-hover:text-blue-600 transition-colors`}>
                           {q.originalName || "ไม่มีชื่อไฟล์"}
                         </p>
                         <p className="text-slate-400 text-[11px] mt-0.5">
@@ -160,10 +186,40 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
 
                       {/* Status */}
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border ${status.color}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-                          {status.label}
-                        </span>
+                        <div className="relative inline-block">
+                          {updatingId === q._id && (
+                             <div className="absolute -left-5 top-1.5">
+                               <Loader2 size={12} className="animate-spin text-blue-500" />
+                             </div>
+                          )}
+                          <select 
+                            value={q.status}
+                            disabled={updatingId === q._id}
+                            onChange={(e) => handleStatusChange(q._id, e.target.value)}
+                            className={`appearance-none outline-none cursor-pointer inline-flex items-center gap-1.5 pl-3 pr-6 py-1 rounded-full text-[10px] font-semibold border ${status.color} disabled:opacity-50 transition-colors`}
+                          >
+                             <option value="pending" className="text-amber-700 bg-white">รอดำเนินการ</option>
+                             <option value="ordered" className="text-emerald-700 bg-white">สั่งซื้อแล้ว</option>
+                             <option value="cancelled" className="text-red-600 bg-white">ยกเลิก</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                             <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Internal Tracking */}
+                      <td className="px-6 py-4 text-center">
+                        {q.internalStatus === "contacted" ? (
+                           <span className="inline-block px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-md border border-emerald-100 mb-1">ติดต่อแล้ว</span>
+                        ) : (
+                           <span className="inline-block px-2.5 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-md border border-amber-100 mb-1">ยังไม่ติดต่อ</span>
+                        )}
+                        {q.internalComments && (
+                           <div className="text-[10px] text-slate-400 truncate max-w-[120px] mx-auto italic" title={q.internalComments}>
+                             "{q.internalComments}"
+                           </div>
+                        )}
                       </td>
 
                       {/* Actions */}

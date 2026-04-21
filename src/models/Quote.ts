@@ -6,6 +6,10 @@ const QuoteSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
         },
+        quoteNumber: {
+            type: String,
+            unique: true,
+        },
         fileName: {
             type: String,
             required: true,
@@ -66,6 +70,15 @@ const QuoteSchema = new mongoose.Schema(
             enum: ["pending", "ordered", "cancelled"],
             default: "pending",
         },
+        internalStatus: {
+            type: String,
+            enum: ["pending", "contacted"],
+            default: "pending",
+        },
+        internalComments: {
+            type: String,
+            default: "",
+        },
         billing: {
             type: {
                 type: String,
@@ -95,6 +108,18 @@ const QuoteSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+// Auto-generate quoteNumber
+QuoteSchema.pre("validate", function (next: any) {
+    if (!this.quoteNumber) {
+        const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
+        const randomStr = Math.floor(1000 + Math.random() * 9000); 
+        this.quoteNumber = `QT-${dateStr}-${randomStr}`;
+    }
+    if (typeof next === 'function') {
+        next();
+    }
+});
 
 if (mongoose.models.Quote) {
     delete mongoose.models.Quote;

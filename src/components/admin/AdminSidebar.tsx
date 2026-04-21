@@ -30,6 +30,7 @@ const menuItems = [
   { label: "รายการสั่งซื้อ", icon: ShoppingBag, href: "/admin/orders", badge: "New", badgeColor: "bg-emerald-500" },
   { label: "คลังไฟล์โมเดล", icon: Database, href: "/admin/models", badge: null },
   { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
+  { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
   { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },

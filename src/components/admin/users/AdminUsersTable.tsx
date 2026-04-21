@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Search, RefreshCw, Mail, AlertCircle, CheckCircle2, X } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Search, RefreshCw, Mail, AlertCircle, CheckCircle2, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -231,23 +232,33 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
                         </span>
                       </td>
 
-                      {/* Toggle role */}
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => toggleRole(user._id, user.role)}
-                          disabled={togglingId === user._id}
-                          title={user.role === "admin" ? "ลด Role เป็น Member" : "เลื่อนขึ้นเป็น Admin"}
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-40 border ${
-                            user.role === "admin"
-                              ? "bg-slate-900 text-white border-slate-900 hover:bg-red-600 hover:border-red-600"
-                              : "bg-white text-slate-400 border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600"
-                          }`}
-                        >
-                          {togglingId === user._id
-                            ? <RefreshCw size={13} className="animate-spin" />
-                            : user.role === "admin" ? <ShieldCheck size={13} /> : <ShieldOff size={13} />
-                          }
-                        </button>
+                      {/* Actions */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link
+                            href={`/admin/users/${user._id}`}
+                            title="ดูข้อมูลส่วนบุคคลและสถิติ"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white text-slate-400 border border-slate-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-300"
+                          >
+                            <ExternalLink size={13} />
+                          </Link>
+                          
+                          <button
+                            onClick={() => toggleRole(user._id, user.role)}
+                            disabled={togglingId === user._id}
+                            title={user.role === "admin" ? "ลด Role เป็น Member" : "เลื่อนขึ้นเป็น Admin"}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-40 border ${
+                              user.role === "admin"
+                                ? "bg-slate-900 text-white border-slate-900 hover:bg-red-600 hover:border-red-600"
+                                : "bg-white text-slate-400 border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                            }`}
+                          >
+                            {togglingId === user._id
+                              ? <RefreshCw size={13} className="animate-spin" />
+                              : user.role === "admin" ? <ShieldCheck size={13} /> : <ShieldOff size={13} />
+                            }
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

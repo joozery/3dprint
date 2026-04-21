@@ -76,7 +76,7 @@ export default async function QuoteViewPage({
                 </div>
                 <div className="text-right">
                     <p className="text-slate-500 text-[10px] font-semibold mb-0.5 uppercase tracking-widest">{isEng ? 'Document No.' : 'เลขที่เอกสาร / No.'}</p>
-                    <p className="text-base font-bold text-slate-800 leading-none">QT-{quote._id.toString().slice(-6).toUpperCase()}</p>
+                    <p className="text-base font-bold text-slate-800 leading-none">{quote.quoteNumber || `QT-${quote._id.toString().slice(-6).toUpperCase()}`}</p>
                     
                     <p className="text-slate-500 text-[10px] font-semibold mt-3 mb-0.5 uppercase tracking-widest">{isEng ? 'Date' : 'วันที่ / Date'}</p>
                     <p className="text-xs font-bold text-slate-800 leading-none">

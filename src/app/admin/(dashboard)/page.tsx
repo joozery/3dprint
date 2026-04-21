@@ -10,12 +10,25 @@ import AdminQuoteStats from "@/components/admin/dashboard/AdminQuoteStats";
 async function getDashboardData() {
   await dbConnect();
 
+  const now = new Date();
+  
+  // This Month range
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  
+  // This Year range
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+
   const [
     totalOrders,
     totalUsers,
     totalQuotes,
-    pendingOrders,
-    revenueData,
+    pendingProcessOrdersCount,
+    printingOrdersCount,
+    pendingQuotesCount,
+    revenueThisMonthAgg,
+    revenueThisYearAgg,
     recentOrders,
     recentUsers,
     ordersByStatus,
@@ -23,9 +36,15 @@ async function getDashboardData() {
     Order.countDocuments(),
     User.countDocuments({ role: "user" }),
     Quote.countDocuments(),
-    Order.countDocuments({ status: "pending_payment" }),
+    Order.countDocuments({ status: { $in: ["pending_payment", "processing"] } }),
+    Order.countDocuments({ status: "printing" }),
+    Quote.countDocuments({ internalStatus: "pending" }),
     Order.aggregate([
-      { $match: { "paymentDetails.status": "paid" } },
+      { $match: { "paymentDetails.status": "paid", createdAt: { $gte: startOfMonth, $lte: endOfMonth } } },
+      { $group: { _id: null, total: { $sum: "$pricing.totalAmount" } } },
+    ]),
+    Order.aggregate([
+      { $match: { "paymentDetails.status": "paid", createdAt: { $gte: startOfYear, $lte: endOfYear } } },
       { $group: { _id: null, total: { $sum: "$pricing.totalAmount" } } },
     ]),
     Order.find()
@@ -42,14 +61,18 @@ async function getDashboardData() {
     ]),
   ]);
 
-  const totalRevenue = revenueData[0]?.total || 0;
+  const totalRevenueThisMonth = revenueThisMonthAgg[0]?.total || 0;
+  const totalRevenueThisYear = revenueThisYearAgg[0]?.total || 0;
 
   return {
     totalOrders,
     totalUsers,
     totalQuotes,
-    pendingOrders,
-    totalRevenue,
+    pendingProcessOrdersCount,
+    printingOrdersCount,
+    pendingQuotesCount,
+    totalRevenueThisMonth,
+    totalRevenueThisYear,
     recentOrders: JSON.parse(JSON.stringify(recentOrders)),
     recentUsers: JSON.parse(JSON.stringify(recentUsers)),
     ordersByStatus: JSON.parse(JSON.stringify(ordersByStatus)),
@@ -64,11 +87,11 @@ export default async function AdminDashboardPage() {
 
       {/* Stats row */}
       <AdminDashboardStats
-        totalOrders={data.totalOrders}
-        totalUsers={data.totalUsers}
-        totalQuotes={data.totalQuotes}
-        pendingOrders={data.pendingOrders}
-        totalRevenue={data.totalRevenue}
+        totalRevenueThisMonth={data.totalRevenueThisMonth}
+        totalRevenueThisYear={data.totalRevenueThisYear}
+        pendingProcessOrdersCount={data.pendingProcessOrdersCount}
+        pendingQuotesCount={data.pendingQuotesCount}
+        printingOrdersCount={data.printingOrdersCount}
       />
 
       {/* Main grid */}
