@@ -77,9 +77,9 @@ export default function AdminRecentOrders({ orders }: { orders: Order[] }) {
                   <tr key={order._id} className="hover:bg-slate-50/60 transition-colors group">
                     {/* Order number */}
                     <td className="px-6 py-4">
-                      <p className="text-slate-800 font-semibold text-sm group-hover:text-blue-600 transition-colors">
+                      <Link href={`/admin/orders/${order._id}`} className="text-slate-800 font-semibold text-sm group-hover:text-blue-600 transition-colors block mb-0.5">
                         #{order.orderNumber}
-                      </p>
+                      </Link>
                       <p className="text-slate-400 text-[11px] mt-0.5">
                         {new Date(order.createdAt).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
                       </p>

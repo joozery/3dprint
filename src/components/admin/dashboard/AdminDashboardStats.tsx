@@ -5,39 +5,47 @@ import {
   FileText,
   Clock,
   DollarSign,
+  Printer,
+  CalendarDays,
 } from "lucide-react";
 
 interface AdminDashboardStatsProps {
-  totalOrders: number;
-  totalUsers: number;
-  totalQuotes: number;
-  pendingOrders: number;
-  totalRevenue: number;
+  totalRevenueThisMonth: number;
+  totalRevenueThisYear: number;
+  pendingProcessOrdersCount: number;
+  pendingQuotesCount: number;
+  printingOrdersCount: number;
 }
 
 const statCards = (data: AdminDashboardStatsProps) => [
   {
-    label: "รายได้รวมระบบ",
-    sublabel: "Total Revenue",
-    value: `฿${data.totalRevenue.toLocaleString("th-TH")}`,
+    label: "รายได้เดือนนี้",
+    sublabel: "This Month",
+    value: `฿${(data.totalRevenueThisMonth || 0).toLocaleString("th-TH")}`,
     icon: DollarSign,
   },
   {
-    label: "คำสั่งซื้อทั้งหมด",
-    sublabel: "Total Orders",
-    value: data.totalOrders.toLocaleString(),
-    icon: ShoppingCart,
+    label: "รายได้ปีนี้",
+    sublabel: "This Year",
+    value: `฿${(data.totalRevenueThisYear || 0).toLocaleString("th-TH")}`,
+    icon: CalendarDays,
   },
   {
-    label: "รอดำเนินการ",
-    sublabel: "Pending",
-    value: data.pendingOrders.toLocaleString(),
+    label: "ออเดอร์ใหม่รอดำเนินการ",
+    sublabel: "Pending Orders",
+    value: (data.pendingProcessOrdersCount || 0).toLocaleString(),
     icon: Clock,
   },
   {
-    label: "ใบเสนอราคา",
-    sublabel: "Quotes",
-    value: data.totalQuotes.toLocaleString(),
+    label: "งานกำลังพิมพ์",
+    sublabel: "Active Prints",
+    value: (data.printingOrdersCount || 0).toLocaleString(),
+    icon: Printer,
+  },
+  {
+    label: "ใบเสนอราคารอทีมติดต่อ",
+    sublabel: "New Quotes",
+    value: (data.pendingQuotesCount || 0).toLocaleString(),
     icon: FileText,
   },
 ];

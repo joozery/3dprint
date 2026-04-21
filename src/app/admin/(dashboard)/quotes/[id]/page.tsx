@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, MapPin, Phone, Mail, Building2, User } from "lucide-react";
 import { PrintButton } from "@/components/quote/PrintButton";
+import QuoteInternalTracker from "@/components/admin/quotes/QuoteInternalTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,13 @@ export default async function AdminQuoteViewPage({ params }: { params: Promise<{
             </div>
         </div>
 
+        {/* ── Internal Tracker ── */}
+        <QuoteInternalTracker 
+          id={quote._id} 
+          initialStatus={quote.internalStatus} 
+          initialComment={quote.internalComments} 
+        />
+
         {/* ── Document A4 Container ── */}
         <div className="bg-white border border-slate-200 shadow-lg print:shadow-none print:border-none p-8 sm:p-12 print:p-6 pb-12 print:pb-6 max-w-[850px] w-full mx-auto">
             
@@ -58,7 +66,7 @@ export default async function AdminQuoteViewPage({ params }: { params: Promise<{
                 </div>
                 <div className="text-right">
                     <p className="text-slate-500 text-[10px] font-semibold mb-0.5 uppercase tracking-widest">เลขที่เอกสาร / No.</p>
-                    <p className="text-base font-bold text-slate-800 leading-none">QT-{quote._id.toString().slice(-6).toUpperCase()}</p>
+                    <p className="text-base font-bold text-slate-800 leading-none">{quote.quoteNumber || `QT-${quote._id.toString().slice(-6).toUpperCase()}`}</p>
                     
                     <p className="text-slate-500 text-[10px] font-semibold mt-3 mb-0.5 uppercase tracking-widest">วันที่ / Date</p>
                     <p className="text-xs font-bold text-slate-800 leading-none">

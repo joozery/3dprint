@@ -2,30 +2,31 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
-import MaterialConfig from "@/models/MaterialConfig";
+import Quote from "@/models/Quote";
 
-export async function GET() {
-  try {
-    await dbConnect();
-    const materials = await MaterialConfig.find().sort({ technology: 1, name: 1 });
-    return NextResponse.json(materials);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
+    const { id } = await params;
     const body = await req.json();
-    
-    const material = await MaterialConfig.create(body);
-    return NextResponse.json(material, { status: 201 });
+
+    await dbConnect();
+
+    const updated = await Quote.findByIdAndUpdate(
+      id,
+      { status: body.status },
+      { new: true }
+    );
+
+    if (!updated) {
+      return NextResponse.json({ error: "Quote not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, updated });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
