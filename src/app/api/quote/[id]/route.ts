@@ -5,11 +5,12 @@ import Material from "@/models/Material";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
-        const quote = await Quote.findById(params.id);
+        const { id } = await params;
+        const quote = await Quote.findById(id);
 
         if (!quote) {
             return NextResponse.json({ error: "Quote not found" }, { status: 404 });
@@ -23,14 +24,15 @@ export async function GET(
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
         const body = await req.json();
         const { technology, material, color, quantity } = body;
+        const { id } = await params;
 
-        const quote = await Quote.findById(params.id);
+        const quote = await Quote.findById(id);
         if (!quote) {
             return NextResponse.json({ error: "Quote not found" }, { status: 404 });
         }
@@ -58,7 +60,7 @@ export async function PATCH(
         const totalPrice = pricePerUnit * finalQuantity;
 
         const updatedQuote = await Quote.findByIdAndUpdate(
-            params.id,
+            id,
             {
                 technology: technology || quote.technology,
                 material: material || quote.material,
@@ -80,11 +82,12 @@ export async function PATCH(
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await dbConnect();
-        await Quote.findByIdAndDelete(params.id);
+        const { id } = await params;
+        await Quote.findByIdAndDelete(id);
         return NextResponse.json({ success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

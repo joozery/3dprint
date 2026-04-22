@@ -169,7 +169,8 @@ function QuoteRequestForm() {
         <SuccessModal 
           onClose={() => {
             const idArray = ids.split(",").filter(Boolean);
-            if (idArray.length === 1) {
+            if (idArray.length > 0) {
+              // พาเข้าไปดูบิล/ใบแรกเลย ตามที่ผู้ใช้ต้องการ
               router.push(`/profile/quotes/${idArray[0]}`);
             } else {
               router.push("/profile/quotes");

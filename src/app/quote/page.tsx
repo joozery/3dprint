@@ -6,13 +6,41 @@ import { QuoteForm } from "@/components/quote/QuoteForm";
 import { SidebarSummary } from "@/components/quote/SidebarSummary";
 import { Footer } from "@/components/home/HomeSections";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function QuotePage() {
     const [quotes, setQuotes] = useState<any[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Fetch pending quotes on initial load
+    useEffect(() => {
+        const fetchPendingQuotes = async () => {
+            try {
+                const localIds = JSON.parse(localStorage.getItem("guest_quote_ids") || "[]");
+                const res = await fetch(`/api/quote/pending?ids=${localIds.join(",")}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.quotes.length > 0) {
+                        setQuotes(data.quotes);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load pending quotes", err);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+        fetchPendingQuotes();
+    }, []);
 
     const addQuote = (newQuote: any) => {
-        setQuotes(prev => [...prev, newQuote]);
+        setQuotes(prev => {
+            const updated = [...prev, newQuote];
+            const ids = updated.map(q => q._id);
+            localStorage.setItem("guest_quote_ids", JSON.stringify(ids));
+            window.dispatchEvent(new Event("cart_updated"));
+            return updated;
+        });
     };
 
     const updateQuote = (updatedQuote: any) => {
@@ -20,7 +48,13 @@ export default function QuotePage() {
     };
 
     const removeQuote = (id: string) => {
-        setQuotes(prev => prev.filter(q => q._id !== id));
+        setQuotes(prev => {
+            const updated = prev.filter(q => q._id !== id);
+            const ids = updated.map(q => q._id);
+            localStorage.setItem("guest_quote_ids", JSON.stringify(ids));
+            window.dispatchEvent(new Event("cart_updated"));
+            return updated;
+        });
     };
 
     return (
