@@ -150,6 +150,13 @@ function QuoteRequestForm() {
         ]);
       }
 
+      // 3. Clear cart from local storage
+      const submittedIds = ids.split(",").filter(Boolean);
+      const currentCart = JSON.parse(localStorage.getItem("guest_quote_ids") || "[]");
+      const newCart = currentCart.filter((id: string) => !submittedIds.includes(id));
+      localStorage.setItem("guest_quote_ids", JSON.stringify(newCart));
+      window.dispatchEvent(new Event("cart_updated"));
+
       setShowSuccess(true);
     } catch (err: any) {
       setFeedback(err.message);
@@ -169,7 +176,8 @@ function QuoteRequestForm() {
         <SuccessModal 
           onClose={() => {
             const idArray = ids.split(",").filter(Boolean);
-            if (idArray.length === 1) {
+            if (idArray.length > 0) {
+              // พาเข้าไปดูบิล/ใบแรกเลย ตามที่ผู้ใช้ต้องการ
               router.push(`/profile/quotes/${idArray[0]}`);
             } else {
               router.push("/profile/quotes");

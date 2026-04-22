@@ -124,6 +124,11 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                     <Button
                         variant="outline"
                         disabled={!hasQuotes}
+                        onClick={() => {
+                            import("sonner").then(m => m.toast.success("บันทึกลงตะกร้าเรียบร้อยแล้ว!", { 
+                                description: "ออเดอร์นี้จะถูกบันทึกไว้ในบัญชีของคุณอัตโนมัติ" 
+                            }));
+                        }}
                         className="w-full py-6 text-base font-bold rounded-full border-blue-600 text-blue-600 hover:bg-blue-50 disabled:opacity-40"
                     >
                         <ShoppingCart size={16} className="mr-2" />

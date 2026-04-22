@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +59,34 @@ const navLinks = [
 export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const { data: session, status } = useSession();
+    const [cartCount, setCartCount] = useState(0);
+
+    useEffect(() => {
+        const fetchCartCount = async () => {
+            try {
+                const localIds = JSON.parse(localStorage.getItem("guest_quote_ids") || "[]");
+                const res = await fetch(`/api/quote/pending?ids=${localIds.join(",")}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        setCartCount(data.quotes.length);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load cart count", err);
+            }
+        };
+        fetchCartCount();
+
+        const handleStorage = () => fetchCartCount();
+        window.addEventListener("storage", handleStorage);
+        window.addEventListener("cart_updated", handleStorage);
+
+        return () => {
+            window.removeEventListener("storage", handleStorage);
+            window.removeEventListener("cart_updated", handleStorage);
+        };
+    }, [session]);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/90 backdrop-blur-md shadow-sm">
@@ -127,12 +155,14 @@ export default function Navbar() {
                     <button className="hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                         <Search size={18} />
                     </button>
-                    <button className="relative hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                    <Link href="/quote" className="relative hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                         <ShoppingCart size={18} />
-                        <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
-                            0
-                        </span>
-                    </button>
+                        {cartCount > 0 && (
+                            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-sm">
+                                {cartCount}
+                            </span>
+                        )}
+                    </Link>
 
                     <Button
                         variant="outline"

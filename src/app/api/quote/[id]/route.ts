@@ -10,6 +10,7 @@ export async function GET(
     try {
         const { id } = await params;
         await dbConnect();
+
         const quote = await Quote.findById(id);
 
         if (!quote) {
@@ -87,6 +88,7 @@ export async function DELETE(
     try {
         const { id } = await params;
         await dbConnect();
+
         await Quote.findByIdAndDelete(id);
         return NextResponse.json({ success: true });
     } catch (error: any) {

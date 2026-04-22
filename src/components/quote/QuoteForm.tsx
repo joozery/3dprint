@@ -72,16 +72,50 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile, materials }: {
     const handleMaterialChange = (id: string) => { setSelectedMaterial(id); patchQuote({ material: id }); };
     const handleQtyChange = (n: number) => { setQty(n); patchQuote({ quantity: n }); };
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
     const deleteQuote = async () => {
-        if (!confirm("คุณต้องการลบรายการนี้ใช่หรือไม่?")) return;
         try {
             await fetch(`/api/quote/${quote._id}`, { method: "DELETE" });
             onRemove(quote._id);
+            setShowDeleteConfirm(false);
         } catch (err) { console.error("Delete failed", err); }
     };
 
     return (
         <div className="bg-white border rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500 relative">
+            
+            {/* Delete Confirmation Modal Overlay */}
+            {showDeleteConfirm && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white border border-slate-200 shadow-2xl rounded-2xl p-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                                <Trash2 className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-900 mb-2">ยืนยันการลบไฟล์</h3>
+                            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+                                คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์ <span className="font-bold text-slate-700">{quote.originalName}</span> ออกจากตะกร้า? การกระทำนี้ไม่สามารถย้อนกลับได้
+                            </p>
+                            <div className="flex items-center gap-3 w-full">
+                                <button 
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button 
+                                    onClick={deleteQuote}
+                                    className="flex-1 py-2.5 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md shadow-red-200 transition-colors"
+                                >
+                                    ยืนยันลบ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Toggle Button */}
             <div className="absolute top-4 right-6 z-10">
                 <button
@@ -123,7 +157,7 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile, materials }: {
 
                     {/* Hover Actions */}
                     <div className="absolute bottom-2 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
-                        <button onClick={deleteQuote} className="text-[10px] font-bold text-slate-400 hover:text-red-500 flex items-center gap-1">
+                        <button onClick={() => setShowDeleteConfirm(true)} className="text-[10px] font-bold text-slate-400 hover:text-red-500 flex items-center gap-1">
                             <Trash2 className="w-3 h-3" /> Delete
                         </button>
                     </div>
@@ -192,29 +226,21 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile, materials }: {
                             <div>
                                 <label className="text-xs font-bold text-slate-500 block mb-3 uppercase tracking-wider">วัสดุ</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {materials.filter(m => m.technology === selectedTech).map((mat) => (
+                                    {materials.filter(m => m.technology?.toLowerCase() === selectedTech.toLowerCase()).map((mat) => (
                                         <button
-                                            key={mat.systemId}
-                                            onClick={() => handleMaterialChange(mat.systemId)}
+                                            key={mat._id}
+                                            onClick={() => handleMaterialChange(mat._id)}
                                             className={cn(
                                                 "relative px-3 py-2 rounded-md text-sm transition-all border text-left flex items-center justify-between shadow-sm",
-                                                selectedMaterial === mat.systemId
+                                                selectedMaterial === mat._id
                                                     ? "border-blue-600 text-blue-600 bg-blue-50 font-bold"
                                                     : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
                                             )}
                                         >
                                             <span className="truncate mr-2">{mat.name}</span>
-                                            {mat.badge && (
-                                                <span className={cn(
-                                                    "text-[9px] px-1 rounded font-bold uppercase",
-                                                    mat.badge === "ยอดนิยม" ? "bg-orange-100 text-orange-600" : "bg-red-100 text-red-600"
-                                                )}>
-                                                    {mat.badge}
-                                                </span>
-                                            )}
                                         </button>
                                     ))}
-                                    {materials.filter(m => m.technology === selectedTech).length === 0 && (
+                                    {materials.filter(m => m.technology?.toLowerCase() === selectedTech.toLowerCase()).length === 0 && (
                                         <div className="col-span-4 p-3 text-xs text-slate-400 bg-slate-50 rounded-md border text-center">
                                             ไม่มีฟิลเตอร์วัสดุสำหรับเทคโนโลยีนี้
                                         </div>
@@ -226,9 +252,15 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile, materials }: {
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 block mb-3 uppercase tracking-wider">สี</label>
-                                    <button className="w-full px-4 py-2 rounded-md text-sm border border-blue-600 text-blue-600 bg-blue-50 text-left font-bold shadow-sm">
-                                        {quote.color || "ขาวด้าน (Matte White)"}
-                                    </button>
+                                    <select 
+                                        value={color}
+                                        onChange={(e) => { setColor(e.target.value); patchQuote({ color: e.target.value }); }}
+                                        className="w-full px-4 py-2 rounded-md text-sm border border-slate-200 text-slate-800 bg-white font-semibold shadow-sm focus:border-blue-500 outline-none"
+                                    >
+                                        {materials.find(m => m._id === selectedMaterial)?.colors?.map((c: string) => (
+                                            <option key={c} value={c}>{c}</option>
+                                        )) || <option value={color || "ขาวด้าน (Matte White)"}>{color || "ขาวด้าน (Matte White)"}</option>}
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 block mb-3 uppercase tracking-wider">จำนวน</label>
@@ -252,7 +284,7 @@ function QuoteCard({ quote, onUpdate, onRemove, rawFile, materials }: {
                                     <span className="text-lg font-bold text-orange-600">฿{quote.priceDetail?.pricePerUnit?.toLocaleString() || "0"}</span>
                                 </div>
                                 <button
-                                    onClick={deleteQuote}
+                                    onClick={() => setShowDeleteConfirm(true)}
                                     className="text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 text-xs font-bold"
                                 >
                                     <Trash2 className="w-4 h-4" /> ลบทิ้ง
@@ -282,8 +314,10 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
         fetch("/api/admin/materials")
             .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    setDbMaterials(data.materials.filter((m: any) => m.isActive));
+                if (Array.isArray(data)) {
+                    setDbMaterials(data.filter((m: any) => m.isActive !== false)); // Default to true if not specified
+                } else if (data.success && data.materials) {
+                    setDbMaterials(data.materials.filter((m: any) => m.isActive !== false));
                 }
             })
             .catch(err => console.error("Failed to load materials", err));
