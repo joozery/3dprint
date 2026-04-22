@@ -32,6 +32,11 @@ export async function PATCH(
     if (body[field] !== undefined) update[field] = body[field];
   }
 
+  // Handle nested payment status update
+  if (body.paymentStatus !== undefined) {
+    update["paymentDetails.status"] = body.paymentStatus;
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }

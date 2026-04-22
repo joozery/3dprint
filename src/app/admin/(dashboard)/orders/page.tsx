@@ -6,6 +6,7 @@ interface SearchParams {
   page?: string;
   status?: string;
   search?: string;
+  userId?: string;
 }
 
 async function getOrders(searchParams: SearchParams) {
@@ -18,6 +19,9 @@ async function getOrders(searchParams: SearchParams) {
   const filter: Record<string, any> = {};
   if (searchParams.status && searchParams.status !== "all") {
     filter.status = searchParams.status;
+  }
+  if (searchParams.userId) {
+    filter.userId = searchParams.userId;
   }
 
   const [orders, total] = await Promise.all([

@@ -308,6 +308,7 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
     const [rawFiles, setRawFiles] = useState<Record<string, File>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [dbMaterials, setDbMaterials] = useState<any[]>([]);
+    const [uploadError, setUploadError] = useState<string | null>(null);
 
     useEffect(() => {
         // Fetch materials
@@ -361,7 +362,7 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
             setUploading(false);
             setCurrentFile(null);
             const msg = error.response?.data?.error || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์";
-            alert(`อัปโหลดล้มเหลว: ${msg}`);
+            setUploadError(msg);
         }
 
         // Reset input so same file can be re-uploaded
@@ -369,7 +370,47 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+            
+            {/* Upload Error Modal Overlay */}
+            {uploadError && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white border border-slate-200 shadow-2xl rounded-2xl p-8 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5 border border-red-100">
+                                <AlertCircle className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 mb-2">อัปโหลดล้มเหลว</h3>
+                            <p className="text-[15px] text-slate-500 mb-8 leading-relaxed">
+                                {uploadError}
+                            </p>
+                            {uploadError?.includes("เข้าสู่ระบบ") || uploadError?.toLowerCase().includes("unauthorized") ? (
+                                <div className="flex gap-3 w-full">
+                                    <button 
+                                        onClick={() => setUploadError(null)}
+                                        className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
+                                    >
+                                        ปิด
+                                    </button>
+                                    <button 
+                                        onClick={() => window.location.href = "/login"}
+                                        className="flex-1 py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
+                                    >
+                                        เข้าสู่ระบบ
+                                    </button>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={() => setUploadError(null)}
+                                    className="w-full py-3.5 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all active:scale-95"
+                                >
+                                    ตกลง
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="flex items-center justify-between">
                 <h1 className="text-xl font-bold text-slate-900">คำนวณราคาพิมพ์ 3 มิติออนไลน์</h1>
                 <div className="flex items-center space-x-4 text-sm text-slate-500">

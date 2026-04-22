@@ -135,21 +135,31 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
-              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2"><ShoppingBag size={20}/></div>
+            <Link href={`/admin/orders?userId=${user._id}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center hover:border-blue-400 hover:shadow-lg transition-all group relative overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300"><ShoppingBag size={20}/></div>
               <p className="text-3xl font-black text-slate-800">{totalOrders}</p>
-              <p className="text-xs font-semibold text-slate-500 uppercase">ออเดอร์ทั้งหมด</p>
-            </div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase group-hover:text-blue-600 transition-colors">ออเดอร์ทั้งหมด</p>
+                <span className="text-blue-600 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">&rarr;</span>
+              </div>
+              <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-100 rounded-2xl transition-colors pointer-events-none" />
+            </Link>
+            
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
               <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-2"><span className="text-lg font-black">฿</span></div>
               <p className="text-xl font-black text-slate-800 mt-2">{(totalSpent).toLocaleString()}</p>
               <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">ยอดสั่งซื้อรวม</p>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
-              <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mb-2"><FileBox size={20}/></div>
+
+            <Link href={`/admin/quotes?userId=${user._id}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center hover:border-orange-400 hover:shadow-lg transition-all group relative overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mb-2 group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300"><FileBox size={20}/></div>
               <p className="text-3xl font-black text-slate-800">{totalQuotes}</p>
-              <p className="text-xs font-semibold text-slate-500 uppercase">ใบเสนอราคา</p>
-            </div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase group-hover:text-orange-500 transition-colors">ใบเสนอราคา</p>
+                <span className="text-orange-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">&rarr;</span>
+              </div>
+              <div className="absolute inset-0 border-2 border-transparent group-hover:border-orange-100 rounded-2xl transition-colors pointer-events-none" />
+            </Link>
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
               <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center mb-2"><HardDrive size={20}/></div>
               <p className="text-xl font-black text-slate-800 mt-2">{totalFiles}</p>

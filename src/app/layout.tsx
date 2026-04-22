@@ -31,6 +31,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+import { RouteChangePointerEventsFix } from "@/components/layout/RouteChangePointerEventsFix";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="th" suppressHydrationWarning>
       <body className={`${sarabun.variable} font-sans antialiased`} suppressHydrationWarning>
+        <RouteChangePointerEventsFix />
         <AuthProvider>
           <TooltipProvider>
             {children}
