@@ -150,6 +150,13 @@ function QuoteRequestForm() {
         ]);
       }
 
+      // 3. Clear cart from local storage
+      const submittedIds = ids.split(",").filter(Boolean);
+      const currentCart = JSON.parse(localStorage.getItem("guest_quote_ids") || "[]");
+      const newCart = currentCart.filter((id: string) => !submittedIds.includes(id));
+      localStorage.setItem("guest_quote_ids", JSON.stringify(newCart));
+      window.dispatchEvent(new Event("cart_updated"));
+
       setShowSuccess(true);
     } catch (err: any) {
       setFeedback(err.message);

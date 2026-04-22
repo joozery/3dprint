@@ -67,8 +67,8 @@ const QuoteSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["pending", "ordered", "cancelled"],
-            default: "pending",
+            enum: ["draft", "pending", "ordered", "cancelled"],
+            default: "draft",
         },
         internalStatus: {
             type: String,

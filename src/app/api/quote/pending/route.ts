@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const idsParam = searchParams.get("ids");
         
-        let query: any = { status: "pending" };
+        let query: any = { status: "draft" };
         
         const orConditions = [];
 
