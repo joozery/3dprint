@@ -84,6 +84,26 @@ export default function AdminOrdersTable({ orders, total, page, totalPages, curr
     }
   };
 
+  const updatePaymentStatus = async (orderId: string, newStatus: string) => {
+    setUpdatingId(orderId + "_payment");
+    try {
+      await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentStatus: newStatus }),
+      });
+      router.refresh();
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const paymentStatusOptions = [
+    { value: "pending", label: "รอชำระเงิน" },
+    { value: "paid", label: "ชำระแล้ว" },
+    { value: "failed", label: "ล้มเหลว" },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Status Filter Pills */}
@@ -163,8 +183,33 @@ export default function AdminOrdersTable({ orders, total, page, totalPages, curr
                         <p className="text-slate-400 text-[11px] font-medium mt-0.5">{order.userId?.email || "—"}</p>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-blue-50/50 rounded-lg inline-block border border-blue-100/50">
-                          {paymentMethodLabel[order.paymentDetails.method] || order.paymentDetails.method}
+                        <div className="flex flex-col gap-2">
+                          <div className="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-slate-100 rounded-lg inline-block border border-slate-200/60 w-fit">
+                            {paymentMethodLabel[order.paymentDetails.method] || order.paymentDetails.method}
+                          </div>
+                          <div className="relative inline-block w-full max-w-[120px]">
+                            <select 
+                              value={order.paymentDetails.status} 
+                              disabled={updatingId === order._id + "_payment"}
+                              onChange={(e) => updatePaymentStatus(order._id, e.target.value)}
+                              className={`w-full border text-[11px] font-bold rounded-xl px-2 py-1.5 cursor-pointer focus:outline-none focus:ring-4 transition-all appearance-none shadow-sm disabled:opacity-50 ${
+                                order.paymentDetails.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-emerald-500/10' :
+                                order.paymentDetails.status === 'failed' ? 'bg-red-50 text-red-700 border-red-200 focus:ring-red-500/10' :
+                                'bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-500/10'
+                              }`}
+                            >
+                              {paymentStatusOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                              <ChevronRight size={12} className={`rotate-90 ${
+                                order.paymentDetails.status === 'paid' ? 'text-emerald-500' :
+                                order.paymentDetails.status === 'failed' ? 'text-red-500' :
+                                'text-amber-500'
+                              }`} />
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-5">

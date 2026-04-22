@@ -3,12 +3,13 @@ import Quote from "@/models/Quote";
 import AdminQuotesTable from "@/components/admin/quotes/AdminQuotesTable";
 import { FileText, Clock, CheckCircle, XCircle } from "lucide-react";
 
-async function getQuotes(page: number, status: string) {
+async function getQuotes(page: number, status: string, userId?: string) {
   await dbConnect();
   const limit = 20;
   const skip = (page - 1) * limit;
   const filter: Record<string, any> = {};
   if (status && status !== "all") filter.status = status;
+  if (userId) filter.userId = userId;
 
   const [quotes, total, pendingCount, orderedCount, cancelledCount] = await Promise.all([
     Quote.find(filter)
@@ -37,11 +38,11 @@ async function getQuotes(page: number, status: string) {
 export default async function AdminQuotesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; search?: string; userId?: string }>;
 }) {
   const params = await searchParams;
   const page = parseInt(params.page || "1");
-  const data = await getQuotes(page, params.status || "all");
+  const data = await getQuotes(page, params.status || "all", params.userId);
 
   const statCards = [
     { label: "ใบเสนอราคาทั้งหมด", sublabel: "Total Quotes", value: data.total,          icon: FileText    },

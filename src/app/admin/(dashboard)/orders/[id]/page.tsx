@@ -4,6 +4,9 @@ import Quote from "@/models/Quote";
 import User from "@/models/User";
 import Link from "next/link";
 import { ArrowLeft, Package, User as UserIcon, MapPin, CreditCard, Clock, CheckCircle2, CircleDollarSign, Printer, Box, FileBox, FileText, ChevronRight } from "lucide-react";
+import AdminSlipUploader from "@/components/admin/orders/AdminSlipUploader";
+import AdminOrderStatusSelect from "@/components/admin/orders/AdminOrderStatusSelect";
+import SlipViewerButton from "@/components/admin/orders/SlipViewerButton";
 
 // For typing purposes if needed
 const formatCur = (v: number) => Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -53,10 +56,9 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </div>
         </div>
         
-        {/* Status Badge */}
-        <div className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${statusCfg.color} ${statusCfg.bg} border-current/20`}>
-          <StatusIcon size={14} className="stroke-[2.5px]" />
-          <span className="text-xs font-bold uppercase tracking-wide">{statusCfg.label}</span>
+        {/* Status Dropdown */}
+        <div className="shrink-0">
+          <AdminOrderStatusSelect orderId={order._id.toString()} currentStatus={order.status} />
         </div>
       </div>
 
@@ -239,11 +241,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     </div>
                     {order.paymentDetails?.slipUrl && (
                         <div className="pt-2">
-                           <a href={order.paymentDetails.slipUrl} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-sm font-bold transition-all">
-                                ดูสลิปโอนเงิน (Slip)
-                           </a>
+                           <SlipViewerButton slipUrl={order.paymentDetails.slipUrl} />
                         </div>
                     )}
+                    
+                    <AdminSlipUploader orderId={order._id.toString()} />
                 </div>
             </div>
 

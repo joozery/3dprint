@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Plus, Edit, Trash2, Settings, Save, X, ExternalLink, Link as LinkIcon, DollarSign, Palette, Settings2, FolderOpen, Ruler, Coins, Sparkles } from "lucide-react";
+import { Box, Plus, Edit, Trash2, Settings, Save, X, ExternalLink, Link as LinkIcon, DollarSign, Palette, Settings2, FolderOpen, Ruler, Coins, Sparkles, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+
+const DEFAULT_TECHS = ["SLA", "FDM", "MJF", "SLS", "DLP"];
 
 export default function MaterialManager({ initialMaterials }: { initialMaterials: any[] }) {
   const [materials, setMaterials] = useState(initialMaterials);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showCustomTech, setShowCustomTech] = useState(false);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -22,6 +25,8 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
     postProcessing: [] as { name: string, costPrice: number, sellPrice: number }[]
   });
 
+  const uniqueTechs = Array.from(new Set([...DEFAULT_TECHS, ...materials.map(m => (m.technology || "").toUpperCase())])).filter(Boolean).sort();
+
   const resetForm = () => {
     setFormData({
       technology: "SLA", name: "", description: "", tdsLink: "", sdsLink: "",
@@ -30,6 +35,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       colors: "", postProcessing: []
     });
     setEditingId(null);
+    setShowCustomTech(false);
   };
 
   const handleEdit = (m: any) => {
@@ -46,6 +52,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
     });
     setEditingId(m._id);
     setIsModalOpen(true);
+    setShowCustomTech(!uniqueTechs.includes((m.technology || "").toUpperCase()));
   };
 
   const handleDelete = async (id: string) => {
@@ -66,6 +73,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       
       const payload = {
         ...formData,
+        technology: formData.technology.toUpperCase(),
         colors: formData.colors.split(",").map(s => s.trim()).filter(Boolean)
       };
 
@@ -101,6 +109,14 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
     setFormData({...formData, postProcessing: newItems});
   };
 
+  // Group materials by technology
+  const groupedMaterials = materials.reduce((acc: any, m) => {
+    const tech = (m.technology || "OTHER").toUpperCase();
+    if (!acc[tech]) acc[tech] = [];
+    acc[tech].push(m);
+    return acc;
+  }, {});
+
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -131,82 +147,76 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
             </button>
          </div>
       ) : (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-            {materials.map(m => (
-              <div key={m._id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden group">
-                 <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                       <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-black uppercase tracking-widest">{m.technology}</span>
-                       <h3 className="font-bold text-slate-800 text-lg uppercase tracking-tight">{m.name}</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <button onClick={() => handleEdit(m)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16} /></button>
-                       <button onClick={() => handleDelete(m._id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16} /></button>
-                    </div>
-                 </div>
-                 <div className="p-6 space-y-6">
-                    {/* Docs */}
-                    {(m.tdsLink || m.sdsLink) && (
-                        <div className="flex gap-4">
-                           {m.tdsLink && <a href={m.tdsLink} target="_blank" className="flex items-center gap-1.5 text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:underline"><LinkIcon size={12}/> Technical DataSheet (TDS)</a>}
-                           {m.sdsLink && <a href={m.sdsLink} target="_blank" className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full hover:underline"><LinkIcon size={12}/> Safety DataSheet (SDS)</a>}
-                        </div>
-                    )}
-
-                    {/* Configuration Overview */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                           <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Max Size (H x W x D)</p>
-                           <p className="font-semibold text-slate-800 text-sm">{m.maxPrintSize?.width} x {m.maxPrintSize?.length} x {m.maxPrintSize?.height} mm</p>
-                        </div>
-                        <div className="space-y-1 text-right">
-                           <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Available Colors</p>
-                           <p className="font-semibold text-slate-800 text-sm truncate">{m.colors?.join(", ") || '-'}</p>
-                        </div>
-                    </div>
-
-                    {/* Pricing Info */}
-                    <div className="grid grid-cols-2 gap-px bg-slate-100 rounded-xl overflow-hidden border border-slate-100">
-                       <div className="bg-white p-4">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 mb-3"><DollarSign size={14}/> ราคาต่อกรัม (Per Gram)</p>
-                          <div className="flex justify-between items-end border-b border-slate-50 pb-2 mb-2">
-                             <span className="text-xs text-slate-500 font-medium tracking-wide">ทุน (Cost)</span>
-                             <span className="text-sm font-black text-rose-600">฿{m.pricing?.costPerGram}</span>
+         <div className="space-y-12">
+            {Object.keys(groupedMaterials).sort().map(tech => (
+               <div key={tech} className="space-y-4">
+                  <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
+                     <div className="w-2 h-6 bg-blue-600 rounded-full" />
+                     <h2 className="text-xl font-black text-slate-800 tracking-tight uppercase">{tech} <span className="ml-2 text-sm font-bold text-slate-400">({groupedMaterials[tech].length} วัสดุ)</span></h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                     {groupedMaterials[tech].map((m: any) => (
+                       <div key={m._id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden group hover:shadow-md transition-shadow">
+                          <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                             <div className="flex items-center gap-3">
+                                <h3 className="font-bold text-slate-800 text-lg uppercase tracking-tight">{m.name}</h3>
+                             </div>
+                             <div className="flex items-center gap-2">
+                                <button onClick={() => handleEdit(m)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16} /></button>
+                                <button onClick={() => handleDelete(m._id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                             </div>
                           </div>
-                          <div className="flex justify-between items-end">
-                             <span className="text-xs text-slate-500 font-medium tracking-wide">ขาย (Sell)</span>
-                             <span className="text-lg font-black text-emerald-600 leading-none">฿{m.pricing?.sellPerGram}</span>
-                          </div>
-                       </div>
-                       <div className="bg-white p-4">
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 mb-3"><Settings size={14}/> ค่าเวลาต่อนาที (Per Min)</p>
-                          <div className="flex justify-between items-end border-b border-slate-50 pb-2 mb-2">
-                             <span className="text-xs text-slate-500 font-medium tracking-wide">ทุน (Cost)</span>
-                             <span className="text-sm font-black text-rose-600">฿{m.pricing?.costPerMinute}</span>
-                          </div>
-                          <div className="flex justify-between items-end">
-                             <span className="text-xs text-slate-500 font-medium tracking-wide">ขาย (Sell)</span>
-                             <span className="text-lg font-black text-emerald-600 leading-none">฿{m.pricing?.sellPerMinute}</span>
-                          </div>
-                       </div>
-                    </div>
-
-                    {/* Post Processing */}
-                    {m.postProcessing && m.postProcessing.length > 0 && (
-                        <div>
-                           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 border-b border-slate-100 pb-1 flex items-center gap-2"><Settings2 size={12}/> Post-Processing Options</p>
-                           <div className="space-y-1.5">
-                              {m.postProcessing.map((pp: any, idx: number) => (
-                                <div key={idx} className="flex justify-between items-center text-xs bg-slate-50/50 px-3 py-2 rounded-lg border border-slate-100">
-                                   <span className="font-semibold text-slate-700">{pp.name}</span>
-                                   <span className="text-slate-500 font-medium">ทุน: ฿{pp.costPrice}   <span className="mx-2 text-slate-300">|</span>   ขาย: <span className="font-bold text-emerald-600">฿{pp.sellPrice}</span></span>
+                          <div className="p-6 space-y-6">
+                             {/* Docs */}
+                             {(m.tdsLink || m.sdsLink) && (
+                                 <div className="flex flex-wrap gap-2">
+                                    {m.tdsLink && <a href={m.tdsLink} target="_blank" className="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:underline"><LinkIcon size={12}/> TDS</a>}
+                                    {m.sdsLink && <a href={m.sdsLink} target="_blank" className="flex items-center gap-1.5 text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full hover:underline"><LinkIcon size={12}/> SDS</a>}
+                                 </div>
+                             )}
+                             
+                             {/* Configuration Overview */}
+                             <div className="grid grid-cols-2 gap-4">
+                                 <div className="space-y-1">
+                                    <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Max Size</p>
+                                    <p className="font-semibold text-slate-800 text-xs">{m.maxPrintSize?.width}x{m.maxPrintSize?.length}x{m.maxPrintSize?.height} mm</p>
+                                 </div>
+                                 <div className="space-y-1 text-right">
+                                    <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Colors</p>
+                                    <p className="font-semibold text-slate-800 text-xs truncate">{m.colors?.join(", ") || '-'}</p>
+                                 </div>
+                             </div>
+        
+                             {/* Pricing Info */}
+                             <div className="grid grid-cols-2 gap-px bg-slate-100 rounded-xl overflow-hidden border border-slate-100">
+                                <div className="bg-white p-3">
+                                   <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-1"><DollarSign size={10}/> ต่อกรัม</p>
+                                   <div className="flex justify-between items-end border-b border-slate-50 pb-1 mb-1">
+                                      <span className="text-[10px] text-slate-500 font-medium tracking-wide">ทุน</span>
+                                      <span className="text-[11px] font-black text-rose-600">฿{m.pricing?.costPerGram}</span>
+                                   </div>
+                                   <div className="flex justify-between items-end">
+                                      <span className="text-[10px] text-slate-500 font-medium tracking-wide">ขาย</span>
+                                      <span className="text-sm font-black text-emerald-600 leading-none">฿{m.pricing?.sellPerGram}</span>
+                                   </div>
                                 </div>
-                              ))}
-                           </div>
-                        </div>
-                    )}
-                 </div>
-              </div>
+                                <div className="bg-white p-3">
+                                   <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-1"><Settings size={10}/> ต่อนาที</p>
+                                   <div className="flex justify-between items-end border-b border-slate-50 pb-1 mb-1">
+                                      <span className="text-[10px] text-slate-500 font-medium tracking-wide">ทุน</span>
+                                      <span className="text-[11px] font-black text-rose-600">฿{m.pricing?.costPerMinute}</span>
+                                   </div>
+                                   <div className="flex justify-between items-end">
+                                      <span className="text-[10px] text-slate-500 font-medium tracking-wide">ขาย</span>
+                                      <span className="text-sm font-black text-emerald-600 leading-none">฿{m.pricing?.sellPerMinute}</span>
+                                   </div>
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+               </div>
             ))}
          </div>
       )}
@@ -227,8 +237,38 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">เทคโนโลยี</label>
-                           <input type="text" value={formData.technology} onChange={e => setFormData({...formData, technology: e.target.value})} className="w-full text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl uppercase" placeholder="e.g. SLA, FDM, MJF" />
+                           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">เทคโนโลยี (Technology)</label>
+                           <div className="relative">
+                              <select 
+                                value={showCustomTech ? "CUSTOM" : formData.technology.toUpperCase()} 
+                                onChange={e => {
+                                  if (e.target.value === "CUSTOM") {
+                                    setShowCustomTech(true);
+                                    setFormData({...formData, technology: ""});
+                                  } else {
+                                    setShowCustomTech(false);
+                                    setFormData({...formData, technology: e.target.value});
+                                  }
+                                }}
+                                className="w-full text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl uppercase appearance-none focus:border-blue-500 outline-none"
+                              >
+                                {uniqueTechs.map(t => <option key={t} value={t}>{t}</option>)}
+                                <option value="CUSTOM">+ เพิ่มเทคโนโลยีใหม่...</option>
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                <ChevronDown size={16} />
+                              </div>
+                           </div>
+                           {showCustomTech && (
+                              <input 
+                                type="text" 
+                                value={formData.technology} 
+                                onChange={e => setFormData({...formData, technology: e.target.value.toUpperCase()})} 
+                                className="w-full text-sm font-semibold text-slate-800 bg-white border border-blue-200 mt-2 px-4 py-2.5 rounded-xl uppercase focus:border-blue-500 outline-none animate-in slide-in-from-top-2" 
+                                placeholder="ระบุชื่อเทคโนโลยีใหม่..." 
+                                autoFocus
+                              />
+                           )}
                         </div>
                         <div className="space-y-1.5">
                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">ชื่อวัสดุ (Material Name)</label>

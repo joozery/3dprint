@@ -16,18 +16,56 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     await dbConnect();
 
-    const updated = await Quote.findByIdAndUpdate(
-      id,
-      { status: body.status },
-      { new: true }
-    );
-
-    if (!updated) {
+    const quote = await Quote.findById(id);
+    if (!quote) {
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
+    }
+
+    quote.status = body.status;
+    const updated = await quote.save();
+
+    // Auto-create an Order if status changed to "ordered"
+    if (body.status === "ordered") {
+      const mongoose = (await import("mongoose")).default;
+      const Order = (await import("@/models/Order")).default;
+
+      // Check if an order already exists for this quote to prevent duplicates
+      const existingOrder = await Order.findOne({ quotes: quote._id });
+
+      if (!existingOrder) {
+        // Fallback addresses if not fully filled in the quote
+        const shippingFallback = quote.shippingAddress || {
+          fullName: "รออัปเดต",
+          phone: "รออัปเดต",
+          address: "รออัปเดต",
+          province: "รออัปเดต",
+          zipCode: "รออัปเดต"
+        };
+
+        const newOrder = new Order({
+          userId: quote.userId || new mongoose.Types.ObjectId(), // Handle guests safely or link to actual user
+          quotes: [quote._id],
+          shippingAddress: shippingFallback,
+          paymentDetails: {
+            method: "bank_transfer",
+            status: "pending",
+          },
+          pricing: {
+            subtotal: quote.price || 0,
+            shippingFee: 0,
+            discount: 0,
+            totalAmount: quote.price || 0,
+          },
+          status: "pending_payment",
+        });
+
+        await newOrder.save();
+      }
     }
 
     return NextResponse.json({ success: true, updated });
   } catch (error: any) {
+    console.error("Update quote status error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
