@@ -3,7 +3,7 @@ import Order from "@/models/Order";
 import Quote from "@/models/Quote";
 import User from "@/models/User";
 import Link from "next/link";
-import { ArrowLeft, Package, User as UserIcon, MapPin, CreditCard, Clock, CheckCircle2, CircleDollarSign, Printer, Box, FileBox, FileText, ChevronRight } from "lucide-react";
+import { ArrowLeft, Package, User as UserIcon, MapPin, CreditCard, Clock, CheckCircle2, CircleDollarSign, Printer, Box, FileBox, FileText, ChevronRight, Download } from "lucide-react";
 import AdminSlipUploader from "@/components/admin/orders/AdminSlipUploader";
 import AdminOrderStatusSelect from "@/components/admin/orders/AdminOrderStatusSelect";
 import SlipViewerButton from "@/components/admin/orders/SlipViewerButton";
@@ -90,10 +90,22 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="font-semibold text-slate-800 mb-1">{q.originalName || q.fileName}</div>
-                                        <div className="text-[10px] text-slate-500 space-y-0.5">
+                                        <div className="text-[10px] text-slate-500 space-y-0.5 mb-2.5">
                                             <p>ขนาด: {q.dimensions?.x?.toFixed(1)} x {q.dimensions?.y?.toFixed(1)} x {q.dimensions?.z?.toFixed(1)} mm</p>
                                             <p>ปริมาตร: {q.volumeCm3?.toFixed(2)} cm³</p>
                                         </div>
+                                        {q.fileUrl && (
+                                            <a 
+                                                href={q.fileUrl} 
+                                                download={q.originalName || q.fileName || "3d-model"}
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded border border-blue-100 text-[10px] font-bold transition-colors w-fit"
+                                                title="ดาวน์โหลดไฟล์โมเดล"
+                                            >
+                                                <Download size={13} strokeWidth={2.5} /> โหลดไฟล์
+                                            </a>
+                                        )}
                                     </td>
                                     <td className="px-5 py-4">
                                         <div className="flex flex-col items-center gap-1.5">

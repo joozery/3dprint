@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Upload, Info, Trash2, ChevronDown, CheckCircle2, AlertCircle, Layers, Plus } from "lucide-react";
+import { Upload, Info, Trash2, ChevronDown, CheckCircle2, AlertCircle, Layers, Plus, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -377,35 +377,46 @@ export function QuoteForm({ quotes, onAdd, onUpdate, onRemove }: QuoteFormProps)
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white border border-slate-200 shadow-2xl rounded-2xl p-8 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
                         <div className="flex flex-col items-center text-center">
-                            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5 border border-red-100">
-                                <AlertCircle className="w-7 h-7" />
-                            </div>
-                            <h3 className="text-xl font-black text-slate-900 mb-2">อัปโหลดล้มเหลว</h3>
-                            <p className="text-[15px] text-slate-500 mb-8 leading-relaxed">
-                                {uploadError}
-                            </p>
                             {uploadError?.includes("เข้าสู่ระบบ") || uploadError?.toLowerCase().includes("unauthorized") ? (
-                                <div className="flex gap-3 w-full">
+                                <>
+                                    <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-5 border border-blue-100">
+                                        <Lock className="w-7 h-7" />
+                                    </div>
+                                    <h3 className="text-xl font-black text-slate-900 mb-2">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</h3>
+                                    <p className="text-[14px] text-slate-500 mb-8 leading-relaxed px-2">
+                                        เข้าสู่ระบบหรือสมัครสมาชิกเพื่ออัปโหลดไฟล์ 3D และขอรับบริการพิมพ์ชิ้นงาน
+                                    </p>
+                                    <div className="flex flex-col gap-3 w-full">
+                                        <button 
+                                            onClick={() => window.location.href = "/login"}
+                                            className="w-full py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
+                                        >
+                                            เข้าสู่ระบบ / สมัครสมาชิก
+                                        </button>
+                                        <button 
+                                            onClick={() => setUploadError(null)}
+                                            className="w-full py-3.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
+                                        >
+                                            ยกเลิก
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5 border border-red-100">
+                                        <AlertCircle className="w-7 h-7" />
+                                    </div>
+                                    <h3 className="text-xl font-black text-slate-900 mb-2">อัปโหลดล้มเหลว</h3>
+                                    <p className="text-[15px] text-slate-500 mb-8 leading-relaxed">
+                                        {uploadError}
+                                    </p>
                                     <button 
                                         onClick={() => setUploadError(null)}
-                                        className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95"
+                                        className="w-full py-3.5 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all active:scale-95"
                                     >
-                                        ปิด
+                                        ตกลง
                                     </button>
-                                    <button 
-                                        onClick={() => window.location.href = "/login"}
-                                        className="flex-1 py-3.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
-                                    >
-                                        เข้าสู่ระบบ
-                                    </button>
-                                </div>
-                            ) : (
-                                <button 
-                                    onClick={() => setUploadError(null)}
-                                    className="w-full py-3.5 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all active:scale-95"
-                                >
-                                    ตกลง
-                                </button>
+                                </>
                             )}
                         </div>
                     </div>
