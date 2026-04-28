@@ -35,6 +35,8 @@ export default function ModelsView({ initialModels }: ModelsViewProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedUserFilter, setSelectedUserFilter] = useState("all");
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
   const itemsPerPage = 20;
 
   // Derive stats
@@ -210,19 +212,67 @@ export default function ModelsView({ initialModels }: ModelsViewProps) {
       {/* Model Explorer Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         
+        {/* User Filter Dropdown */}
         <div className="relative flex w-full sm:w-auto items-center gap-3">
-            <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <select 
-               value={selectedUserFilter} 
-               onChange={(e) => { setSelectedUserFilter(e.target.value); setCurrentPage(1); }}
-               className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl pl-9 pr-10 py-2.5 focus:outline-none focus:border-blue-500 transition-all cursor-pointer min-w-[200px] appearance-none"
-            >
-               <option value="all">ผู้ใช้ทั้งหมด (All Users)</option>
-               {uniqueUsersList.map(u => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-               ))}
-            </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            {isUserDropdownOpen && <div className="fixed inset-0 z-30" onClick={() => setIsUserDropdownOpen(false)} />}
+            <div className="relative w-full sm:w-64 z-40">
+                <button
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 hover:bg-slate-100 transition-all cursor-pointer text-left flex items-center justify-between shadow-sm"
+                >
+                    <div className="flex items-center gap-2 truncate">
+                        <Users size={16} className="text-slate-400 shrink-0" />
+                        <span className="truncate">
+                            {selectedUserFilter === "all" 
+                                ? "ผู้ใช้ทั้งหมด (All Users)" 
+                                : uniqueUsersList.find(u => u.id === selectedUserFilter)?.name || "ผู้ใช้ทั้งหมด"}
+                        </span>
+                    </div>
+                    <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                </button>
+
+                {isUserDropdownOpen && (
+                    <div className="absolute top-full mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="p-2 border-b border-slate-100 bg-slate-50/50">
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    placeholder="ค้นหาชื่อผู้ใช้..."
+                                    value={userSearchTerm}
+                                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-2 text-xs font-semibold border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto p-1.5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                            <button
+                                onClick={() => { setSelectedUserFilter("all"); setIsUserDropdownOpen(false); setUserSearchTerm(""); setCurrentPage(1); }}
+                                className={`w-full text-left px-3 py-2.5 text-xs font-semibold rounded-lg transition-colors ${selectedUserFilter === "all" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+                            >
+                                ผู้ใช้ทั้งหมด (All Users)
+                            </button>
+                            {uniqueUsersList.filter(u => u.name.toLowerCase().includes(userSearchTerm.toLowerCase())).map(u => (
+                                <button
+                                    key={u.id}
+                                    onClick={() => { setSelectedUserFilter(u.id); setIsUserDropdownOpen(false); setUserSearchTerm(""); setCurrentPage(1); }}
+                                    className={`w-full text-left px-3 py-2.5 text-xs font-semibold rounded-lg transition-colors truncate ${selectedUserFilter === u.id ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+                                    title={u.name}
+                                >
+                                    {u.name}
+                                </button>
+                            ))}
+                            {uniqueUsersList.filter(u => u.name.toLowerCase().includes(userSearchTerm.toLowerCase())).length === 0 && (
+                                <div className="px-3 py-6 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+                                    <Search size={16} className="text-slate-300" />
+                                    ไม่พบรายชื่อผู้ใช้
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
 
         <div className="flex w-full sm:w-auto items-center gap-3">
