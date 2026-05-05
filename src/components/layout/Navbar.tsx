@@ -60,11 +60,17 @@ export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const { data: session, status } = useSession();
     const [cartCount, setCartCount] = useState(0);
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
         const fetchCartCount = async () => {
             try {
                 const localIds = JSON.parse(localStorage.getItem("guest_quote_ids") || "[]");
+                if (localIds.length === 0) {
+                    setCartCount(0);
+                    return;
+                }
                 const res = await fetch(`/api/quote/pending?ids=${localIds.join(",")}`);
                 if (res.ok) {
                     const data = await res.json();
@@ -109,45 +115,47 @@ export default function Navbar() {
 
                 {/* Desktop Nav */}
                 <nav className="hidden lg:flex items-center">
-                    <NavigationMenu>
-                        <NavigationMenuList className="gap-0">
-                            {navLinks.map((link) =>
-                                link.children ? (
-                                    <NavigationMenuItem key={link.label}>
-                                        <NavigationMenuTrigger className="bg-transparent text-slate-600 hover:text-blue-600 text-sm font-medium h-10 px-3">
-                                            {link.label}
-                                        </NavigationMenuTrigger>
-                                        <NavigationMenuContent>
-                                            <ul className="grid w-[320px] gap-1 p-3">
-                                                {link.children.map((child) => (
-                                                    <li key={child.label}>
-                                                        <NavigationMenuLink asChild>
-                                                            <Link
-                                                                href={child.href}
-                                                                className="block select-none rounded-md px-3 py-2 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                                                            >
-                                                                <div className="text-sm font-medium text-slate-800">{child.label}</div>
-                                                                <div className="text-xs text-slate-500 mt-0.5">{child.desc}</div>
-                                                            </Link>
-                                                        </NavigationMenuLink>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </NavigationMenuContent>
-                                    </NavigationMenuItem>
-                                ) : (
-                                    <NavigationMenuItem key={link.label}>
-                                        <Link
-                                            href={link.href}
-                                            className="inline-flex items-center px-3 h-10 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
-                                        >
-                                            {link.label}
-                                        </Link>
-                                    </NavigationMenuItem>
-                                )
-                            )}
-                        </NavigationMenuList>
-                    </NavigationMenu>
+                    {isMounted && (
+                        <NavigationMenu>
+                            <NavigationMenuList className="gap-0">
+                                {navLinks.map((link) =>
+                                    link.children ? (
+                                        <NavigationMenuItem key={link.label}>
+                                            <NavigationMenuTrigger className="bg-transparent text-slate-600 hover:text-blue-600 text-sm font-medium h-10 px-3">
+                                                {link.label}
+                                            </NavigationMenuTrigger>
+                                            <NavigationMenuContent>
+                                                <ul className="grid w-[320px] gap-1 p-3">
+                                                    {link.children.map((child) => (
+                                                        <li key={child.label}>
+                                                            <NavigationMenuLink asChild>
+                                                                <Link
+                                                                    href={child.href}
+                                                                    className="block select-none rounded-md px-3 py-2 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                                                >
+                                                                    <div className="text-sm font-medium text-slate-800">{child.label}</div>
+                                                                    <div className="text-xs text-slate-500 mt-0.5">{child.desc}</div>
+                                                                </Link>
+                                                            </NavigationMenuLink>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </NavigationMenuContent>
+                                        </NavigationMenuItem>
+                                    ) : (
+                                        <NavigationMenuItem key={link.label}>
+                                            <Link
+                                                href={link.href}
+                                                className="inline-flex items-center px-3 h-10 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        </NavigationMenuItem>
+                                    )
+                                )}
+                            </NavigationMenuList>
+                        </NavigationMenu>
+                    )}
                 </nav>
 
                 {/* Right Actions */}
@@ -157,7 +165,7 @@ export default function Navbar() {
                     </button>
                     <Link href="/quote" className="relative hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                         <ShoppingCart size={18} />
-                        {cartCount > 0 && (
+                        {isMounted && cartCount > 0 && (
                             <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-sm">
                                 {cartCount}
                             </span>

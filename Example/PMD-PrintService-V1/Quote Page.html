@@ -1,0 +1,367 @@
+<!DOCTYPE html><html lang="th" data-theme="light"><head>
+
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำนวณราคาพิมพ์ 3 มิติ · Print My Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-purple: #8848a8;
+    --brand-purple-deep: #683888;
+    --brand-green: #28c868;
+    --bg: oklch(0.985 0.004 310);
+    --bg-2: oklch(0.97 0.006 310);
+    --card: #fff;
+    --chip: oklch(0.94 0.008 310);
+    --line: oklch(0.88 0.012 310);
+    --line-soft: oklch(0.92 0.008 310);
+    --ink: oklch(0.22 0.02 310);
+    --muted: oklch(0.52 0.02 310);
+    --muted2: oklch(0.4 0.02 310);
+    --accent: var(--brand-purple);
+    --accent-deep: var(--brand-purple-deep);
+    --positive: var(--brand-green);
+    --warn: oklch(0.72 0.16 65);
+    --danger: oklch(0.6 0.21 25);
+    --viewer: oklch(0.97 0.005 310);
+    --sans: 'Sarabun', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --thai: 'Sarabun', sans-serif;
+  }
+  [data-theme="dark"] {
+    --bg: oklch(0.17 0.018 310);
+    --bg-2: oklch(0.2 0.02 310);
+    --card: oklch(0.22 0.02 310);
+    --chip: oklch(0.27 0.022 310);
+    --line: oklch(0.32 0.022 310);
+    --line-soft: oklch(0.28 0.02 310);
+    --ink: oklch(0.96 0.005 310);
+    --muted: oklch(0.65 0.018 310);
+    --muted2: oklch(0.78 0.015 310);
+    --accent: oklch(0.72 0.16 310);
+    --viewer: oklch(0.21 0.018 310);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  :lang(th), body { font-family: var(--sans); }
+  button { font-family: inherit; color: inherit; }
+  a { color: inherit; }
+  input, select { font-family: inherit; color: inherit; }
+
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    border: 1px solid var(--accent);
+    padding: 10px 16px; border-radius: 6px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-deep); border-color: var(--accent-deep); }
+  .btn-primary:disabled { cursor: not-allowed; }
+
+  a { color: inherit; }
+  .nav-link:hover { color: var(--accent); background: color-mix(in oklch, var(--accent) 10%, transparent); }
+  .btn-ghost {
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 10px 16px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-ghost:hover { background: var(--card); }
+  .btn-accent {
+    background: var(--accent); color: #fff; border: none;
+    padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+    70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Tweaks panel */
+  .tweaks {
+    position: fixed; bottom: 16px; right: 16px; z-index: 100;
+    width: 280px;
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    font-family: var(--sans); overflow: hidden;
+  }
+  .tweaks-head {
+    padding: 10px 14px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
+    background: var(--card);
+  }
+  .tweaks-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+  .tweak-row { display: flex; flex-direction: column; gap: 6px; }
+  .tweak-row > label {
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.5px; font-family: var(--mono);
+  }
+  .tweak-opts { display: flex; gap: 4px; }
+  .tweak-opt {
+    flex: 1; padding: 6px 8px; font-size: 11px; border-radius: 4px;
+    background: var(--card); border: 1px solid var(--line);
+    cursor: pointer; text-align: center; color: var(--ink);
+    font-family: var(--sans); font-weight: 500;
+  }
+  .tweak-opt.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body data-new-gr-c-s-check-loaded="14.1284.0" data-gr-ext-installed="" data-cc-id="cc-1" style="background-color: rgb(0, 0, 0); cursor: crosshair; font-size: 13px;" data-new-gr-c-s-loaded="14.1284.0">
+<div id="root"><div data-screen-label="Quote Page" style="height: 100vh; display: grid; grid-template: &quot;header header header header&quot; 56px &quot;subhead subhead subhead subhead&quot; &quot;sidebar viewer config price&quot; 1fr / 280px 1fr 320px 360px; background: var(--bg); color: var(--ink);"><header style="grid-area: header; border-bottom: 1px solid var(--line); background: var(--bg); display: flex; align-items: center; padding: 0px 20px; height: 56px;"><div style="display: flex; align-items: center; gap: 32px; flex: 1 1 0%;" data-cc-id="cc-4"><div style="display: flex; align-items: center; gap: 8px;"><div style="width: 28px; height: 28px; background: var(--ink); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 13px; letter-spacing: -0.5px; border-radius: 4px;">P</div><div style="font-weight: 700; font-size: 14px; letter-spacing: 1px;">PRINT&nbsp;MY&nbsp;DESIGN</div></div><nav style="display: flex; gap: 4px; font-size: 13px;"><a href="#" style="padding: 6px 10px; color: var(--ink); text-decoration: none; border-radius: 4px;">บริการ</a><a href="#" style="padding: 6px 10px; color: var(--ink); text-decoration: none; border-radius: 4px;">วัสดุ</a><a href="#" style="padding: 6px 10px; color: var(--ink); text-decoration: none; border-radius: 4px;">โมเดล 3D ฟรี</a><a href="#" style="padding: 6px 10px; color: var(--ink); text-decoration: none; border-radius: 4px;">ช่วยเหลือ</a><a href="#" style="padding: 6px 10px; color: var(--ink); text-decoration: none; border-radius: 4px;">เกี่ยวกับเรา</a></nav></div><div style="display: flex; align-items: center; gap: 8px;"><div style="position: relative;"><button style="width: auto; height: 34px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--ink); padding: 0px 10px; gap: 6px; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 1px;" data-cc-id="cc-3"><span style="font-size: 13px;">🇹🇭</span>TH<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="m5 6 3 3 3-3"></path></svg></button></div><button style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--ink);"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M2 8a6 6 0 1 0 2-4.5"></path><path d="M2 2v3h3M8 4v4l2.5 2"></path></svg></button><button style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--ink);"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="8" cy="5" r="2.5"></circle><path d="M3 14a5 5 0 0 1 10 0"></path></svg></button><button style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; color: var(--ink); position: relative;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M1.5 2h2l1.5 9a1 1 0 0 0 1 .8h6.4a1 1 0 0 0 1-.7L15 5H4"></path><circle cx="6" cy="14" r="0.8"></circle><circle cx="12" cy="14" r="0.8"></circle></svg><span style="position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; background: var(--accent); color: rgb(255, 255, 255); border-radius: 50%; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; font-family: var(--mono);">2</span></button><div style="width: 1px; height: 20px; background: var(--line); margin: 0px 4px;"></div><button class="btn-primary" style="padding: 8px 14px; font-size: 12px; background-color: rgb(0, 0, 0);" data-cc-id="cc-2">สั่งพิมพ์เลย</button></div></header><div style="grid-area: subhead; padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; flex-wrap: wrap;"><div style="flex: 1 1 0%; min-width: 200px;"><div style="font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px;">Instant Quote · เรียลไทม์</div><h1 style="font-size: 22px; font-weight: 700; margin: 0px; letter-spacing: -0.5px;">คำนวณราคาพิมพ์ 3 มิติออนไลน์</h1></div><div style="display: flex; align-items: center; gap: 12px;"><a href="#" style="font-size: 12px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px;">คู่มือการพิมพ์ 3D <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="m6 4 3 4-3 4"></path></svg></a><a href="#" style="font-size: 12px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M2 8a6 6 0 1 0 2-4.5"></path><path d="M2 2v3h3M8 4v4l2.5 2"></path></svg> ประวัติการอัปโหลด</a><div style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px dashed var(--line); border-radius: 4px; font-family: var(--mono); font-size: 10px; color: var(--muted);"><span>STATE</span><select style="border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: transparent; font-family: var(--mono); font-size: 10px; color: var(--ink); font-weight: 600; cursor: pointer; text-transform: uppercase;"><option value="empty">Empty</option><option value="uploading">Uploading</option><option value="analyzing">Analyzing</option><option value="priced">Priced</option><option value="multi">Multi-part</option><option value="warning">Warnings</option></select></div></div></div><aside style="grid-area: sidebar; border-right: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden;"><div style="padding: 16px; border-bottom: 1px solid var(--line);"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><div style="font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);">ไฟล์ · 1</div><button style="background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: var(--sans); color: var(--ink);"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 3v10M3 8h10"></path></svg> เพิ่ม</button><input type="file" style="display: none;"></div><button style="width: 100%; padding: 14px 12px; border: 1.5px dashed var(--line); border-radius: 6px; background: var(--card); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted);"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 10V2M8 2L5 5M8 2L11 5"></path><path d="M2 10v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3"></path></svg><div style="font-size: 11px; font-weight: 600; color: var(--ink);">ลากวางหรือเลือกไฟล์ 3D</div><div style="font-size: 10px; font-family: var(--mono); letter-spacing: 0.5px;">STL · STEP · OBJ · 3MF</div></button></div><div style="flex: 1 1 0%; overflow: auto;"><div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; border-left: 2px solid var(--accent); background: var(--card); border-bottom: 1px solid var(--line);"><div style="width: 32px; height: 32px; border-radius: 4px; background: var(--chip); display: flex; align-items: center; justify-content: center; color: var(--muted); flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 1.5 2 4.5v7L8 14.5l6-3v-7L8 1.5z"></path><path d="M2 4.5 8 7.5l6-3M8 7.5V14.5"></path></svg></div><div style="flex: 1 1 0%; min-width: 0px;"><div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">bracket_v3.stl</div><div style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 2px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgb(22, 163, 74); box-shadow: none; animation: auto ease 0s 1 normal none running none;"></span>12.4 cm³ · ×2</div></div><button style="background: transparent; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; color: var(--muted); cursor: pointer; padding: 4px;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.5 9a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1L12 4"></path></svg></button></div></div><div style="padding: 12px; border-top: 1px solid var(--line); background: var(--card);"><div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.5px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 1.5 2.5 3.5v5c0 3 2.5 5 5.5 6 3-1 5.5-3 5.5-6v-5L8 1.5z"></path></svg>การอัปโหลดเข้ารหัสและเป็นความลับ</div></div></aside><div style="grid-area: viewer; display: flex; flex-direction: column; overflow: hidden;"><div style="padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><div style="display: flex; align-items: center; gap: 8px;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 2h6l4 4v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"></path><path d="M9 2v4h4"></path></svg><span style="font-size: 13px; font-weight: 600;">bracket_v3.stl</span><span style="font-family: var(--mono); font-size: 10px; color: var(--muted); padding: 2px 6px; background: var(--chip); border-radius: 3px;">50 KB</span></div><div style="flex: 1 1 0%;"></div><div style="display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--card);"><button style="flex: 1 1 0%; padding: 6px 8px; font-size: 11px; font-family: var(--sans); background: var(--ink); color: var(--bg); border-top-width: medium; border-right: 1px solid var(--line); border-bottom-width: medium; border-left-width: medium; border-top-style: none; border-bottom-style: none; border-left-style: none; border-top-color: currentcolor; border-bottom-color: currentcolor; border-left-color: currentcolor; border-image: initial; cursor: pointer; white-space: nowrap; font-weight: 600; transition: background 0.15s;">Shaded</button><button style="flex: 1 1 0%; padding: 6px 8px; font-size: 11px; font-family: var(--sans); background: transparent; color: var(--ink); border-top-width: medium; border-right: 1px solid var(--line); border-bottom-width: medium; border-left-width: medium; border-top-style: none; border-bottom-style: none; border-left-style: none; border-top-color: currentcolor; border-bottom-color: currentcolor; border-left-color: currentcolor; border-image: initial; cursor: pointer; white-space: nowrap; font-weight: 500; transition: background 0.15s;">Wireframe</button><button style="flex: 1 1 0%; padding: 6px 8px; font-size: 11px; font-family: var(--sans); background: transparent; color: var(--ink); border-top-width: medium; border-right: 1px solid var(--line); border-bottom-width: medium; border-left-width: medium; border-top-style: none; border-bottom-style: none; border-left-style: none; border-top-color: currentcolor; border-bottom-color: currentcolor; border-left-color: currentcolor; border-image: initial; cursor: pointer; white-space: nowrap; font-weight: 500; transition: background 0.15s;">ความหนาผนัง</button><button style="flex: 1 1 0%; padding: 6px 8px; font-size: 11px; font-family: var(--sans); background: transparent; color: var(--ink); border-top-width: medium; border-right: 1px solid var(--line); border-bottom-width: medium; border-left-width: medium; border-top-style: none; border-bottom-style: none; border-left-style: none; border-top-color: currentcolor; border-bottom-color: currentcolor; border-left-color: currentcolor; border-image: initial; cursor: pointer; white-space: nowrap; font-weight: 500; transition: background 0.15s;">ขนาด</button></div></div><div style="flex: 1 1 0%; position: relative; background: var(--viewer); overflow: hidden;"><svg viewBox="-120 -120 240 240" width="100%" height="100%" style="cursor: grab; display: block; user-select: none;"><defs><pattern id="dotgrid" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="0.5" fill="rgba(30,36,51,0.15)"></circle></pattern></defs><rect x="-120" y="-120" width="240" height="240" fill="url(#dotgrid)"></rect><line x1="-120" y1="0" x2="120" y2="0" stroke="rgba(30,36,51,0.08)" stroke-width="0.5"></line><line x1="0" y1="-120" x2="0" y2="120" stroke="rgba(30,36,51,0.08)" stroke-width="0.5"></line><ellipse cx="0" cy="55" rx="55" ry="8" fill="rgba(30,36,51,0.12)"></ellipse><g><polygon points="31.176914536239792,28.70898547872384 31.176914536239792,-16.39626031899977 35.97691453623979,-19.2397623931696 35.97691453623979,25.86548340455401" fill="#b3bdd0" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="31.176914536239792,-16.39626031899977 -31.176914536239792,-28.70898547872384 -26.37691453623979,-31.552487552893666 35.97691453623979,-19.2397623931696" fill="#d4dae8" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-31.176914536239792,16.39626031899977 31.176914536239792,28.70898547872384 31.176914536239792,-16.39626031899977 -31.176914536239792,-28.70898547872384" fill="#a8b3c7" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-26.37691453623979,-22.531438393348942 35.97691453623979,-10.218713233624873 35.97691453623979,-19.2397623931696 -26.37691453623979,-31.552487552893666" fill="#c7d0e0" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="35.97691453623979,-10.218713233624873 35.97691453623979,-19.2397623931696 59.97691453623979,-33.45727276401874 59.97691453623979,-24.436223604474016" fill="#b3bdd0" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-26.37691453623979,13.55275824482994 35.97691453623979,25.86548340455401 35.97691453623979,-19.2397623931696 -26.37691453623979,-31.552487552893666" fill="#e4e9f2" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-31.176914536239792,16.39626031899977 31.176914536239792,28.70898547872384 35.97691453623979,25.86548340455401 -26.37691453623979,13.55275824482994" fill="#c7d0e0" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="35.97691453623979,-19.2397623931696 -26.37691453623979,-31.552487552893666 -2.3769145362397963,-45.769997923742814 59.97691453623979,-33.45727276401874" fill="#a8b3c7" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-31.176914536239792,-28.70898547872384 -31.176914536239792,16.39626031899977 -26.37691453623979,13.55275824482994 -26.37691453623979,-31.552487552893666" fill="#b3bdd0" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-26.37691453623979,-22.531438393348942 35.97691453623979,-10.218713233624873 59.97691453623979,-24.436223604474016 -2.3769145362397963,-36.74894876419808" fill="#d4dae8" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-26.37691453623979,-31.552487552893666 -26.37691453623979,-22.531438393348942 -2.3769145362397963,-36.74894876419808 -2.3769145362397963,-45.769997923742814" fill="#b3bdd0" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon><polygon points="-2.3769145362397963,-36.74894876419808 59.97691453623979,-24.436223604474016 59.97691453623979,-33.45727276401874 -2.3769145362397963,-45.769997923742814" fill="#dde3ee" stroke="rgba(30,36,51,0.35)" stroke-width="0.4" fill-opacity="1"></polygon></g></svg><div style="position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 4px;"><button style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); cursor: pointer;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M2 8a6 6 0 0 1 10.5-4"></path><path d="M13 2v3h-3"></path><path d="M14 8a6 6 0 0 1-10.5 4"></path><path d="M3 14v-3h3"></path></svg></button><button style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); cursor: pointer;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="7" cy="7" r="4.5"></circle><path d="m13.5 13.5-3.2-3.2M7 5v4M5 7h4"></path></svg></button><button style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); cursor: pointer;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="7" cy="7" r="4.5"></circle><path d="m13.5 13.5-3.2-3.2M5 7h4"></path></svg></button><button style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); cursor: pointer;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 2v12M2 8h12M8 2l-2 2M8 2l2 2M8 14l-2-2M8 14l2-2M2 8l2-2M2 8l2 2M14 8l-2-2M14 8l-2 2"></path></svg></button></div><div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px;"><div style="width: auto; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--muted); cursor: default; padding: 4px 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 1px;">ISO</div><div style="display: flex; gap: 4px;"><button style="width: 28px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); cursor: pointer; font-family: var(--mono); font-size: 10px; font-weight: 700;">X</button><button style="width: 28px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); cursor: pointer; font-family: var(--mono); font-size: 10px; font-weight: 700;">Y</button><button style="width: 28px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); cursor: pointer; font-family: var(--mono); font-size: 10px; font-weight: 700;">Z</button></div></div><div style="position: absolute; bottom: 12px; left: 12px; display: flex; flex-direction: column; gap: 3px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; background: rgba(255, 255, 255, 0.92); padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink);"><div style="color: var(--muted); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px;">Bounding box</div><div>X &nbsp; 60.0 mm</div><div>Y &nbsp; 40.0 mm</div><div>Z &nbsp; 48.0 mm</div></div></div><div style="border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(6, 1fr);"><div style="padding: 10px 14px; border-right: 1px solid var(--line);"><div style="font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);">Volume</div><div style="font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 2px;">12.4<span style="color: var(--muted); font-size: 10px; margin-left: 3px;">cm³</span></div></div><div style="padding: 10px 14px; border-right: 1px solid var(--line);"><div style="font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);">Surface</div><div style="font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 2px;">104<span style="color: var(--muted); font-size: 10px; margin-left: 3px;">cm²</span></div></div><div style="padding: 10px 14px; border-right: 1px solid var(--line);"><div style="font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);">Weight</div><div style="font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 2px;">15.4<span style="color: var(--muted); font-size: 10px; margin-left: 3px;">g</span></div></div><div style="padding: 10px 14px; border-right: 1px solid var(--line);"><div style="font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);">Triangles</div><div style="font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 2px;">18,432<span style="color: var(--muted); font-size: 10px; margin-left: 3px;"></span></div></div><div style="padding: 10px 14px; border-right: 1px solid var(--line);"><div style="font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);">Watertight</div><div style="font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 2px;">YES<span style="color: var(--muted); font-size: 10px; margin-left: 3px;"></span></div></div><div style="padding: 10px 14px; border-right-width: medium; border-right-style: none; border-right-color: currentcolor;"><div style="font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted);">Print time</div><div style="font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 2px;">8<span style="color: var(--muted); font-size: 10px; margin-left: 3px;">h</span></div></div></div></div><aside style="grid-area: config; border-left: 1px solid var(--line); overflow: auto; background: var(--bg);"><div style="padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between;"><div><div style="font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);">Configuration</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px;">ตั้งค่าการพิมพ์</div></div><button style="background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; font-size: 10px; font-family: var(--mono); letter-spacing: 0.5px; color: var(--muted); cursor: pointer;">COPY TO ALL</button></div><div style="padding: 18px;"><div style="margin-bottom: 22px;"><div style="font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">1. กระบวนการ (Process)</div><div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;"><button style="padding: 8px 4px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--ink); color: var(--bg); border: 1px solid var(--ink); border-radius: 4px; cursor: pointer;">FDM</button><button style="padding: 8px 4px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">SLA</button><button style="padding: 8px 4px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">MJF</button><button style="padding: 8px 4px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">SLS</button><button style="padding: 8px 4px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">SLM</button></div></div><div style="margin-bottom: 22px;"><div style="font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">2. วัสดุ (Material)</div><div style="display: grid; gap: 8px;"><div style="text-align: left; padding: 14px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; width: 100%; display: flex; flex-direction: column; gap: 8px; transition: 0.15s;"><div style="display: flex; align-items: center; gap: 8px;"><span style="font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 2px 6px; border-radius: 3px; background: var(--chip); color: var(--muted);">FDM</span><span style="font-family: var(--mono); font-size: 10px; margin-left: auto; color: var(--muted);">฿1.00/cm³</span></div><div><div style="font-weight: 600; font-size: 13px;">PLA Standard</div><div style="font-size: 11px; color: var(--muted); margin-top: 2px;">เหมาะสำหรับงานต้นแบบทั่วไป</div></div><div style="display: flex; gap: 6px; margin-top: 2px; flex-wrap: wrap;"><a href="#tds/pla-standard.pdf" target="_blank" rel="noopener" title="Technical Data Sheet" style="display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 3px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; background: transparent; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 2h6l4 4v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"></path><path d="M9 2v4h4"></path></svg> TDS</a><a href="#sds/pla-standard.pdf" target="_blank" rel="noopener" title="Safety Data Sheet" style="display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 3px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; background: transparent; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 1.5 2.5 3.5v5c0 3 2.5 5 5.5 6 3-1 5.5-3 5.5-6v-5L8 1.5z"></path></svg> SDS</a></div></div><div style="text-align: left; padding: 14px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; width: 100%; display: flex; flex-direction: column; gap: 8px; transition: 0.15s;"><div style="display: flex; align-items: center; gap: 8px;"><span style="font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 2px 6px; border-radius: 3px; background: var(--chip); color: var(--muted);">FDM</span><span style="font-family: var(--mono); font-size: 10px; margin-left: auto; color: var(--muted);">฿1.20/cm³</span></div><div><div style="font-weight: 600; font-size: 13px;">PETG</div><div style="font-size: 11px; color: var(--muted); margin-top: 2px;">ทนทาน กันกระแทก กันน้ำ</div></div><div style="display: flex; gap: 6px; margin-top: 2px; flex-wrap: wrap;"><a href="#tds/petg.pdf" target="_blank" rel="noopener" title="Technical Data Sheet" style="display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 3px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; background: transparent; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 2h6l4 4v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"></path><path d="M9 2v4h4"></path></svg> TDS</a><a href="#sds/petg.pdf" target="_blank" rel="noopener" title="Safety Data Sheet" style="display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 3px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; background: transparent; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 1.5 2.5 3.5v5c0 3 2.5 5 5.5 6 3-1 5.5-3 5.5-6v-5L8 1.5z"></path></svg> SDS</a></div></div><div style="text-align: left; padding: 14px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; width: 100%; display: flex; flex-direction: column; gap: 8px; transition: 0.15s;"><div style="display: flex; align-items: center; gap: 8px;"><span style="font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 2px 6px; border-radius: 3px; background: var(--chip); color: var(--muted);">FDM</span><span style="font-family: var(--mono); font-size: 10px; margin-left: auto; color: var(--muted);">฿1.40/cm³</span></div><div><div style="font-weight: 600; font-size: 13px;">ABS Pro</div><div style="font-size: 11px; color: var(--muted); margin-top: 2px;">งานทนร้อน ทนแรงกระแทก</div></div><div style="display: flex; gap: 6px; margin-top: 2px; flex-wrap: wrap;"><a href="#tds/abs-pro.pdf" target="_blank" rel="noopener" title="Technical Data Sheet" style="display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 3px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; background: transparent; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 2h6l4 4v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"></path><path d="M9 2v4h4"></path></svg> TDS</a><a href="#sds/abs-pro.pdf" target="_blank" rel="noopener" title="Safety Data Sheet" style="display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 3px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; background: transparent; cursor: pointer;"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 1.5 2.5 3.5v5c0 3 2.5 5 5.5 6 3-1 5.5-3 5.5-6v-5L8 1.5z"></path></svg> SDS</a></div></div></div><div style="margin-top: 12px; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 4px; display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--mono);"><span style="width: 52px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">ความแข็ง</span><div style="display: flex; gap: 2px;"><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div></div></div><div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--mono);"><span style="width: 52px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">ผิวงาน</span><div style="display: flex; gap: 2px;"><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--line);"></div></div></div><div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--mono);"><span style="width: 52px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">ทนร้อน</span><div style="display: flex; gap: 2px;"><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--ink);"></div><div style="width: 8px; height: 10px; background: var(--line);"></div></div></div></div></div><div style="margin-bottom: 22px;"><div style="font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">3. สี (Color)</div><div style="display: flex; gap: 6px; flex-wrap: wrap;"><button title="ขาว" style="width: 32px; height: 32px; border-radius: 50%; background: rgb(243, 244, 246); border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button><button title="เทา" style="width: 32px; height: 32px; border-radius: 50%; background: rgb(156, 163, 175); border: 2px solid var(--ink); outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button><button title="ดำ" style="width: 32px; height: 32px; border-radius: 50%; background: rgb(31, 41, 55); border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button><button title="แดง" style="width: 32px; height: 32px; border-radius: 50%; background: rgb(220, 38, 38); border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button><button title="น้ำเงิน" style="width: 32px; height: 32px; border-radius: 50%; background: rgb(37, 99, 235); border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button><button title="เหลือง" style="width: 32px; height: 32px; border-radius: 50%; background: rgb(234, 179, 8); border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button><button title="เขียว" style="width: 32px; height: 32px; border-radius: 50%; background: rgb(22, 163, 74); border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button><button title="ใส" style="width: 32px; height: 32px; border-radius: 50%; background: repeating-linear-gradient(45deg, rgb(229, 231, 235), rgb(229, 231, 235) 3px, rgb(255, 255, 255) 3px, rgb(255, 255, 255) 6px); border: 2px solid transparent; outline: 1px solid var(--line); cursor: pointer; padding: 0px;"></button></div></div><div style="margin-bottom: 22px;"><div style="font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">4. เติมเนื้อใน (Infill)</div><div style="display: flex; gap: 4px;"><button style="flex: 1 1 0%; padding: 8px 0px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">10%</button><button style="flex: 1 1 0%; padding: 8px 0px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">20%</button><button style="flex: 1 1 0%; padding: 8px 0px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--ink); color: var(--bg); border: 1px solid var(--ink); border-radius: 4px; cursor: pointer;">30%</button><button style="flex: 1 1 0%; padding: 8px 0px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">50%</button><button style="flex: 1 1 0%; padding: 8px 0px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">80%</button><button style="flex: 1 1 0%; padding: 8px 0px; font-size: 11px; font-family: var(--mono); font-weight: 600; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;">100%</button></div><div style="font-size: 10px; color: var(--muted); margin-top: 6px; font-family: var(--mono);">30% · แข็งแรงปานกลาง</div></div><div style="margin-bottom: 22px;"><div style="font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">5. ผิวงาน (Finish)</div><div style="display: grid; gap: 4px;"><button style="padding: 10px 12px; font-size: 12px; text-align: left; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 600;">มาตรฐาน (Standard)</span><span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">รวมในราคา</span></button><button style="padding: 10px 12px; font-size: 12px; text-align: left; background: var(--ink); color: var(--bg); border: 1px solid var(--ink); border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 600;">ขัดเรียบ (Sanded)</span><span style="font-family: var(--mono); font-size: 11px; color: rgba(255, 255, 255, 0.7);">+฿80</span></button><button style="padding: 10px 12px; font-size: 12px; text-align: left; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 600;">พ่นรองพื้น (Primed)</span><span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">+฿150</span></button><button style="padding: 10px 12px; font-size: 12px; text-align: left; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 600;">พ่นสี (Painted)</span><span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">+฿250</span></button><button style="padding: 10px 12px; font-size: 12px; text-align: left; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 600;">ขัดเงา (Polished)</span><span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">+฿320</span></button></div></div><div style="margin-bottom: 22px;"><div style="font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">6. จำนวน &amp; เวลาจัดส่ง</div><div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;"><div style="font-size: 12px; color: var(--muted); flex: 1 1 0%;">จำนวน</div><div style="display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--card); width: 140px;"><button style="width: 32px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ink);"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 8h10"></path></svg></button><input type="text" value="2" style="flex: 1 1 0%; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: transparent; text-align: center; font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--ink); outline: none;"><button style="width: 32px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--ink);"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M8 3v10M3 8h10"></path></svg></button></div></div><div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;"><button style="padding: 10px 6px; text-align: center; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;"><div style="font-size: 11px; font-weight: 600;">ประหยัด</div><div style="font-size: 10px; font-family: var(--mono); margin-top: 2px; color: var(--muted);">7-10 วัน</div></button><button style="padding: 10px 6px; text-align: center; background: var(--ink); color: var(--bg); border: 1px solid var(--ink); border-radius: 4px; cursor: pointer;"><div style="font-size: 11px; font-weight: 600;">ปกติ</div><div style="font-size: 10px; font-family: var(--mono); margin-top: 2px; color: rgba(255, 255, 255, 0.7);">4-5 วัน</div></button><button style="padding: 10px 6px; text-align: center; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; cursor: pointer;"><div style="font-size: 11px; font-weight: 600;">ด่วน</div><div style="font-size: 10px; font-family: var(--mono); margin-top: 2px; color: var(--muted);">2 วัน</div></button></div></div></div></aside><aside style="grid-area: price; border-left: 1px solid var(--line); background: var(--card); display: flex; flex-direction: column; overflow: hidden;"><div style="padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--bg);"><div style="font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);">Price breakdown</div><div style="font-size: 14px; font-weight: 600; margin-top: 2px;">รายละเอียดราคา</div></div><div style="flex: 1 1 0%; overflow: auto; padding: 12px 0px;"><div style="padding: 10px 18px; border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor;"><div style="display: flex; align-items: flex-start; gap: 10px;"><div style="flex: 1 1 0%; min-width: 0px;"><div style="font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">bracket_v3.stl</div><div style="font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 2px;">Nylon PA12 · เทา · ×2</div></div><div style="font-family: var(--mono); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;">฿6,002.08</div></div><div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 4px;"><span>฿3,001.04 / ชิ้น</span><span>+ ขัดเรียบ (Sanded)</span></div></div><div style="padding: 14px 18px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: 12px;"><div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--ink); font-weight: 600;"><span style="color: inherit;">Subtotal</span><span style="font-variant-numeric: tabular-nums; color: inherit;">฿6,002.08</span></div><div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 400;"><span style="color: inherit;">ค่าเตรียมงาน</span><span style="font-variant-numeric: tabular-nums; color: inherit;">฿150.00</span></div><div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 400;"><span style="color: var(--accent);">FIRST25 คูปอง</span><span style="font-variant-numeric: tabular-nums; color: var(--accent);">−฿25.00</span></div><div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 400;"><span style="color: inherit;">VAT 7%</span><span style="font-variant-numeric: tabular-nums; color: inherit;">฿428.90</span></div></div></div><div style="padding: 12px 18px; border-top: 1px solid var(--line); background: var(--bg);"><div style="font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px;">Coupon</div><div style="display: flex; gap: 6px;"><div style="flex: 1 1 0%; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--card);"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; color: var(--accent);"><path d="m8 1.5-6.5.5v6L8 14.5l6.5-6.5v-6L8 1.5z"></path><circle cx="10" cy="6" r="0.8"></circle></svg><input type="text" placeholder="ใส่โค้ดส่วนลด" value="FIRST25" style="flex: 1 1 0%; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; background: transparent; outline: none; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; color: var(--ink);"><span style="font-size: 9px; font-family: var(--mono); color: var(--accent); letter-spacing: 1px;">ACTIVE</span></div><button class="btn-ghost" style="padding: 6px 12px; font-size: 11px;">นำออก</button></div></div><div style="padding: 12px 18px; border-top: 1px solid var(--line); background: var(--bg); display: flex; align-items: center; gap: 10px;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; color: var(--muted);"><path d="M1.5 4h8v7h-8zM9.5 6h3l2 2.5V11H9.5z"></path><circle cx="4" cy="12.5" r="1.2"></circle><circle cx="12" cy="12.5" r="1.2"></circle></svg><div style="flex: 1 1 0%;"><div style="font-size: 11px; font-weight: 600;">จัดส่งถึงกรุงเทพ</div><div style="font-size: 10px; color: var(--muted); font-family: var(--mono);">น้ำหนัก 31g · Kerry 4-5 วัน</div></div><div style="font-family: var(--mono); font-size: 11px; font-weight: 600;">฿85.00</div></div><div style="padding: 16px 18px; border-top: 1px solid var(--line); background: var(--ink); color: var(--bg);"><div style="display: flex; align-items: baseline; justify-content: space-between;"><div><div style="font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.6;">Total · รวม</div><div style="font-family: var(--mono); font-size: 9px; opacity: 0.5; margin-top: 2px;">รวม VAT 7% แล้ว</div></div><div style="font-family: var(--mono); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -1px;">฿6,555.98</div></div></div><div style="padding: 16px; border-top: 1px solid var(--line); background: var(--card);"><label style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 10px; cursor: pointer; line-height: 1.4;"><input type="checkbox" style="margin-top: 1px; accent-color: var(--accent);"><span>ฉันยอมรับ <a href="#" style="color: var(--ink);">เงื่อนไขการใช้งาน</a></span></label><button class="btn-primary" disabled="" style="width: 100%; padding: 12px; font-size: 13px; font-weight: 600; opacity: 0.5;">สั่งพิมพ์เลย · Place order</button><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;"><button class="btn-ghost" style="padding: 8px; font-size: 11px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-right: 4px; vertical-align: middle;"><path d="M8 2v8M8 10 5 7M8 10l3-3"></path><path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"></path></svg>ใบเสนอราคา</button><button class="btn-ghost" style="padding: 8px; font-size: 11px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-right: 4px; vertical-align: middle;"><path d="M1.5 2h2l1.5 9a1 1 0 0 0 1 .8h6.4a1 1 0 0 0 1-.7L15 5H4"></path><circle cx="6" cy="14" r="0.8"></circle><circle cx="12" cy="14" r="0.8"></circle></svg>บันทึกตะกร้า</button></div><div style="margin-top: 10px; font-size: 10px; color: var(--muted); text-align: center; line-height: 1.5; font-family: var(--mono);">อาจมีค่าใช้จ่ายเพิ่มเติมสำหรับกรณีพิเศษ</div></div></aside><div class="tweaks"><div class="tweaks-head"><span>Tweaks</span><button style="background: transparent; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; cursor: pointer; color: var(--muted); font-size: 14px;">×</button></div><div class="tweaks-body"><div class="tweak-row"><label>Theme</label><div class="tweak-opts"><button class="tweak-opt active">light</button><button class="tweak-opt ">dark</button></div></div><div class="tweak-row"><label>Accent</label><div class="tweak-opts"><button class="tweak-opt " style="border-left: 4px solid oklch(0.58 0.17 255);">blue</button><button class="tweak-opt " style="border-left: 4px solid oklch(0.68 0.17 55);">orange</button><button class="tweak-opt active" style="border-left: 4px solid oklch(0.62 0.15 150);">green</button><button class="tweak-opt " style="border-left: 4px solid oklch(0.6 0.2 335);">magenta</button></div></div><div class="tweak-row"><label>Layout</label><div class="tweak-opts"><button class="tweak-opt active">Balanced</button><button class="tweak-opt ">Viewer+</button><button class="tweak-opt ">Config+</button></div></div><div class="tweak-row"><label>Scenario</label><select style="padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--card); font-size: 11px; font-family: var(--mono);"><option value="empty">Empty</option><option value="uploading">Uploading</option><option value="analyzing">Analyzing</option><option value="priced">Priced</option><option value="multi">Multi-part</option><option value="warning">Warnings</option></select></div></div></div></div></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/icons.jsx" data-plugins="transform-react-jsx-source" data-filename="components/icons.jsx"></script>
+<script type="text/babel" src="components/i18n.jsx" data-plugins="transform-react-jsx-source" data-filename="components/i18n.jsx"></script>
+<script type="text/babel" src="components/ui.jsx" data-plugins="transform-react-jsx-source" data-filename="components/ui.jsx"></script>
+<script type="text/babel" src="components/model-viewer.jsx" data-plugins="transform-react-jsx-source" data-filename="components/model-viewer.jsx"></script>
+<script type="text/babel" src="components/app-parts.jsx" data-plugins="transform-react-jsx-source" data-filename="components/app-parts.jsx"></script>
+<script type="text/babel" src="components/quote-modal.jsx" data-plugins="transform-react-jsx-source" data-filename="components/quote-modal.jsx"></script>
+<script type="text/babel" src="components/app-config.jsx" data-plugins="transform-react-jsx-source" data-filename="components/app-config.jsx"></script>
+
+<script type="text/babel" data-presets="env,react" data-plugins="transform-react-jsx-source" data-filename="inline-6">
+const { useState, useEffect, useMemo } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "light",
+  "layout": "balanced",
+  "accent": "purple",
+  "density": "comfortable"
+}/*EDITMODE-END*/;
+
+const ACCENT_MAP = {
+  purple:  { base: '#8848a8', deep: '#683888' },
+  green:   { base: '#28c868', deep: '#1ea552' },
+  deep:    { base: '#683888', deep: '#4a2864' },
+  magenta: { base: 'oklch(0.60 0.20 335)', deep: 'oklch(0.48 0.18 335)' },
+};
+
+function App() {
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [tweaksVisible, setTweaksVisible] = useState(false);
+  const [scenario, setScenario] = useState('priced');
+  const [lang, setLang] = useState('th');
+  const [parts, setParts] = useState([SAMPLE_PARTS[0]]);
+  const [activeId, setActiveId] = useState(1);
+  const [viewMode, setViewMode] = useState('shaded');
+  const [rotation, setRotation] = useState({ x: -20, y: 30 });
+
+  // Apply theme + accent
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', tweaks.theme);
+    const a = ACCENT_MAP[tweaks.accent] || ACCENT_MAP.purple;
+    document.documentElement.style.setProperty('--accent', a.base);
+    document.documentElement.style.setProperty('--accent-deep', a.deep);
+  }, [tweaks.theme, tweaks.accent]);
+
+  // Edit mode bridge
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setTweaksVisible(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksVisible(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const updateTweak = (k, v) => {
+    const next = { ...tweaks, [k]: v };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+
+  // Scenario -> parts state
+  useEffect(() => {
+    if (scenario === 'empty') { setParts([]); }
+    else if (scenario === 'uploading') { setParts([]); }
+    else if (scenario === 'analyzing') {
+      setParts([{ ...SAMPLE_PARTS[0], status: 'analyzing' }]);
+      setActiveId(1);
+    }
+    else if (scenario === 'priced') {
+      setParts([{ ...SAMPLE_PARTS[0], warnings: [] }]);
+      setActiveId(1);
+    }
+    else if (scenario === 'warning') {
+      setParts([{ ...SAMPLE_PARTS[0] }]);
+      setActiveId(1);
+    }
+    else if (scenario === 'multi') {
+      setParts([...SAMPLE_PARTS, {
+        id: 3, name: 'base_plate.stl', volume: 28.2, bbox: { x: 100, y: 100, z: 6 },
+        qty: 4, materialId: 'pla', finishId: 'standard', infill: 20, color: 'White',
+        status: 'ready', warnings: [], triangles: 8420, watertight: true,
+      }]);
+      setActiveId(1);
+    }
+  }, [scenario]);
+
+  const activePart = parts.find(p => p.id === activeId);
+
+  const updatePart = (patch) => {
+    setParts(ps => ps.map(p => p.id === activeId ? { ...p, ...patch } : p));
+  };
+
+  const onUpload = (name) => {
+    const id = Date.now();
+    const newPart = {
+      id, name, volume: 15 + Math.random() * 20,
+      bbox: { x: 60 + Math.floor(Math.random()*40), y: 40, z: 30 },
+      qty: 1, materialId: 'pla', finishId: 'standard', infill: 20, color: 'White',
+      status: 'analyzing', warnings: [], triangles: 10000 + Math.floor(Math.random()*40000),
+      watertight: true,
+    };
+    setParts(p => [...p, newPart]);
+    setActiveId(id);
+    setTimeout(() => {
+      setParts(ps => ps.map(p => p.id === id ? { ...p, status: 'ready' } : p));
+    }, 2000);
+  };
+
+  const onDelete = (id) => {
+    setParts(ps => ps.filter(p => p.id !== id));
+    if (activeId === id && parts.length > 1) {
+      const rest = parts.filter(p => p.id !== id);
+      setActiveId(rest[0]?.id);
+    }
+  };
+
+  // layout template
+  const layouts = {
+    balanced:    '280px 1fr 320px 360px',
+    viewer_wide: '240px 1fr 300px 320px',
+    config_wide: '260px 1.2fr 380px 340px',
+    stacked:     '260px 1fr 320px 360px', // same grid, different emphasis
+  };
+
+  const gridTemplateColumns = layouts[tweaks.layout] || layouts.balanced;
+
+  return (
+    <LangContext.Provider value={{ lang, setLang, t: I18N[lang] || I18N.th }}>
+    <div style={{
+      height: '100vh',
+      display: 'grid',
+      gridTemplateColumns,
+      gridTemplateRows: '56px auto 1fr',
+      gridTemplateAreas: `
+        "header header header header"
+        "subhead subhead subhead subhead"
+        "sidebar viewer config price"
+      `,
+      background: 'var(--bg)',
+      color: 'var(--ink)',
+    }} data-screen-label="Quote Page">
+      <Header />
+      <SubHeader scenario={scenario} setScenario={setScenario} />
+      <PartsSidebar
+        parts={parts} activeId={activeId} setActiveId={setActiveId}
+        onDelete={onDelete} onUpload={onUpload} scenario={scenario} />
+      <ViewerArea
+        part={activePart} scenario={scenario}
+        viewMode={viewMode} setViewMode={setViewMode}
+        rotation={rotation} setRotation={setRotation} />
+      {scenario === 'warning' && activePart?.warnings?.length > 0 && (
+        <div style={{ gridArea: 'viewer', position: 'relative', pointerEvents: 'none' }}>
+          <WarningBanner part={activePart} />
+        </div>
+      )}
+      <ConfigPanel part={activePart} updatePart={updatePart} />
+      <PricePanel parts={parts} scenario={scenario} />
+
+      {tweaksVisible && (
+        <div className="tweaks">
+          <div className="tweaks-head">
+            <span>Tweaks</span>
+            <button onClick={() => setTweaksVisible(false)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14 }}>×</button>
+          </div>
+          <div className="tweaks-body">
+            <div className="tweak-row">
+              <label>Theme</label>
+              <div className="tweak-opts">
+                {['light','dark'].map(t => (
+                  <button key={t} className={`tweak-opt ${tweaks.theme === t ? 'active' : ''}`}
+                    onClick={() => updateTweak('theme', t)}>{t}</button>
+                ))}
+              </div>
+            </div>
+            <div className="tweak-row">
+              <label>Accent</label>
+              <div className="tweak-opts">
+                {['purple','green','deep','magenta'].map(a => (
+                  <button key={a} className={`tweak-opt ${tweaks.accent === a ? 'active' : ''}`}
+                    onClick={() => updateTweak('accent', a)}
+                    style={{
+                      borderLeft: `4px solid ${ACCENT_MAP[a].base}`,
+                    }}>{a}</button>
+                ))}
+              </div>
+            </div>
+            <div className="tweak-row">
+              <label>Layout</label>
+              <div className="tweak-opts">
+                {[
+                  { v: 'balanced', l: 'Balanced' },
+                  { v: 'viewer_wide', l: 'Viewer+' },
+                  { v: 'config_wide', l: 'Config+' },
+                ].map(o => (
+                  <button key={o.v} className={`tweak-opt ${tweaks.layout === o.v ? 'active' : ''}`}
+                    onClick={() => updateTweak('layout', o.v)}>{o.l}</button>
+                ))}
+              </div>
+            </div>
+            <div className="tweak-row">
+              <label>Scenario</label>
+              <select value={scenario} onChange={e => setScenario(e.target.value)}
+                style={{ padding: '6px 8px', border: '1px solid var(--line)', borderRadius: 4,
+                  background: 'var(--card)', fontSize: 11, fontFamily: 'var(--mono)' }}>
+                <option value="empty">Empty</option>
+                <option value="uploading">Uploading</option>
+                <option value="analyzing">Analyzing</option>
+                <option value="priced">Priced</option>
+                <option value="multi">Multi-part</option>
+                <option value="warning">Warnings</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+    </LangContext.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+
+</body><grammarly-desktop-integration data-grammarly-shadow-root="true"></grammarly-desktop-integration></html>

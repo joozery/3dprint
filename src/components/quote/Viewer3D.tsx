@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js';
@@ -20,10 +20,34 @@ interface Viewer3DProps {
     fileName?: string | null;
     file?: File | null;
     color?: string;
+    viewMode?: string;
 }
 
-function Model({ url, fileName, color = "#3b82f6", onError }: { url: string; fileName?: string | null; color?: string; onError: (err: any) => void }) {
+export interface ViewerRef {
+    zoomIn: () => void;
+    zoomOut: () => void;
+    resetView: () => void;
+    setView: (axis: 'X' | 'Y' | 'Z' | 'ISO') => void;
+}
+
+function Model({ url, fileName, color = "#3b82f6", viewMode = 'shaded', onError }: { url: string; fileName?: string | null; color?: string; viewMode?: string; onError: (err: any) => void }) {
     const ext = fileName?.split('.').pop()?.toLowerCase();
+
+    const colorMap: { [key: string]: string } = {
+        'ขาว': '#ffffff',
+        'ขาวด้าน': '#f8f8f8',
+        'ดำ': '#1a1a1a',
+        'เทา': '#808080',
+        'แดง': '#ff0000',
+        'น้ำเงิน': '#0000ff',
+        'เหลือง': '#ffff00',
+        'เขียว': '#00ff00',
+        'ใส': '#e0e0e0',
+    };
+
+    const finalColor = colorMap[color] || color || "#3b82f6";
+    const isWireframe = viewMode === 'wireframe';
+    const isThickness = viewMode === 'ความหนาผนัง';
 
     // Use useLoader but handle errors via Suspense & Error Boundary
     const object = useLoader(
@@ -34,34 +58,46 @@ function Model({ url, fileName, color = "#3b82f6", onError }: { url: string; fil
     useMemo(() => {
         if (!object) return;
 
-        const material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(color),
-            roughness: 0.4,
-            metalness: 0.1
-        });
+        const material = isWireframe
+            ? new THREE.MeshBasicMaterial({
+                color: new THREE.Color('#2d3152'),
+                wireframe: true,
+            })
+            : isThickness
+            ? new THREE.MeshBasicMaterial({
+                color: new THREE.Color('#3b82f6'),
+            })
+            : new THREE.MeshStandardMaterial({
+                color: new THREE.Color(finalColor),
+                roughness: 0.4,
+                metalness: 0.1,
+            });
 
         if (object instanceof THREE.BufferGeometry) {
-            // STL returns geometry
             return;
         } else {
-            // 3MF/OBJ returns Group/Object3D
             object.traverse((child: any) => {
                 if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
+                    child.castShadow = !isWireframe && !isThickness;
+                    child.receiveShadow = !isWireframe && !isThickness;
                     child.material = material;
                 }
             });
         }
-    }, [object, color]);
+    }, [object, finalColor, isWireframe, isThickness]);
 
     if (!object) return null;
 
     if (object instanceof THREE.BufferGeometry) {
         return (
             <Center top>
-                <mesh geometry={object} castShadow receiveShadow>
-                    <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
+                <mesh geometry={object} castShadow={!isWireframe && !isThickness} receiveShadow={!isWireframe && !isThickness}>
+                    {isWireframe
+                        ? <meshBasicMaterial color="#2d3152" wireframe />
+                        : isThickness
+                        ? <meshBasicMaterial color="#3b82f6" />
+                        : <meshStandardMaterial color={finalColor} roughness={0.4} metalness={0.1} />
+                    }
                 </mesh>
             </Center>
         );
@@ -74,9 +110,54 @@ function Model({ url, fileName, color = "#3b82f6", onError }: { url: string; fil
     );
 }
 
-export function Viewer3D({ fileUrl, fileName, file, color }: Viewer3DProps) {
+export const Viewer3D = React.forwardRef<ViewerRef, Viewer3DProps>(({ fileUrl, fileName, file, color, viewMode = 'shaded' }, ref) => {
     const [objectUrl, setObjectUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const orbitRef = useRef<any>(null);
+
+    React.useImperativeHandle(ref, () => ({
+        zoomIn: () => {
+            if (orbitRef.current) {
+                const camera = orbitRef.current.object;
+                camera.position.multiplyScalar(0.9);
+                orbitRef.current.update();
+            }
+        },
+        zoomOut: () => {
+            if (orbitRef.current) {
+                const camera = orbitRef.current.object;
+                camera.position.multiplyScalar(1.1);
+                orbitRef.current.update();
+            }
+        },
+        resetView: () => {
+            if (orbitRef.current) {
+                orbitRef.current.reset();
+            }
+        },
+        setView: (axis: 'X' | 'Y' | 'Z' | 'ISO') => {
+            if (orbitRef.current) {
+                const camera = orbitRef.current.object;
+                const distance = camera.position.length();
+                switch (axis) {
+                    case 'X':
+                        camera.position.set(distance, 0, 0);
+                        break;
+                    case 'Y':
+                        camera.position.set(0, distance, 0);
+                        break;
+                    case 'Z':
+                        camera.position.set(0, 0, distance);
+                        break;
+                    case 'ISO':
+                        const iso = distance / Math.sqrt(3);
+                        camera.position.set(iso, iso, iso);
+                        break;
+                }
+                orbitRef.current.update();
+            }
+        }
+    }));
 
     useEffect(() => {
         setError(null);
@@ -97,7 +178,7 @@ export function Viewer3D({ fileUrl, fileName, file, color }: Viewer3DProps) {
 
     if (error) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50">
+            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
                 <p className="text-[10px] font-bold text-red-500 uppercase mb-1">Preview Error</p>
                 <p className="text-[9px] text-slate-400 leading-tight">{error}</p>
             </div>
@@ -107,24 +188,26 @@ export function Viewer3D({ fileUrl, fileName, file, color }: Viewer3DProps) {
     if (!objectUrl) return null;
 
     return (
-        <div className="w-full h-full bg-slate-50 cursor-grab active:cursor-grabbing">
+        <div className="w-full h-full cursor-grab active:cursor-grabbing">
             <Canvas
-                shadows
+                shadows={viewMode !== 'wireframe'}
                 camera={{ position: [100, 100, 100], fov: 45 }}
-                gl={{ antialias: true, preserveDrawingBuffer: true }}
+                gl={{ antialias: true, preserveDrawingBuffer: true, alpha: true }}
                 dpr={[1, 2]}
                 onError={(e) => setError("ไม่สามารถประมวลผลโมเดล 3D ได้")}
             >
-                <Stage intensity={0.5} environment="city" shadows="contact" adjustCamera={1.2}>
-                    <ErrorBoundary onError={(e) => setError("ไม่สามารถดึงข้อมูลโมเดล 3D ได้ (โครงสร้างไฟล์ซับซ้อนเกินไป)")}>
+                <Stage intensity={viewMode === 'wireframe' ? 0 : 0.5} environment={viewMode === 'wireframe' ? undefined : "city"} shadows={viewMode === 'wireframe' ? false : "contact"} adjustCamera={1.2}>
+                    <ErrorBoundary onError={(e) => setError("ไม่สามารถดึงข้อมูลโมเดล 3D ได้ (โครงสร้างไฟล์ซับซ้อนเกินไป)")}>  
                         <React.Suspense fallback={null}>
-                            <Model url={objectUrl} fileName={file?.name || fileName} color={color} onError={(e) => setError("โครงสร้างไฟล์ 3D ไม่ถูกต้อง")} />
+                            <Model url={objectUrl} fileName={file?.name || fileName} color={color} viewMode={viewMode} onError={(e) => setError("โครงสร้างไฟล์ 3D ไม่ถูกต้อง")} />
                         </React.Suspense>
                     </ErrorBoundary>
                 </Stage>
-                <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 1.75} />
+                <OrbitControls ref={orbitRef} makeDefault />
                 <AdaptiveDpr pixelated />
             </Canvas>
         </div>
     );
-}
+});
+
+Viewer3D.displayName = 'Viewer3D';

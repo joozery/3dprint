@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin · Print My Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --brand-purple: #8848a8;
+    --brand-purple-deep: #683888;
+    --brand-green: #28c868;
+    --bg: oklch(0.985 0.004 310);
+    --bg-2: oklch(0.97 0.006 310);
+    --card: #fff;
+    --chip: oklch(0.94 0.008 310);
+    --line: oklch(0.88 0.012 310);
+    --line-soft: oklch(0.92 0.008 310);
+    --ink: oklch(0.22 0.02 310);
+    --muted: oklch(0.52 0.02 310);
+    --muted2: oklch(0.4 0.02 310);
+    --accent: var(--brand-purple);
+    --accent-deep: var(--brand-purple-deep);
+    --positive: var(--brand-green);
+    --warn: oklch(0.72 0.16 65);
+    --danger: oklch(0.6 0.21 25);
+    --sans: 'Sarabun', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  [data-theme="dark"] {
+    --bg: oklch(0.17 0.018 310);
+    --bg-2: oklch(0.2 0.02 310);
+    --card: oklch(0.22 0.02 310);
+    --chip: oklch(0.27 0.022 310);
+    --line: oklch(0.32 0.022 310);
+    --line-soft: oklch(0.28 0.02 310);
+    --ink: oklch(0.96 0.005 310);
+    --muted: oklch(0.65 0.018 310);
+    --muted2: oklch(0.78 0.015 310);
+    --accent: oklch(0.72 0.16 310);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  button, input, select, textarea { font-family: inherit; color: inherit; }
+  a { color: inherit; }
+  table { border-collapse: collapse; width: 100%; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+    border-radius: 6px; padding: 7px 12px; cursor: pointer; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); transition: all .12s; }
+  .btn:hover { background: var(--chip); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
+  .btn.ghost { border-color: transparent; background: transparent; }
+  .btn.ghost:hover { background: var(--chip); }
+  .btn.sm { padding: 4px 8px; font-size: 11px; }
+  .btn.danger { color: var(--danger); border-color: color-mix(in oklch, var(--danger) 30%, var(--line)); }
+  .btn.danger:hover { background: color-mix(in oklch, var(--danger) 8%, transparent); }
+  .input { font-size: 12px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--card); color: var(--ink); outline: none; width: 100%; }
+  .input:focus { border-color: var(--accent); }
+  .label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 4px; display: block; }
+  .pill { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 2px 7px;
+    border-radius: 99px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px; }
+  .kbd { font-family: var(--mono); font-size: 10px; padding: 2px 5px; border: 1px solid var(--line);
+    border-radius: 3px; background: var(--card); color: var(--muted); }
+  .mono { font-family: var(--mono); }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+  .h-divider { height: 1px; background: var(--line-soft); }
+
+  /* Sparkline-ish bar */
+  .bar-track { position: relative; height: 6px; background: var(--chip); border-radius: 99px; overflow: hidden; }
+  .bar-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 99px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/admin-data.jsx"></script>
+<script type="text/babel" src="components/admin-shell.jsx"></script>
+<script type="text/babel" src="components/admin-dashboard.jsx"></script>
+<script type="text/babel" src="components/admin-orders.jsx"></script>
+<script type="text/babel" src="components/admin-catalog.jsx"></script>
+<script type="text/babel" src="components/admin-system.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useMemo, useEffect } = React;
+
+function App() {
+  const [section, setSection] = useState('dashboard');
+  const [role, setRole] = useState('admin'); // admin | ops | finance
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const renderSection = () => {
+    switch (section) {
+      case 'dashboard':   return <AdminDashboard />;
+      case 'orders':      return <AdminOrders />;
+      case 'quotations':  return <AdminQuotations />;
+      case 'users':       return <AdminUsers />;
+      case 'files':       return <AdminFiles />;
+      case 'technologies':return <AdminTechnologies />;
+      case 'cost':        return <AdminCost />;
+      case 'shipping':    return <AdminShipping />;
+      case 'slicer':      return <AdminSlicer />;
+      case 'api':         return <AdminAPI />;
+      case 'storage':     return <AdminStorage />;
+      default:            return <AdminDashboard />;
+    }
+  };
+
+  return (
+    <AdminShell section={section} setSection={setSection} role={role} setRole={setRole}
+      theme={theme} setTheme={setTheme}>
+      {renderSection()}
+    </AdminShell>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

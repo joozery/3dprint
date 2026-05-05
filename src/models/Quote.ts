@@ -65,6 +65,14 @@ const QuoteSchema = new mongoose.Schema(
             totalPrice: { type: Number, default: 0 },
             setupFee: { type: Number, default: 0 },
         },
+        finish: {
+            type: String,
+            default: "standard",
+        },
+        deliverySpeed: {
+            type: String,
+            default: "standard",
+        },
         status: {
             type: String,
             enum: ["draft", "pending", "ordered", "cancelled"],

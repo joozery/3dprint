@@ -44,7 +44,16 @@ export default async function QuoteViewPage({
   
   const subtotal = priceDetail?.totalPrice || 0;
   const vat = subtotal * 0.07;
-  const grandTotal = subtotal + vat;
+  
+  const deliveryConfig: Record<string, { label: string; days: string; price: number }> = {
+      economy:  { label: 'ประหยัด',  days: '7-10 วัน', price: 60 },
+      standard: { label: 'ปกติ',    days: '4-5 วัน',  price: 85 },
+      express:  { label: 'ด่วน',    days: '2 วัน',    price: 285 },
+  };
+  const currentDelivery = deliveryConfig[quote.deliverySpeed || 'standard'];
+  const deliveryCost = currentDelivery.price;
+
+  const grandTotal = subtotal + vat + deliveryCost;
   const wht = subtotal * 0.03;
   const netPayable = grandTotal - wht;
 
@@ -174,6 +183,7 @@ export default async function QuoteViewPage({
                                 <div className="text-[10px] text-slate-500 space-y-0.5 leading-snug">
                                     <p>• {isEng ? 'Technology' : 'เทคโนโลยี'}: <span className="font-semibold">{quote.technology?.toUpperCase()}</span></p>
                                     <p>• {isEng ? 'Material' : 'วัสดุ'}: <span className="font-semibold">{quote.material}</span> / {isEng ? 'Color' : 'สี'}: {quote.color}</p>
+                                    <p>• {isEng ? 'Finish' : 'ผิวงาน'}: <span className="font-semibold text-blue-600">{quote.finish === 'sanded' ? 'ขัดเรียบ (Sanded)' : quote.finish || 'มาตรฐาน'}</span></p>
                                     <p>• {isEng ? 'Volume' : 'ปริมาตร'}: {quote.volumeCm3?.toFixed(2)} cm³</p>
                                     <p>• {isEng ? 'Dimensions (X,Y,Z)' : 'ขนาด (X,Y,Z)'}: {quote.dimensions?.x?.toFixed(1)} x {quote.dimensions?.y?.toFixed(1)} x {quote.dimensions?.z?.toFixed(1)} mm</p>
                                 </div>
@@ -196,6 +206,13 @@ export default async function QuoteViewPage({
                     <div className="flex justify-between items-center py-1.5 text-xs">
                         <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'VAT (7%)' : 'ภาษีมูลค่าเพิ่ม 7% (VAT)'}</span>
                         <span className="font-bold text-slate-800">฿{formatCur(vat)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5 text-xs">
+                        <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Delivery Fee' : 'ค่าจัดส่ง (Delivery)'}</span>
+                        <span className="font-bold text-slate-800">
+                            {quote.deliverySpeed === 'express' ? <span className="text-orange-500 mr-2">[ด่วน]</span> : null}
+                            ฿{formatCur(deliveryCost)}
+                        </span>
                     </div>
                     <div className="flex justify-between items-center py-2.5 mt-1.5 border-t border-slate-200">
                         <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Grand Total' : 'ยอดรวมสุทธิ (Total)'}</span>

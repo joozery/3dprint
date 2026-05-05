@@ -1,0 +1,49 @@
+/* Print My Design — brand tokens */
+:root {
+  /* Brand palette — sampled from logo */
+  --brand-purple: #8848a8;
+  --brand-purple-deep: #683888;
+  --brand-purple-soft: oklch(0.92 0.04 310);
+  --brand-green: #28c868;
+  --brand-green-deep: #1f9c52;
+  --brand-green-soft: oklch(0.92 0.06 155);
+
+  /* Light theme defaults — calm warm-neutral with purple ink accent */
+  --bg: oklch(0.985 0.004 310);
+  --bg-elev: oklch(1 0 0);
+  --card: oklch(0.97 0.005 310);
+  --chip: oklch(0.94 0.008 310);
+  --line: oklch(0.88 0.012 310);
+  --line-soft: oklch(0.92 0.008 310);
+  --ink: oklch(0.22 0.02 310);
+  --muted: oklch(0.52 0.02 310);
+  --muted2: oklch(0.4 0.02 310);
+
+  /* Semantic */
+  --accent: var(--brand-purple);
+  --accent-deep: var(--brand-purple-deep);
+  --accent-fg: #fff;
+  --positive: var(--brand-green);
+  --positive-deep: var(--brand-green-deep);
+  --warn: oklch(0.74 0.16 65);
+  --danger: oklch(0.62 0.21 25);
+
+  --sans: 'Sarabun', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+[data-theme="dark"] {
+  --bg: oklch(0.18 0.018 310);
+  --bg-elev: oklch(0.22 0.02 310);
+  --card: oklch(0.22 0.02 310);
+  --chip: oklch(0.27 0.022 310);
+  --line: oklch(0.32 0.022 310);
+  --line-soft: oklch(0.28 0.02 310);
+  --ink: oklch(0.96 0.005 310);
+  --muted: oklch(0.65 0.018 310);
+  --muted2: oklch(0.78 0.015 310);
+  --accent: oklch(0.7 0.16 310);
+  --accent-deep: oklch(0.6 0.18 310);
+  --positive: oklch(0.78 0.18 150);
+  --positive-deep: oklch(0.7 0.18 150);
+}
