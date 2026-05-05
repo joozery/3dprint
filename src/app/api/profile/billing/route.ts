@@ -10,8 +10,8 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await dbConnect();
-  const user = await User.findById((session.user as any).id).select("billing").lean();
-  return NextResponse.json({ billing: (user as any)?.billing || null });
+  const user = await User.findById((session.user as any).id).select("-password").lean();
+  return NextResponse.json({ user, billing: (user as any)?.billing || null });
 }
 
 // PUT — บันทึก billing info
@@ -20,8 +20,12 @@ export async function PUT(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await dbConnect();
-  const { billing } = await req.json();
+  const { billing, shippingAddresses } = await req.json();
 
-  await User.findByIdAndUpdate((session.user as any).id, { $set: { billing } });
+  const update: any = {};
+  if (billing) update.billing = billing;
+  if (shippingAddresses) update.shippingAddresses = shippingAddresses;
+
+  await User.findByIdAndUpdate((session.user as any).id, { $set: update });
   return NextResponse.json({ success: true });
 }

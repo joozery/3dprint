@@ -23,7 +23,7 @@ export default async function AdminLayout({
   }
 
   await dbConnect();
-  const userId = (session.user as any).id;
+  const userId = session ? (session.user as any).id : null;
   const user = await User.findById(userId).lean();
 
   if (!user || user.role !== "admin") {

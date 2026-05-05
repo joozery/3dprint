@@ -9,7 +9,7 @@ import Link from "next/link";
 // Sub Components
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
 import DashboardHeader from "@/components/profile/DashboardHeader";
-import { RecentOrdersTable } from "@/components/profile/RecentOrdersTable";
+import { OrderHistoryTable } from "@/components/profile/OrderHistoryTable";
 import { MobileBottomNav } from "@/components/profile/MobileBottomNav";
 import EmailCheckModal from "@/components/auth/EmailCheckModal";
 
@@ -48,40 +48,18 @@ export default async function OrdersPage() {
         {/* ── Top Header Navbar ── */}
         <DashboardHeader />
 
-        <div className="p-6 md:p-10 max-w-[1200px] w-full mx-auto pb-24 relative z-10">
+        <div className="p-6 md:p-10 max-w-[1100px] w-full mx-auto pb-24 relative z-10">
             
-            {/* Header Area */}
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest mb-4">
-                        <History size={14} /> Full History
-                    </div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Order Management</h1>
-                    <p className="text-slate-500 mt-1 font-medium">View and manage all your past 3D printing requests.</p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                    <div className="relative hidden md:block">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search orders..." 
-                            className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none w-64 shadow-sm"
-                        />
-                    </div>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 font-semibold text-sm rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
-                        <ListFilter size={16} /> Filter
-                    </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 font-semibold text-sm rounded-lg hover:bg-slate-50 transition-colors shadow-sm hidden sm:flex">
-                        <Download size={16} /> Export
-                    </button>
-                </div>
+            {/* Header Area matching screenshot */}
+            <div className="mb-10">
+                <h1 className="text-[28px] font-black text-slate-900 tracking-tight">ประวัติคำสั่งซื้อ</h1>
+                <p className="text-slate-400 mt-1 font-bold text-sm uppercase tracking-widest">คำสั่งซื้อของคุณ</p>
+                <div className="h-[1.5px] bg-slate-100 w-full mt-6" />
             </div>
 
             {/* ── All Orders Table ── */}
-            <div className="shadow-lg shadow-slate-200/40 rounded-2xl bg-white mb-6">
-                {/* Reuse the RecentOrdersTable but pass ALL quotes */}
-                <RecentOrdersTable quotes={allQuotes} />
+            <div className="mb-6">
+                <OrderHistoryTable quotes={allQuotes} />
             </div>
 
             {/* Pagination Mockup */}

@@ -66,15 +66,26 @@ const UserSchema = new Schema(
       postalCode:  String,
       phone:       String,
       email:       String,
+      companyNameEng: String,
+      branchCode: String,
+      isVatRegistered: { type: Boolean, default: false },
+      industry: String,
+      officePhone: String,
+      website: String,
+      companySize: String,
     },
     // ข้อมูลสำหรับจัดส่ง (บันทึกไว้)
-    shippingAddress: {
+    shippingAddresses: [{
+      label: String, // e.g. Office, Home
       fullName: String,
       phone: String,
       address: String,
+      district: String,
+      subDistrict: String,
       province: String,
       zipCode: String,
-    },
+      isDefault: { type: Boolean, default: false }
+    }],
   },
   { timestamps: true }
 );
