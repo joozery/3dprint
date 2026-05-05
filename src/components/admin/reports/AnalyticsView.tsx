@@ -94,7 +94,7 @@ export default function AnalyticsView({ chartData, viewPeriodText, currentType, 
               <XAxis dataKey="name" axisLine={false} tickLine={false} textAnchor="middle" tick={{ fontSize: 12, fill: '#94a3b8' }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} tickFormatter={(val) => `฿${(val/1000).toFixed(0)}k`} />
               <RechartsTooltip 
-                 formatter={(value: number) => [`฿${value.toLocaleString()}`, 'ยอดขาย']}
+                 formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'ยอดขาย']}
                  labelStyle={{ color: '#0f172a', fontWeight: 'bold' }}
                  contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} 
               />

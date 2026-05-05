@@ -230,8 +230,8 @@ export default function HeroSection() {
                     </h1>
 
                     <ul className="mt-4 flex flex-col gap-2">
-                        {slide.bullets.map((b) => (
-                            <li key={b} className="flex items-center gap-2 text-slate-200 text-sm lg:text-base">
+                        {slide.bullets?.map((b: string, index: number) => (
+                            <li key={index} className="flex items-center gap-2 text-slate-200 text-sm lg:text-base">
                                 <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
                                 {b}
                             </li>
