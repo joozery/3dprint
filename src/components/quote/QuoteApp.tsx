@@ -26,6 +26,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [viewMode, setViewMode] = useState("shaded");
     const [isTermsAccepted, setIsTermsAccepted] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
+    const [showDeliveryDropdown, setShowDeliveryDropdown] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const viewerRef = useRef<any>(null);
 
@@ -367,22 +368,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                     </div>
                                 )}
                             </div>
-                            {/* Stats Row */}
-                            <div className="grid grid-cols-6 divide-x divide-slate-100 bg-white" style={{ borderTop: `1px solid ${lineBorder}` }}>
-                                {[
-                                    { label: 'VOLUME', value: `${activeQuote.volumeCm3?.toFixed(1) || "0.0"} cm³` },
-                                    { label: 'SURFACE', value: `${((activeQuote.volumeCm3 || 0) * 8.4).toFixed(0)} cm²` },
-                                    { label: 'WEIGHT', value: `${activeQuote.weightGrams?.toFixed(1) || "0.0"} g` },
-                                    { label: 'TRIANGLES', value: ((activeQuote.volumeCm3 || 0) * 1500).toFixed(0).toLocaleString() },
-                                    { label: 'WATERTIGHT', value: 'YES', color: 'text-green-600' },
-                                    { label: 'PRINT TIME', value: `${Math.max(1, Math.round((activeQuote.volumeCm3 || 0) * 0.1))} h` },
-                                ].map((stat, i) => (
-                                    <div key={i} className="p-4 text-center group hover:bg-slate-50 transition-colors">
-                                        <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-1.5">{stat.label}</div>
-                                        <div className={cn("text-[15px] font-black font-mono tracking-tighter", stat.color || "text-slate-800")}>{stat.value}</div>
-                                    </div>
-                                ))}
-                            </div>
+
                         </>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center bg-white">
@@ -605,15 +591,61 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             </div>
                         </div>
 
-                        <div className="p-3 flex items-center gap-2 border-t border-slate-100 mt-2 bg-white">
-                            <Truck className="w-4 h-4 shrink-0" style={{ color: activeQuote?.deliverySpeed === 'express' ? '#f97316' : '#94a3b8' }} />
-                            <div className="flex-1">
-                                <div className="text-[10px] font-black text-slate-800">จัดส่งถึงกรุงเทพ</div>
-                                <div className="text-[9px] font-bold mt-0.5 uppercase tracking-tighter leading-none" style={{ color: activeQuote?.deliverySpeed === 'express' ? '#f97316' : '#94a3b8' }}>
-                                    Kerry · {currentDelivery.label} · {currentDelivery.days}
-                                </div>
+                        <div className="p-3 border-t border-slate-100 mt-2 bg-white relative">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Truck className="w-4 h-4 shrink-0 text-blue-600" />
+                                <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">ช่องทางการจัดส่ง</div>
                             </div>
-                            <div className="text-[11px] font-mono font-black text-slate-800">฿{deliveryCost.toFixed(2)}</div>
+                            
+                            <div className="relative">
+                                <button 
+                                    onClick={() => setShowDeliveryDropdown(!showDeliveryDropdown)}
+                                    className="w-full flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-3.5 py-3 text-[12px] font-black text-slate-700 hover:bg-slate-100 transition-all shadow-sm active:scale-[0.98]"
+                                >
+                                    <div className="flex flex-col items-start gap-0.5">
+                                        <span className="text-blue-600 font-black">Kerry Express</span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                                            {currentDelivery.label} ({currentDelivery.days})
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-mono text-slate-900">฿{deliveryCost.toFixed(2)}</span>
+                                        <ChevronDown className={cn("w-4 h-4 text-slate-300 transition-transform duration-300", showDeliveryDropdown && "rotate-180")} />
+                                    </div>
+                                </button>
+
+                                {showDeliveryDropdown && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setShowDeliveryDropdown(false)}></div>
+                                        <div className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-white border border-slate-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                            <div className="p-2 space-y-1">
+                                                {Object.entries(deliveryConfig).map(([key, config]) => (
+                                                    <button
+                                                        key={key}
+                                                        onClick={() => {
+                                                            patchQuote(activeQuote?._id, { deliverySpeed: key });
+                                                            setShowDeliveryDropdown(false);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full flex items-center justify-between p-3 rounded-xl transition-all group",
+                                                            activeQuote?.deliverySpeed === key ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50 text-slate-600"
+                                                        )}
+                                                    >
+                                                        <div className="flex flex-col items-start">
+                                                            <div className="text-[12px] font-black flex items-center gap-2">
+                                                                {config.label}
+                                                                {key === 'express' && <span className="text-[8px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full uppercase">Recommend</span>}
+                                                            </div>
+                                                            <div className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">จัดส่งใน {config.days} · Kerry</div>
+                                                        </div>
+                                                        <div className="text-[12px] font-mono font-black">฿{config.price.toFixed(2)}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
 

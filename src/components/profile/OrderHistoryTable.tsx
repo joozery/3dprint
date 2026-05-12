@@ -11,9 +11,17 @@ interface OrderHistoryTableProps {
 export function OrderHistoryTable({ quotes }: OrderHistoryTableProps) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
+    const stepLabels = [
+        "รับออเดอร์",
+        "เตรียมไฟล์",
+        "กำลังพิมพ์",
+        "ตรวจสอบคุณภาพ",
+        "บรรจุหีบห่อ",
+        "จัดส่งแล้ว"
+    ];
+
     const steps = [1, 2, 3, 4, 5, 6];
     
-    // Mock status mapping for demonstration based on screenshot
     const getStatusStep = (status: string) => {
         switch (status) {
             case 'pending': return 2;
@@ -94,20 +102,28 @@ export function OrderHistoryTable({ quotes }: OrderHistoryTableProps) {
                                     <div className="flex items-center gap-0.5">
                                         {steps.map((s, idx) => (
                                             <React.Fragment key={s}>
-                                                <div 
-                                                    className={cn(
-                                                        "w-5 h-5 rounded-full border flex items-center justify-center text-[9px] font-black transition-all",
-                                                        s < currentStep 
-                                                            ? "bg-slate-900 border-slate-900 text-white shadow-sm" 
-                                                            : s === currentStep
-                                                            ? "bg-white border-slate-900 text-slate-900 ring-4 ring-slate-100"
-                                                            : "bg-white border-slate-200 text-slate-300"
-                                                    )}
-                                                >
-                                                    {s < currentStep ? <CheckCircle2 className="w-3.5 h-3.5" /> : s}
+                                                <div className="relative group/step">
+                                                    {/* Tooltip Popup */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[9px] font-black rounded shadow-lg opacity-0 group-hover/step:opacity-100 transition-all pointer-events-none whitespace-nowrap z-30 translate-y-1 group-hover/step:translate-y-0">
+                                                        {stepLabels[s-1]}
+                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-[4px] border-transparent border-t-slate-900"></div>
+                                                    </div>
+
+                                                    <div 
+                                                        className={cn(
+                                                            "w-5 h-5 rounded-full border flex items-center justify-center text-[9px] font-black transition-all",
+                                                            s < currentStep 
+                                                                ? "bg-blue-600 border-blue-600 text-white shadow-sm" 
+                                                                : s === currentStep
+                                                                ? "bg-white border-blue-600 text-blue-600 ring-4 ring-blue-50"
+                                                                : "bg-white border-slate-200 text-slate-300"
+                                                        )}
+                                                    >
+                                                        {s < currentStep ? <CheckCircle2 className="w-3.5 h-3.5" /> : s}
+                                                    </div>
                                                 </div>
                                                 {idx < steps.length - 1 && (
-                                                    <div className={cn("w-3 h-[1.5px]", s < currentStep ? "bg-slate-900" : "bg-slate-200")} />
+                                                    <div className={cn("w-3 h-[1.5px]", s < currentStep ? "bg-blue-600" : "bg-slate-200")} />
                                                 )}
                                             </React.Fragment>
                                         ))}

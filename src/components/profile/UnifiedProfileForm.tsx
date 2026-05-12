@@ -61,9 +61,15 @@ export default function UnifiedProfileForm() {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
 
+  const [isMounted, setIsMounted] = useState(false);
+  const [addressForm, setAddressForm] = useState<Address>({
+    label: "", fullName: "", phone: "", address: "", district: "", subDistrict: "", province: "", zipCode: "", isDefault: false
+  });
+
   const set = (key: keyof UnifiedForm, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
   useEffect(() => {
+    setIsMounted(true);
     fetch("/api/profile/billing")
       .then(r => r.json())
       .then(({ user, billing }) => {
@@ -88,6 +94,16 @@ export default function UnifiedProfileForm() {
       .catch((err) => console.error("Fetch error:", err))
       .finally(() => setFetching(false));
   }, []);
+
+  useEffect(() => {
+    if (editingAddress) {
+      setAddressForm(editingAddress);
+    } else {
+      setAddressForm({
+        label: "", fullName: "", phone: "", address: "", district: "", subDistrict: "", province: "", zipCode: "", isDefault: false
+      });
+    }
+  }, [editingAddress]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,19 +151,19 @@ export default function UnifiedProfileForm() {
     set("shippingAddresses", updated);
   };
 
-  const handleSaveAddress = (addr: Address) => {
+  const handleSaveAddress = () => {
     let updated = [...form.shippingAddresses];
     if (editingAddress?._id) {
-        updated = updated.map(a => a._id === editingAddress._id ? addr : a);
+        updated = updated.map(a => a._id === editingAddress._id ? addressForm : a);
     } else {
-        updated.push({ ...addr, _id: Date.now().toString() });
+        updated.push({ ...addressForm, _id: Date.now().toString(), isDefault: form.shippingAddresses.length === 0 });
     }
     set("shippingAddresses", updated);
     setShowAddressModal(false);
     setEditingAddress(null);
   };
 
-  if (fetching) {
+  if (fetching || !isMounted) {
     return (
       <div className="flex justify-center py-20">
         <Loader2 className="animate-spin text-slate-300" size={32} />
@@ -400,17 +416,17 @@ export default function UnifiedProfileForm() {
 
                 {/* Modal Body - Scrollable */}
                 <div className="px-7 py-2 overflow-y-auto no-scrollbar space-y-5 flex-1">
-                    <div><label className={labelClass}>ชื่อสถานที่ (เช่น บ้าน, ออฟฟิศ)</label><input type="text" id="modal-label" defaultValue={editingAddress?.label} className={inputClass} placeholder="ออฟฟิศสำนักงานใหญ่" /></div>
-                    <div><label className={labelClass}>ชื่อ-นามสกุล ผู้รับ</label><input type="text" id="modal-name" defaultValue={editingAddress?.fullName} className={inputClass} placeholder="คุณสมชาย วิศวกร" /></div>
-                    <div><label className={labelClass}>เบอร์โทรศัพท์</label><input type="text" id="modal-phone" defaultValue={editingAddress?.phone} className={inputClass} placeholder="+66 2 610 9999" /></div>
-                    <div><label className={labelClass}>ที่อยู่ (บ้านเลขที่, อาคาร, ถนน)</label><textarea id="modal-address" defaultValue={editingAddress?.address} className={cn(inputClass, "h-20 py-3")} placeholder="88/12 อาคารสยามพารากอน ชั้น 4" /></div>
+                    <div><label className={labelClass}>ชื่อสถานที่ (เช่น บ้าน, ออฟฟิศ)</label><input type="text" value={addressForm.label} onChange={e => setAddressForm({...addressForm, label: e.target.value})} className={inputClass} placeholder="ออฟฟิศสำนักงานใหญ่" /></div>
+                    <div><label className={labelClass}>ชื่อ-นามสกุล ผู้รับ</label><input type="text" value={addressForm.fullName} onChange={e => setAddressForm({...addressForm, fullName: e.target.value})} className={inputClass} placeholder="คุณสมชาย วิศวกร" /></div>
+                    <div><label className={labelClass}>เบอร์โทรศัพท์</label><input type="text" value={addressForm.phone} onChange={e => setAddressForm({...addressForm, phone: e.target.value})} className={inputClass} placeholder="+66 2 610 9999" /></div>
+                    <div><label className={labelClass}>ที่อยู่ (บ้านเลขที่, อาคาร, ถนน)</label><textarea value={addressForm.address} onChange={e => setAddressForm({...addressForm, address: e.target.value})} className={cn(inputClass, "h-20 py-3")} placeholder="88/12 อาคารสยามพารากอน ชั้น 4" /></div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div><label className={labelClass}>แขวง/ตำบล</label><input type="text" id="modal-subDistrict" defaultValue={editingAddress?.subDistrict} className={inputClass} placeholder="ปทุมวัน" /></div>
-                        <div><label className={labelClass}>เขต/อำเภอ</label><input type="text" id="modal-district" defaultValue={editingAddress?.district} className={inputClass} placeholder="ปทุมวัน" /></div>
+                        <div><label className={labelClass}>แขวง/ตำบล</label><input type="text" value={addressForm.subDistrict} onChange={e => setAddressForm({...addressForm, subDistrict: e.target.value})} className={inputClass} placeholder="ปทุมวัน" /></div>
+                        <div><label className={labelClass}>เขต/อำเภอ</label><input type="text" value={addressForm.district} onChange={e => setAddressForm({...addressForm, district: e.target.value})} className={inputClass} placeholder="ปทุมวัน" /></div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div><label className={labelClass}>จังหวัด</label><input type="text" id="modal-province" defaultValue={editingAddress?.province} className={inputClass} placeholder="กรุงเทพมหานคร" /></div>
-                        <div><label className={labelClass}>รหัสไปรษณีย์</label><input type="text" id="modal-zip" defaultValue={editingAddress?.zipCode} className={inputClass} placeholder="10330" /></div>
+                        <div><label className={labelClass}>จังหวัด</label><input type="text" value={addressForm.province} onChange={e => setAddressForm({...addressForm, province: e.target.value})} className={inputClass} placeholder="กรุงเทพมหานคร" /></div>
+                        <div><label className={labelClass}>รหัสไปรษณีย์</label><input type="text" value={addressForm.zipCode} onChange={e => setAddressForm({...addressForm, zipCode: e.target.value})} className={inputClass} placeholder="10330" /></div>
                     </div>
                 </div>
 
@@ -419,21 +435,7 @@ export default function UnifiedProfileForm() {
                     <button type="button" onClick={() => setShowAddressModal(false)} className="flex-1 h-11 rounded-xl border border-slate-200 font-black text-xs text-slate-500 hover:bg-slate-50 transition-all">ยกเลิก</button>
                     <button 
                         type="button" 
-                        onClick={() => {
-                            const newAddr: Address = {
-                                _id: editingAddress?._id || Date.now().toString(),
-                                label: (document.getElementById('modal-label') as HTMLInputElement).value,
-                                fullName: (document.getElementById('modal-name') as HTMLInputElement).value,
-                                phone: (document.getElementById('modal-phone') as HTMLInputElement).value,
-                                address: (document.getElementById('modal-address') as HTMLTextAreaElement).value,
-                                subDistrict: (document.getElementById('modal-subDistrict') as HTMLInputElement).value,
-                                district: (document.getElementById('modal-district') as HTMLInputElement).value,
-                                province: (document.getElementById('modal-province') as HTMLInputElement).value,
-                                zipCode: (document.getElementById('modal-zip') as HTMLInputElement).value,
-                                isDefault: editingAddress?.isDefault || form.shippingAddresses.length === 0
-                            };
-                            handleSaveAddress(newAddr);
-                        }}
+                        onClick={handleSaveAddress}
                         className="flex-[2] h-11 px-8 bg-blue-600 text-white rounded-xl font-black text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
                     >
                         ยืนยัน
