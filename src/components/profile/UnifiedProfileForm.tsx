@@ -114,6 +114,16 @@ export default function UnifiedProfileForm() {
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
 
+      // Prepare addresses for saving - remove temporary IDs created by Date.now()
+      const sanitizedAddresses = form.shippingAddresses.map(addr => {
+        // If _id is a temporary timestamp string (e.g. "1712345678901"), remove it so MongoDB can generate a real ObjectId
+        if (addr._id && addr._id.length !== 24) {
+          const { _id, ...rest } = addr;
+          return rest;
+        }
+        return addr;
+      });
+
       const res = await fetch("/api/profile/billing", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -125,7 +135,7 @@ export default function UnifiedProfileForm() {
             firstName,
             lastName
           },
-          shippingAddresses: form.shippingAddresses
+          shippingAddresses: sanitizedAddresses
         }),
       });
       if (!res.ok) throw new Error("บันทึกข้อมูลไม่สำเร็จ");

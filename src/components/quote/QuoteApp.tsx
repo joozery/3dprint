@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Info, Trash2, ChevronDown, CheckCircle2, AlertCircle, Layers, Plus, Lock, History, User, ShoppingCart, ChevronRight, RotateCcw, ZoomIn, ZoomOut, Move, Check, Truck } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Upload, Info, Trash2, ChevronDown, CheckCircle2, AlertCircle, Layers, Plus, Lock, History, User, ShoppingCart, ChevronRight, RotateCcw, ZoomIn, ZoomOut, Move, Check, Truck, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import axios from "axios";
@@ -16,6 +17,7 @@ interface QuoteAppProps {
 }
 
 export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
+    const { data: session } = useSession();
     const router = useRouter();
     const [activeId, setActiveId] = useState<string | null>(quotes.length > 0 ? quotes[0]._id : null);
     const [uploading, setUploading] = useState(false);
@@ -27,6 +29,9 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [isTermsAccepted, setIsTermsAccepted] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [showDeliveryDropdown, setShowDeliveryDropdown] = useState(false);
+    const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+    const [userAddresses, setUserAddresses] = useState<any[]>([]);
+    const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const viewerRef = useRef<any>(null);
 
@@ -39,20 +44,34 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         }
     }, [quotes, activeId]);
 
-    // Load materials from API
+    // Load materials and user addresses
     useEffect(() => {
-        const fetchMaterials = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch('/api/admin/materials');
-                const data = await res.json();
-                if (Array.isArray(data)) setDbMaterials(data.filter((m: any) => m.isActive !== false));
-                else if (data.success && data.materials) setDbMaterials(data.materials.filter((m: any) => m.isActive !== false));
+                // Fetch Materials
+                const matRes = await fetch('/api/admin/materials');
+                const matData = await matRes.json();
+                if (Array.isArray(matData)) setDbMaterials(matData.filter((m: any) => m.isActive !== false));
+                else if (matData.success && matData.materials) setDbMaterials(matData.materials.filter((m: any) => m.isActive !== false));
+
+                // Fetch User Addresses if logged in
+                if (session) {
+                    const profileRes = await fetch('/api/profile/billing');
+                    const profileData = await profileRes.json();
+                    if (profileData.user?.shippingAddresses) {
+                        const addrs = profileData.user.shippingAddresses;
+                        setUserAddresses(addrs);
+                        const def = addrs.find((a: any) => a.isDefault);
+                        if (def) setSelectedAddressId(def._id);
+                        else if (addrs.length > 0) setSelectedAddressId(addrs[0]._id);
+                    }
+                }
             } catch (err) {
-                console.error("Failed to fetch materials", err);
+                console.error("Failed to fetch data", err);
             }
         };
-        fetchMaterials();
-    }, []);
+        fetchData();
+    }, [session]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -591,7 +610,83 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             </div>
                         </div>
 
-                        <div className="p-3 border-t border-slate-100 mt-2 bg-white relative">
+                        {/* Shipping Address Selection */}
+                        <div className="p-3 border-t border-slate-100 bg-white relative">
+                            <div className="flex items-center gap-2 mb-2">
+                                <MapPin className="w-4 h-4 shrink-0 text-blue-600" />
+                                <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">ที่อยู่จัดส่ง</div>
+                            </div>
+
+                            <div className="relative">
+                                {userAddresses.length > 0 ? (
+                                    <>
+                                        <button 
+                                            onClick={() => setShowAddressDropdown(!showAddressDropdown)}
+                                            className="w-full flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-3.5 py-3 text-[12px] font-black text-slate-700 hover:bg-slate-100 transition-all shadow-sm active:scale-[0.98]"
+                                        >
+                                            <div className="flex flex-col items-start gap-0.5 min-w-0">
+                                                <span className="text-slate-900 font-black truncate w-full text-left">
+                                                    {userAddresses.find(a => a._id === selectedAddressId)?.label || "เลือกที่อยู่จัดส่ง"}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight truncate w-full text-left">
+                                                    {userAddresses.find(a => a._id === selectedAddressId)?.receiverName || session?.user?.name}
+                                                </span>
+                                            </div>
+                                            <ChevronDown className={cn("w-4 h-4 text-slate-300 transition-transform duration-300 shrink-0 ml-2", showAddressDropdown && "rotate-180")} />
+                                        </button>
+
+                                        {showAddressDropdown && (
+                                            <>
+                                                <div className="fixed inset-0 z-[60]" onClick={() => setShowAddressDropdown(false)}></div>
+                                                <div className="absolute bottom-full left-0 right-0 mb-2 z-[70] bg-white border border-slate-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                                    <div className="p-2 space-y-1 max-h-[250px] overflow-y-auto no-scrollbar">
+                                                        {userAddresses.map((addr) => (
+                                                            <button
+                                                                key={addr._id}
+                                                                onClick={() => {
+                                                                    setSelectedAddressId(addr._id);
+                                                                    setShowAddressDropdown(false);
+                                                                    patchQuote(activeQuote?._id, { shipping: addr });
+                                                                }}
+                                                                className={cn(
+                                                                    "w-full flex flex-col items-start p-3 rounded-xl transition-all",
+                                                                    selectedAddressId === addr._id ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50 text-slate-600"
+                                                                )}
+                                                            >
+                                                                <div className="text-[12px] font-black flex items-center gap-2">
+                                                                    {addr.label}
+                                                                    {addr.isDefault && <span className="text-[8px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase">Default</span>}
+                                                                </div>
+                                                                <div className="text-[10px] font-bold opacity-60 mt-0.5 text-left line-clamp-1">
+                                                                    {addr.address}, {addr.subDistrict}, {addr.district}, {addr.province} {addr.zipCode}
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                        <button 
+                                                            onClick={() => router.push('/profile/account')}
+                                                            className="w-full flex items-center gap-2 p-3 rounded-xl hover:bg-slate-50 text-blue-600 transition-all border-t border-slate-50 mt-1"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                            <span className="text-[11px] font-black">จัดการที่อยู่</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <button 
+                                        onClick={() => router.push('/profile/account')}
+                                        className="w-full flex items-center justify-center gap-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3.5 py-4 text-[11px] font-black text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all"
+                                    >
+                                        <Plus className="w-4 h-4" /> เพิ่มที่อยู่จัดส่ง
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Delivery Channels */}
+                        <div className="p-3 border-t border-slate-100 bg-white relative">
                             <div className="flex items-center gap-2 mb-2">
                                 <Truck className="w-4 h-4 shrink-0 text-blue-600" />
                                 <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">ช่องทางการจัดส่ง</div>

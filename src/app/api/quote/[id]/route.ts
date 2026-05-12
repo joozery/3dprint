@@ -31,7 +31,7 @@ export async function PATCH(
         const { id } = await params;
         await dbConnect();
         const body = await req.json();
-        const { technology, material, color, quantity } = body;
+        const { technology, material, color, quantity, deliverySpeed, finish, billing, shipping } = body;
 
         const quote = await Quote.findById(id);
         if (!quote) {
@@ -67,6 +67,10 @@ export async function PATCH(
                 material: material || quote.material,
                 color: color || quote.color,
                 quantity: finalQuantity,
+                deliverySpeed: deliverySpeed || quote.deliverySpeed,
+                finish: finish || quote.finish,
+                billing: billing || quote.billing,
+                shipping: shipping || quote.shipping,
                 weightGrams: weight,
                 "priceDetail.pricePerUnit": pricePerUnit,
                 "priceDetail.totalPrice": totalPrice,
