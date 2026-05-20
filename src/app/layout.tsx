@@ -4,6 +4,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { LanguageProvider } from "@/components/providers/LanguageProvider";
 
 const sarabun = Sarabun({
   variable: "--font-sarabun",
@@ -43,13 +44,15 @@ export default function RootLayout({
       <body className={`${sarabun.variable} font-sans antialiased`} suppressHydrationWarning>
         <RouteChangePointerEventsFix />
         <AuthProvider>
-          <TooltipProvider>
-            {children}
-            <EmailCheckModal />
-            <Toaster richColors position="top-right" />
-            <CookieConsent />
-            <TawkChat />
-          </TooltipProvider>
+          <LanguageProvider>
+            <TooltipProvider>
+              {children}
+              <EmailCheckModal />
+              <Toaster richColors position="top-right" />
+              <CookieConsent />
+              <TawkChat />
+            </TooltipProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

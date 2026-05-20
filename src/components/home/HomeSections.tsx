@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
     UploadCloud,
     Settings2,
@@ -23,23 +22,26 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 // --- Section 1: Technologies ---
 export function TechSection() {
+    const { t } = useLanguage();
+
     const techs = [
         {
             title: "FDM Printing",
             subtitle: "Fused Deposition Modeling",
-            description: "เหมาะสำหรับชิ้นงานต้นแบบ (Prototyping) ชิ้นส่วนกลไก และงานขนาดใหญ่ที่ต้องการความประหยัด",
-            features: ["ราคาถูกที่สุด", "วัสดุหลากหลาย (PLA, ABS, PETG)", "ชิ้นงานแข็งแรงทนทาน"],
+            description: t.tech.fdmDesc,
+            features: [t.tech.fdmF1, t.tech.fdmF2, t.tech.fdmF3],
             icon: <Layers className="h-8 w-8 text-blue-500" />,
             color: "blue"
         },
         {
             title: "SLA Resin",
             subtitle: "Stereolithography",
-            description: "เหมาะสำหรับงานที่ต้องการความละเอียดสูง พื้นผิวเรียบเนียน เช่น โมเดลฟิกเกอร์ หรืออัญมณี",
-            features: ["ความละเอียดสูงมาก (Micron level)", "พื้นผิวเนียนเรียบ", "รองรับเรซิ่นวิศวกรรมเฉพาะทาง"],
+            description: t.tech.slaDesc,
+            features: [t.tech.slaF1, t.tech.slaF2, t.tech.slaF3],
             icon: <Cpu className="h-8 w-8 text-purple-500" />,
             color: "purple"
         }
@@ -49,9 +51,9 @@ export function TechSection() {
         <section className="py-20 bg-slate-50">
             <div className="mx-auto max-w-7xl px-6">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl font-bold text-slate-900 lg:text-4xl mb-4">เทคโนโลยีที่รองรับ</h2>
+                    <h2 className="text-3xl font-bold text-slate-900 lg:text-4xl mb-4">{t.tech.heading}</h2>
                     <p className="text-slate-600 max-w-2xl mx-auto">
-                        เราใช้เครื่องพิมพ์ 3 มิติระดับอุตสาหกรรม เพื่อให้แน่ใจว่างานทุกชิ้นมีคุณภาพสูงสุด
+                        {t.tech.subheading}
                     </p>
                 </div>
 
@@ -90,31 +92,33 @@ export function TechSection() {
 
 // --- Section 2: How It Works ---
 export function HowItWorks() {
+    const { t } = useLanguage();
+
     const steps = [
         {
-            title: "อัปโหลดไฟล์ 3D",
-            desc: "รองรับไฟล์ .STL, .OBJ, .STEP ระบบจะตรวจสอบและซ่อมแซมวิเคราะห์ความสมบูรณ์ให้แบบอัตโนมัติ",
+            title: t.howItWorks.step1Title,
+            desc: t.howItWorks.step1Desc,
             icon: <UploadCloud className="h-6 w-6 text-blue-600" />,
             color: "blue",
             delay: "0"
         },
         {
-            title: "เลือกวัสดุและสี",
-            desc: "เลือกวัสดุที่เหมาะสม ทั้งเรซิ่น ไนลอน โลหะ และเปรียบเทียบราคาแบบเรียลไทม์",
+            title: t.howItWorks.step2Title,
+            desc: t.howItWorks.step2Desc,
             icon: <Settings2 className="h-6 w-6 text-indigo-600" />,
             color: "indigo",
             delay: "100"
         },
         {
-            title: "สั่งพิมพ์ระดับอุตสาหกรรม",
-            desc: "วิศวกรตรวจสอบไฟล์และเริ่มการพิมพ์ด้วยเครื่องจักร High-end มาตรฐานสากล",
+            title: t.howItWorks.step3Title,
+            desc: t.howItWorks.step3Desc,
             icon: <Printer className="h-6 w-6 text-violet-600" />,
             color: "violet",
             delay: "200"
         },
         {
-            title: "จัดส่งรวดเร็วถึงมือคุณ",
-            desc: "ผ่านกระบวนการ QC อย่างเข้มงวด บรรจุให้อย่างดี และจัดส่งตรงเวลา",
+            title: t.howItWorks.step4Title,
+            desc: t.howItWorks.step4Desc,
             icon: <Truck className="h-6 w-6 text-sky-600" />,
             color: "sky",
             delay: "300"
@@ -132,14 +136,14 @@ export function HowItWorks() {
             <div className="mx-auto max-w-7xl px-6 relative z-10">
                 <div className="text-center mb-20">
                     <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-blue-100/60 border border-blue-200/60 mb-6 backdrop-blur-sm">
-                        <span className="text-[11px] font-black text-blue-700 tracking-[0.2em] uppercase">Workflow</span>
+                        <span className="text-[11px] font-black text-blue-700 tracking-[0.2em] uppercase">{t.howItWorks.badge}</span>
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 md:text-5xl mb-6 tracking-tight leading-tight">
-                        ขั้นตอนการสั่งพิมพ์ที่ง่าย<br className="hidden md:block" />
-                        <span className="text-blue-600 drop-shadow-sm">และเป็นมืออาชีพ</span>
+                        {t.howItWorks.heading1}<br className="hidden md:block" />
+                        <span className="text-blue-600 drop-shadow-sm">{t.howItWorks.heading2}</span>
                     </h2>
                     <p className="text-slate-500 max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-                        เราเปลี่ยนกระบวนการผลิตงานอุตสาหกรรมที่ซับซ้อน ให้กลายเป็นเรื่องง่ายด้วยระบบแพลตฟอร์มอัตโนมัติของเรา
+                        {t.howItWorks.subheading}
                     </p>
                 </div>
 
@@ -188,6 +192,7 @@ export function HowItWorks() {
 
 // --- Section 3: Footer ---
 export function Footer() {
+    const { t } = useLanguage();
     const currentYear = new Date().getFullYear();
 
     return (
@@ -206,7 +211,7 @@ export function Footer() {
                             />
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed max-w-md mb-8">
-                            ผู้นำแพลตฟอร์มการผลิตและพิมพ์ 3 มิติระดับสากล ให้บริการด้วยมาตรฐานอุตสาหกรรม (Industrial Grade) เพื่อเปลี่ยนทุกไอเดียของคุณให้กลายเป็นชิ้นงานจริงได้อย่างรวดเร็วและแม่นยำ
+                            {t.footer.tagline}
                         </p>
                         <div className="flex gap-4">
                             <Link href="#" className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
@@ -230,17 +235,17 @@ export function Footer() {
                     <div className="lg:col-span-7">
                         <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-800/60 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
                             <div>
-                                <h3 className="text-white text-lg font-bold mb-2">ติดตามข่าวสารและสิทธิพิเศษ</h3>
-                                <p className="text-sm text-slate-400">ลงทะเบียนเพื่อรับข่าวสารด้านเทคโนโลยีการผลิตจากเรา</p>
+                                <h3 className="text-white text-lg font-bold mb-2">{t.footer.newsletterTitle}</h3>
+                                <p className="text-sm text-slate-400">{t.footer.newsletterDesc}</p>
                             </div>
                             <div className="flex w-full xl:w-auto">
                                 <input
                                     type="email"
-                                    placeholder="กรอกอีเมลของคุณ"
+                                    placeholder={t.footer.newsletterPlaceholder}
                                     className="px-4 py-3 bg-slate-900 border border-slate-700 rounded-l-lg focus:outline-none focus:border-blue-500 text-sm w-full xl:w-64"
                                 />
                                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-r-lg font-medium transition-colors flex items-center shrink-0">
-                                    ติดตาม <ArrowRight className="w-4 h-4 ml-2" />
+                                    {t.footer.newsletterBtn} <ArrowRight className="w-4 h-4 ml-2" />
                                 </button>
                             </div>
                         </div>
@@ -267,46 +272,46 @@ export function Footer() {
                     </div>
 
                     <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">บริการ (Services)</h4>
+                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.servicesHeading}</h4>
                         <ul className="space-y-3 text-sm text-slate-400">
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">พิมพ์ 3 มิติ (3D Printing)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">งานกัด CNC (CNC Machining)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">พับโลหะ (Sheet Metal)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">ประกอบวงจร (PCB/PCBA)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">เทคโนโลยีใหม่ๆ</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s1}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s2}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s3}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s4}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s5}</Link></li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">วัสดุ (Materials)</h4>
+                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.materialsHeading}</h4>
                         <ul className="space-y-3 text-sm text-slate-400">
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">Industrial Resin (SLA)</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">Nylon (SLS/MJF)</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">Stainless Steel (SLM)</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">Standard Plastic (FDM)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">คู่มือเปรียบเทียบวัสดุ</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.m5}</Link></li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">แหล่งเรียนรู้</h4>
+                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.resourcesHeading}</h4>
                         <ul className="space-y-3 text-sm text-slate-400">
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">คู่มือการออกแบบ 3D</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">เกณฑ์การอัปโหลดไฟล์</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">บทความ (Blog)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">กรณีศึกษา (Case Studies)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">ศูนย์ช่วยเหลือ</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r1}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r2}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r3}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r4}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r5}</Link></li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">เกี่ยวกับองค์กร</h4>
+                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.companyHeading}</h4>
                         <ul className="space-y-3 text-sm text-slate-400">
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">เกี่ยวกับ 3DEV</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">โรงงานและเทคโนโลยี</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">ร่วมงานกับเรา (Careers)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">ความยั่งยืน (Sustainability)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">ติดต่อเรา</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c1}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c2}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c3}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c4}</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c5}</Link></li>
                         </ul>
                     </div>
                 </div>
@@ -314,12 +319,12 @@ export function Footer() {
                 {/* Bottom Section */}
                 <div className="pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-6">
                     <p className="text-sm text-slate-500">
-                        © {currentYear} PDM 3D Print Thailand. สงวนลิขสิทธิ์
+                        © {currentYear} PDM 3D Print Thailand. {t.footer.copyright}
                     </p>
                     <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500 font-bold">
-                        <Link href="/privacy" className="hover:text-blue-400 transition-colors">นโยบายความเป็นส่วนตัว</Link>
-                        <Link href="/terms" className="hover:text-blue-400 transition-colors">ข้อกำหนดการให้บริการ</Link>
-                        <Link href="/cookies" className="hover:text-blue-400 transition-colors">นโยบายคุกกี้</Link>
+                        <Link href="/privacy" className="hover:text-blue-400 transition-colors">{t.footer.privacy}</Link>
+                        <Link href="/terms" className="hover:text-blue-400 transition-colors">{t.footer.terms}</Link>
+                        <Link href="/cookies" className="hover:text-blue-400 transition-colors">{t.footer.cookies}</Link>
                     </div>
                 </div>
             </div>

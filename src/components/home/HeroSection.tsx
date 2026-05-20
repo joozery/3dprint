@@ -6,13 +6,14 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, ChevronLeft, ChevronRight, Upload } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 // ============================================================
 // กำหนด Slides ที่นี่ — เปลี่ยน src และ type ได้เลย
 // type: "image" | "video" | "youtube"
 // ============================================================
 type Slide = {
-    id: number;
+    id: number | string;
     type: "image" | "video" | "youtube";
     src: string;
     overlay: string;
@@ -62,7 +63,7 @@ const defaultSlides: Slide[] = [
         id: 3,
         type: "youtube" as const,
         src: "f94CnlQ0eq4", // YouTube video ID
-        overlay: "from-slate-950/70 via-slate-900/30 to-transparent",
+        overlay: "from-slate-955/70 via-slate-900/30 to-transparent",
         badge: "🏢 รองรับลูกค้าองค์กร B2B",
         title: "ใบเสนอราคา",
         titleHighlight: "PDF อัตโนมัติ",
@@ -79,6 +80,7 @@ const defaultSlides: Slide[] = [
 const AUTOPLAY_INTERVAL = 5000;
 
 export default function HeroSection() {
+    const { lang } = useLanguage();
     const [slides, setSlides] = useState<any[]>(defaultSlides);
     const [current, setCurrent] = useState(0);
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -86,6 +88,59 @@ export default function HeroSection() {
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+    const getTranslatedSlide = useCallback((s: any): Slide => {
+        if (!s) return defaultSlides[0];
+        if (lang === "th") return s;
+        
+        const titleStr = s.title || "";
+        if (s.id === 1 || titleStr.includes("ออกแบบ") || titleStr.includes("Design")) {
+            return {
+                ...s,
+                badge: "🚀 Automated 3D Printing Service",
+                title: "Design. Print. ",
+                titleHighlight: "Create 3D Prototypes",
+                titleEnd: " Instantly",
+                bullets: [
+                    "Upload STL/OBJ files & get instant quote",
+                    "Supports FDM, SLA — Over 50 materials"
+                ],
+                cta: { label: "Order Now", href: s.cta?.href || "/quote" },
+                cta2: { label: "Upload File", href: s.cta2?.href || "/quote" }
+            };
+        }
+        if (s.id === 2 || titleStr.includes("รับราคา") || titleStr.includes("Quote")) {
+            return {
+                ...s,
+                badge: "⚡ Instant Quote Engine",
+                title: "Get Quote ",
+                titleHighlight: "Precisely Automated",
+                titleEnd: " in 30 seconds",
+                bullets: [
+                    "Calculated using actual PrusaSlicer CLI",
+                    "100% accurate weight & print time"
+                ],
+                cta: { label: "Try Instant Quote", href: s.cta?.href || "/quote" },
+                cta2: { label: "Learn More", href: s.cta2?.href || "/about" }
+            };
+        }
+        if (s.id === 3 || titleStr.includes("ใบเสนอราคา") || titleStr.includes("Quotation")) {
+            return {
+                ...s,
+                badge: "🏢 Corporate B2B Supported",
+                title: "Quotation ",
+                titleHighlight: "Automated PDF",
+                titleEnd: " Ready for PO",
+                bullets: [
+                    "Generate PDF quotation instantly",
+                    "Supports Purchase Order from companies"
+                ],
+                cta: { label: "Corporate Registration", href: s.cta?.href || "/register" },
+                cta2: { label: "View Details", href: s.cta2?.href || "/services" }
+            };
+        }
+        return s;
+    }, [lang]);
 
     useEffect(() => {
         fetch("/api/public/banners")

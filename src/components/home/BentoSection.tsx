@@ -3,8 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Zap, ShieldCheck, Palette, Cpu } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export function BentoSection() {
+    const { t } = useLanguage();
+
     return (
         <section className="bg-white py-32 px-4 font-sans relative overflow-hidden">
             {/* Soft background glow */}
@@ -16,12 +19,12 @@ export function BentoSection() {
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-600 font-bold text-xs uppercase tracking-widest mb-4">
                             <Zap size={14} className="fill-blue-600" />
-                            Why Choose Us
+                            {t.bento.badge}
                         </div>
                         <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-[1.15] tracking-tight">
-                            ทำไมบริษัทชั้นนำถึง<br />
+                            {t.bento.heading1}<br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-                                เลือกใช้ 3DEV
+                                {t.bento.heading2}
                             </span>
                         </h2>
                     </div>
@@ -33,9 +36,7 @@ export function BentoSection() {
                     {/* Card 1: Industrial Grade (Large) */}
                     <div className="md:col-span-2 relative rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 group hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-500">
                         <div className="absolute top-0 right-0 w-[60%] h-full md:w-[50%] transition-transform duration-700 group-hover:scale-105 group-hover:-translate-x-2">
-                            {/* Assuming gray background on image, using mix-blend-multiply to blend cleanly */}
                             <Image src="/showcase/metal.png" alt="Metal Print" fill className="object-cover md:object-contain object-right mix-blend-multiply opacity-90" />
-                            {/* Gradient mask to gracefully fade image edges into the background */}
                             <div className="absolute inset-0 bg-gradient-to-r from-slate-50 via-slate-50/20 to-transparent" />
                         </div>
                         <div className="relative z-10 p-10 flex flex-col h-full justify-center w-full md:w-[60%]">
@@ -43,13 +44,13 @@ export function BentoSection() {
                                 <Cpu size={24} strokeWidth={2.5}/>
                             </div>
                             <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3">
-                                พิมพ์ชิ้นงานด้วย<br />วัสดุระดับอุตสาหกรรม
+                                {t.bento.card1Title}
                             </h3>
                             <p className="text-slate-500 font-medium leading-relaxed mb-8 max-w-sm">
-                                รองรับวัสดุหลากหลาย ทั้งเรซิ่นคุณภาพสูง ไนลอนเหนียวทนทาน และโลหะ สำหรับชิ้นงานที่ต้องการความแกร่งเป็นพิเศษ
+                                {t.bento.card1Desc}
                             </p>
                             <Link href="/quote" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700 w-fit group/btn">
-                                สั่งพิมพ์เลย <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                {t.bento.card1Cta} <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </div>
@@ -63,15 +64,15 @@ export function BentoSection() {
                         </div>
                         <div className="relative p-8 z-10">
                             <h3 className="text-2xl font-black leading-tight mb-3">
-                                อัปโหลดไฟล์<br />รับราคาทันที
+                                {t.bento.card2Title}
                             </h3>
                             <p className="text-blue-100 text-sm font-medium leading-relaxed">
-                                ระบบ AI วิเคราะห์ไฟล์สามมิติอัตโนมัติ คำนวณราคาให้คุณทันทีแบบไม่ต้องรอ
+                                {t.bento.card2Desc}
                             </p>
                         </div>
                         <div className="relative px-8 pb-8 z-10 w-full mt-auto">
                             <Link href="/quote" className="w-full inline-flex items-center justify-center gap-2 bg-white text-blue-600 font-bold text-sm py-3 px-4 rounded-xl hover:bg-blue-50 transition-colors shadow-lg shadow-blue-900/50">
-                                เริ่มอัปโหลดไฟล์
+                                {t.bento.card2Cta}
                             </Link>
                         </div>
                     </div>
@@ -87,10 +88,10 @@ export function BentoSection() {
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3">
-                                    สี & พื้นผิว<br />หลากหลาย
+                                    {t.bento.card3Title}
                                 </h3>
                                 <p className="text-sm font-medium text-slate-500 leading-relaxed">
-                                    เลือกชิ้นงานได้ตั้งแต่ Full Color จนถึงผิวด้านระดับ Premium
+                                    {t.bento.card3Desc}
                                 </p>
                             </div>
                         </div>
@@ -100,7 +101,6 @@ export function BentoSection() {
                     <div className="md:col-span-2 relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 group hover:border-slate-700 hover:shadow-2xl hover:shadow-slate-900/50 transition-all duration-500">
                         <div className="absolute top-0 right-0 w-[55%] h-full opacity-60 mix-blend-luminosity group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-700">
                             <Image src="/showcase/sls.png" alt="SLS Nylon" fill className="object-cover md:object-contain object-right" />
-                            {/* Mask the left edge of the image to fade into black */}
                             <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/60 to-transparent" />
                         </div>
                         
@@ -109,13 +109,13 @@ export function BentoSection() {
                                 <ShieldCheck size={24} strokeWidth={2.5}/>
                             </div>
                             <h3 className="text-2xl font-black text-white leading-tight mb-3">
-                                คุณภาพระดับโรงงาน<br />ผ่านการตรวจสอบทุกชิ้น
+                                {t.bento.card4Title}
                             </h3>
                             <p className="text-slate-400 font-medium leading-relaxed mb-8 max-w-sm">
-                                ทีมวิศวกรตรวจสอบไฟล์และชิ้นงานอย่างละเอียดก่อนส่งมอบทุกครั้ง เพื่อให้มั่นใจว่าคุณได้รับชิ้นงานที่สมบูรณ์แบบที่สุด
+                                {t.bento.card4Desc}
                             </p>
                             <Link href="/quote" className="inline-flex items-center gap-2 text-sm font-bold text-white hover:text-emerald-400 w-fit group/btn transition-colors">
-                                ขอดูตัวอย่างงาน <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                {t.bento.card4Cta} <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </div>

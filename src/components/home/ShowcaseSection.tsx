@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 const showcaseItems = [
     {
@@ -31,6 +32,7 @@ const showcaseItems = [
 
 export function ShowcaseSection() {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const { t } = useLanguage();
 
     const scroll = (direction: "left" | "right") => {
         if (scrollRef.current) {
@@ -44,11 +46,11 @@ export function ShowcaseSection() {
         <section className="py-20 bg-white overflow-hidden">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                    3D Printed Parts Made by PDM
+                    {t.showcase.heading}
                 </h2>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <p className="mt-6 text-lg leading-8 text-slate-600 max-w-3xl">
-                        We manufacture rapid cost-effective prototypes and low-volume production orders for a variety of industries and applications.
+                        {t.showcase.subheading}
                     </p>
 
                     {/* Desktop Navigation Arrows */}
@@ -92,11 +94,11 @@ export function ShowcaseSection() {
 
                 <style jsx>{`
                     .showcase-container {
-                        -ms-overflow-style: none;  /* IE and Edge */
-                        scrollbar-width: none;  /* Firefox */
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
                     }
                     .showcase-container::-webkit-scrollbar {
-                        display: none; /* Chrome, Safari and Opera */
+                        display: none;
                     }
                 `}</style>
 
@@ -106,7 +108,7 @@ export function ShowcaseSection() {
                         className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 font-semibold shadow-lg shadow-blue-200 transition-all hover:scale-105"
                         asChild
                     >
-                        <Link href="/quote">Get Instant Quote</Link>
+                        <Link href="/quote">{t.showcase.cta}</Link>
                     </Button>
                 </div>
             </div>
