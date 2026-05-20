@@ -191,6 +191,49 @@ export interface TranslationSchema {
     readonly discountCoupon: string;
     readonly uploadError: string;
   };
+  readonly login: {
+    readonly sidebarTitle: string;
+    readonly sidebarDesc: string;
+    readonly loginTitle: string;
+    readonly loginSub: string;
+    readonly registerTitle: string;
+    readonly registerSub: string;
+    readonly nameLabel: string;
+    readonly namePlaceholder: string;
+    readonly emailLabel: string;
+    readonly passwordLabel: string;
+    readonly confirmPasswordLabel: string;
+    readonly forgotPassword: string;
+    readonly submitLogin: string;
+    readonly submitRegister: string;
+    readonly loading: string;
+    readonly orContinueWith: string;
+    readonly noAccount: string;
+    readonly registerNow: string;
+    readonly hasAccount: string;
+    readonly loginHere: string;
+    readonly termsNote: string;
+    readonly termsLink: string;
+    readonly privacyLink: string;
+    readonly otpTitle: string;
+    readonly otpDesc: string;
+    readonly otpVerify: string;
+    readonly otpNext: string;
+    readonly otpResendTimer: string;
+    readonly otpResend: string;
+    readonly backBtn: string;
+    readonly backToLogin: string;
+    readonly forgotTitle: string;
+    readonly forgotDesc: string;
+    readonly sendOtp: string;
+    readonly sending: string;
+    readonly resetTitle: string;
+    readonly resetDesc: string;
+    readonly newPasswordLabel: string;
+    readonly confirmNewPasswordLabel: string;
+    readonly resetBtn: string;
+    readonly saving: string;
+  };
 }
 
 export const I18N: Record<Language, TranslationSchema> = {
@@ -385,6 +428,49 @@ export const I18N: Record<Language, TranslationSchema> = {
       discountCoupon: "คูปองส่วนลด",
       uploadError: "การอัปโหลดไฟล์ล้มเหลว",
     },
+    login: {
+      sidebarTitle: "เข้าสู่โลก PDM",
+      sidebarDesc: "ยกระดับงานพิมพ์ 3 มิติของคุณ ด้วยโซลูชันอัจฉริยะแบบครบวงจร",
+      loginTitle: "เข้าสู่ระบบ",
+      loginSub: "ดีใจที่พบคุณอีกครั้ง!",
+      registerTitle: "สมัครสมาชิก",
+      registerSub: "เริ่มต้นใช้งาน PDM ฟรีได้ตั้งแต่วันนี้",
+      nameLabel: "ชื่อ-นามสกุล",
+      namePlaceholder: "ระบุชื่อจริงของคุณ",
+      emailLabel: "อีเมลแอดเดรส",
+      passwordLabel: "รหัสผ่าน",
+      confirmPasswordLabel: "ยืนยันรหัสผ่าน",
+      forgotPassword: "ลืมรหัสผ่าน?",
+      submitLogin: "เข้าสู่ระบบ",
+      submitRegister: "สมัครใช้งาน",
+      loading: "กำลังโหลด...",
+      orContinueWith: "เข้าด้วยช่องทางอื่น",
+      noAccount: "ยังไม่มีบัญชี?",
+      registerNow: "สมัครเดี๋ยวนี้",
+      hasAccount: "มีบัญชีอยู่แล้ว?",
+      loginHere: "เข้าสู่ระบบที่นี่",
+      termsNote: "เมื่อดำเนินการต่อ ถือว่าคุณยอมรับ",
+      termsLink: "ข้อกำหนด",
+      privacyLink: "นโยบายความเป็นส่วนตัว",
+      otpTitle: "ยืนยันรหัส OTP",
+      otpDesc: "เราได้ส่งรหัส 6 หลักไปที่",
+      otpVerify: "ยืนยันตัวตน",
+      otpNext: "ถัดไป",
+      otpResendTimer: "ขอรหัสใหม่ในอีก",
+      otpResend: "ส่งรหัสอีกครั้ง",
+      backBtn: "ย้อนกลับ",
+      backToLogin: "กลับสู่หน้าเข้าสู่ระบบ",
+      forgotTitle: "ลืมรหัสผ่าน?",
+      forgotDesc: "ไม่เป็นไร! กรอกอีเมลของคุณด้านล่าง แล้วเราจะส่งรหัส OTP สำหรับตั้งรหัสผ่านใหม่ไปให้",
+      sendOtp: "ส่งรหัส OTP",
+      sending: "กำลังส่ง...",
+      resetTitle: "ตั้งรหัสผ่านใหม่",
+      resetDesc: "กรุณาตั้งรหัสผ่านใหม่ที่คุณจำได้ง่ายและปลอดภัย",
+      newPasswordLabel: "รหัสผ่านใหม่",
+      confirmNewPasswordLabel: "ยืนยันรหัสผ่านใหม่",
+      resetBtn: "รีเซ็ตรหัสผ่าน",
+      saving: "กำลังบันทึก...",
+    },
   },
   en: {
     nav: {
@@ -576,6 +662,49 @@ export const I18N: Record<Language, TranslationSchema> = {
       weightLabel: "Weight",
       discountCoupon: "Discount Coupon",
       uploadError: "File upload failed",
+    },
+    login: {
+      sidebarTitle: "Enter the PDM World",
+      sidebarDesc: "Elevate your 3D printing with our all-in-one intelligent solutions.",
+      loginTitle: "Sign In",
+      loginSub: "Great to see you again!",
+      registerTitle: "Create Account",
+      registerSub: "Start using PDM for free today.",
+      nameLabel: "Full Name",
+      namePlaceholder: "Your full name",
+      emailLabel: "Email Address",
+      passwordLabel: "Password",
+      confirmPasswordLabel: "Confirm Password",
+      forgotPassword: "Forgot password?",
+      submitLogin: "Sign In",
+      submitRegister: "Create Account",
+      loading: "Loading...",
+      orContinueWith: "Or continue with",
+      noAccount: "Don't have an account?",
+      registerNow: "Register now",
+      hasAccount: "Already have an account?",
+      loginHere: "Sign in here",
+      termsNote: "By continuing, you agree to our",
+      termsLink: "Terms",
+      privacyLink: "Privacy Policy",
+      otpTitle: "Verify OTP",
+      otpDesc: "We sent a 6-digit code to",
+      otpVerify: "Verify",
+      otpNext: "Next",
+      otpResendTimer: "Resend in",
+      otpResend: "Resend code",
+      backBtn: "Go back",
+      backToLogin: "Back to sign in",
+      forgotTitle: "Forgot Password?",
+      forgotDesc: "No worries! Enter your email below and we'll send an OTP to reset your password.",
+      sendOtp: "Send OTP",
+      sending: "Sending...",
+      resetTitle: "Set New Password",
+      resetDesc: "Please set a new password that's easy to remember and secure.",
+      newPasswordLabel: "New Password",
+      confirmNewPasswordLabel: "Confirm New Password",
+      resetBtn: "Reset Password",
+      saving: "Saving...",
     },
   },
 };

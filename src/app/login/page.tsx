@@ -80,7 +80,6 @@ export default function LoginPage() {
             if (res.ok) {
                 toast.success("ยืนยันตัวตนสำเร็จ! กำลังเข้าสู่ระบบ...");
                 
-                // ให้เวลา DB อัปเดตสถานะ verified ให้เรียบร้อย 2 วินาที
                 setTimeout(async () => {
                     const resSignIn = await signIn("credentials", {
                         redirect: false,
@@ -91,13 +90,12 @@ export default function LoginPage() {
                     if (resSignIn?.ok) {
                         toast.success("เข้าสู่ระบบเรียบร้อย");
                         router.push("/");
-                        // ใช้ window.location.href เพื่อให้หน้าแรกโหลดข้อมูลใหม่แน่นอน
                         setTimeout(() => {
                             window.location.href = "/";
                         }, 500);
                     } else {
                         console.error("Auto Login Error:", resSignIn?.error);
-                        toast.error("เข้าสู่ระบบอัตโนมัติไม่สำเร็จ (DB Sync Delay) โปรดลองกด 'เข้าสู่ระบบ' อีกครั้งด้วยตนเอง");
+                        toast.error("เข้าสู่ระบบอัตโนมัติไม่สำเร็จ โปรดลองกด 'เข้าสู่ระบบ' อีกครั้ง");
                         setView("login");
                     }
                     setLoading(false);
@@ -189,7 +187,6 @@ export default function LoginPage() {
 
             if (res?.error === "ACCOUNT_NOT_VERIFIED") {
                 toast.warning("บัญชีของคุณยังไม่ได้ยืนยันตัวตน โปรดขอรหัส OTP ใหม่");
-                // Trigger resend to go to OTP view
                 handleResendOTP();
                 setView("otp");
             } else if (res?.error) {
@@ -237,15 +234,121 @@ export default function LoginPage() {
         }
     };
 
+    // ── i18n ──────────────────────────────────────────────────────────────────
+    const [lang, setLang] = useState<"th" | "en">("th");
+    useEffect(() => {
+        const stored = localStorage.getItem("pdm_language") as "th" | "en" | null;
+        if (stored) setLang(stored);
+        const handler = () => {
+            const l = localStorage.getItem("pdm_language") as "th" | "en" | null;
+            if (l) setLang(l);
+        };
+        window.addEventListener("language_changed", handler);
+        return () => window.removeEventListener("language_changed", handler);
+    }, []);
+
+    const tl = {
+        th: {
+            sidebarTitle: "เข้าสู่โลก PDM",
+            sidebarDesc: "ยกระดับงานพิมพ์ 3 มิติของคุณ ด้วยโซลูชันอัจฉริยะแบบครบวงจร",
+            loginTitle: "เข้าสู่ระบบ",
+            loginSub: "ดีใจที่พบคุณอีกครั้ง!",
+            registerTitle: "สมัครสมาชิก",
+            registerSub: "เริ่มต้นใช้งาน PDM ฟรีได้ตั้งแต่วันนี้",
+            nameLabel: "ชื่อ-นามสกุล",
+            namePlaceholder: "ระบุชื่อจริงของคุณ",
+            emailLabel: "อีเมลแอดเดรส",
+            passwordLabel: "รหัสผ่าน",
+            confirmPasswordLabel: "ยืนยันรหัสผ่าน",
+            forgotPassword: "ลืมรหัสผ่าน?",
+            submitLogin: "เข้าสู่ระบบ",
+            submitRegister: "สมัครใช้งาน",
+            loading: "กำลังโหลด...",
+            orContinueWith: "เข้าด้วยช่องทางอื่น",
+            noAccount: "ยังไม่มีบัญชี?",
+            registerNow: "สมัครเดี๋ยวนี้",
+            hasAccount: "มีบัญชีอยู่แล้ว?",
+            loginHere: "เข้าสู่ระบบที่นี่",
+            termsNote: "เมื่อดำเนินการต่อ ถือว่าคุณยอมรับ",
+            termsLink: "ข้อกำหนด",
+            privacyLink: "นโยบายความเป็นส่วนตัว",
+            andWord: "และ",
+            otpTitle: "ยืนยันรหัส OTP",
+            otpDesc: "เราได้ส่งรหัส 6 หลักไปที่",
+            otpVerify: "ยืนยันตัวตน",
+            otpNext: "ถัดไป",
+            otpResendTimer: "ขอรหัสใหม่ในอีก",
+            otpResendSuffix: "วินาที",
+            otpResend: "ส่งรหัสอีกครั้ง",
+            backBtn: "ย้อนกลับ",
+            backToLogin: "กลับสู่หน้าเข้าสู่ระบบ",
+            forgotTitle: "ลืมรหัสผ่าน?",
+            forgotDesc: "ไม่เป็นไร! กรอกอีเมลของคุณด้านล่าง แล้วเราจะส่งรหัส OTP สำหรับตั้งรหัสผ่านใหม่ไปให้",
+            sendOtp: "ส่งรหัส OTP",
+            sending: "กำลังส่ง...",
+            resetTitle: "ตั้งรหัสผ่านใหม่",
+            resetDesc: "กรุณาตั้งรหัสผ่านใหม่ที่คุณจำได้ง่ายและปลอดภัย",
+            newPasswordLabel: "รหัสผ่านใหม่",
+            confirmNewPasswordLabel: "ยืนยันรหัสผ่านใหม่",
+            resetBtn: "รีเซ็ตรหัสผ่าน",
+            saving: "กำลังบันทึก...",
+        },
+        en: {
+            sidebarTitle: "Enter the PDM World",
+            sidebarDesc: "Elevate your 3D printing with our all-in-one intelligent solutions.",
+            loginTitle: "Sign In",
+            loginSub: "Great to see you again!",
+            registerTitle: "Create Account",
+            registerSub: "Start using PDM for free today.",
+            nameLabel: "Full Name",
+            namePlaceholder: "Your full name",
+            emailLabel: "Email Address",
+            passwordLabel: "Password",
+            confirmPasswordLabel: "Confirm Password",
+            forgotPassword: "Forgot password?",
+            submitLogin: "Sign In",
+            submitRegister: "Create Account",
+            loading: "Loading...",
+            orContinueWith: "Or continue with",
+            noAccount: "Don't have an account?",
+            registerNow: "Register now",
+            hasAccount: "Already have an account?",
+            loginHere: "Sign in here",
+            termsNote: "By continuing, you agree to our",
+            termsLink: "Terms",
+            privacyLink: "Privacy Policy",
+            andWord: "and",
+            otpTitle: "Verify OTP",
+            otpDesc: "We sent a 6-digit code to",
+            otpVerify: "Verify",
+            otpNext: "Next",
+            otpResendTimer: "Resend in",
+            otpResendSuffix: "seconds",
+            otpResend: "Resend code",
+            backBtn: "Go back",
+            backToLogin: "Back to sign in",
+            forgotTitle: "Forgot Password?",
+            forgotDesc: "No worries! Enter your email below and we'll send an OTP to reset your password.",
+            sendOtp: "Send OTP",
+            sending: "Sending...",
+            resetTitle: "Set New Password",
+            resetDesc: "Please set a new password that's easy to remember and secure.",
+            newPasswordLabel: "New Password",
+            confirmNewPasswordLabel: "Confirm New Password",
+            resetBtn: "Reset Password",
+            saving: "Saving...",
+        },
+    };
+    const T = tl[lang];
+
     return (
         <div className="min-h-screen w-full flex bg-[#F0F2F5] p-4 sm:p-6 font-sans items-center justify-center relative">
             
-            {/* ── Modal: ขออีเมลเพิ่ม (สำหรับคนเข้าทางลัด LINE/SSO) ── */}
             <EmailCheckModal />
 
             <div className="w-full max-w-[900px] h-auto md:h-[600px] bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.06)] flex overflow-hidden border border-white relative z-10">
                 
-                {/* ── Left Sidebar (Static Image) ── */}
+                {/* ── Left Sidebar ── */}
                 <div className="hidden md:flex w-[40%] relative">
                     <Image 
                         src="/industrial-bg.png" 
@@ -264,9 +367,9 @@ export default function LoginPage() {
                             </div>
                         </Link>
                         <div className="text-white">
-                            <h2 className="text-2xl font-black mb-3">เข้าสู่โลก PDM</h2>
+                            <h2 className="text-2xl font-black mb-3">{T.sidebarTitle}</h2>
                             <p className="text-white/70 text-sm font-medium leading-relaxed">
-                                ยกระดับงานพิมพ์ 3 มิติของคุณ <br/> ด้วยโซลูชันอัจฉริยะแบบครบวงจร
+                                {T.sidebarDesc}
                             </p>
                         </div>
                     </div>
@@ -277,19 +380,19 @@ export default function LoginPage() {
                     <div className="w-full h-full overflow-y-auto pt-14 pb-14 px-8 lg:px-14 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                         <div className="w-full max-w-[340px] mx-auto">
                             
-                            {/* --- OTP Verification View --- */}
+                            {/* --- OTP View --- */}
                             {view === "otp" || view === "forgot-otp" ? (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                                     <button onClick={() => setView(view === "otp" ? "register" : "forgot")} className="mb-6 flex items-center gap-1 text-slate-400 hover:text-blue-600 transition-colors text-xs font-bold">
-                                        <ChevronLeft className="w-4 h-4" /> ย้อนกลับ
+                                        <ChevronLeft className="w-4 h-4" /> {T.backBtn}
                                     </button>
                                     <div className="mb-8 text-center md:text-left">
                                         <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
                                             <ShieldCheck className="w-6 h-6" />
                                         </div>
-                                        <h3 className="text-2xl font-black text-slate-900 mb-2">ยืนยันรหัส OTP</h3>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-2">{T.otpTitle}</h3>
                                         <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                                            เราได้ส่งรหัส 6 หลักไปที่ <span className="text-slate-900 font-bold">{email}</span> เพื่อความปลอดภัย โปรดระบุรหัสดังกล่าวเพื่อดำเนินการต่อ
+                                            {T.otpDesc} <span className="text-slate-900 font-bold">{email}</span>
                                         </p>
                                     </div>
 
@@ -310,7 +413,7 @@ export default function LoginPage() {
                                             disabled={loading || otp.length < 6}
                                             className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black tracking-wider shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-[0.98] transition-all disabled:bg-slate-200 flex items-center justify-center gap-3"
                                         >
-                                            {view === "otp" ? "ยืนยันตัวตน" : "ถัดไป"} <ArrowRight className="w-4 h-4" />
+                                            {view === "otp" ? T.otpVerify : T.otpNext} <ArrowRight className="w-4 h-4" />
                                         </button>
                                     </form>
 
@@ -321,27 +424,26 @@ export default function LoginPage() {
                                             className="text-sm font-bold flex items-center justify-center gap-2 mx-auto transition-colors disabled:text-slate-300 text-blue-600"
                                         >
                                             <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-                                            {timer > 0 ? `ขอรหัสใหม่ในอีก ${timer} วินาที` : "ส่งรหัสอีกครั้ง"}
+                                            {timer > 0 ? `${T.otpResendTimer} ${timer} ${T.otpResendSuffix}` : T.otpResend}
                                         </button>
                                     </div>
                                 </div>
+
                             ) : view === "forgot" ? (
                                 <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                                     <button onClick={() => setView("login")} className="mb-6 flex items-center gap-1 text-slate-400 hover:text-blue-600 transition-colors text-xs font-bold">
-                                        <ChevronLeft className="w-4 h-4" /> กลับสู่หน้าเข้าสู่ระบบ
+                                        <ChevronLeft className="w-4 h-4" /> {T.backToLogin}
                                     </button>
                                     <div className="mb-10 text-center md:text-left pt-2">
-                                        <h3 className="text-3xl font-black text-slate-900 mb-2">ลืมรหัสผ่าน?</h3>
-                                        <p className="text-slate-400 text-sm font-medium">ไม่เป็นไร! กรอกอีเมลของคุณด้านล่าง แล้วเราจะส่งรหัส OTP สำหรับตั้งรหัสผ่านใหม่ไปให้</p>
+                                        <h3 className="text-3xl font-black text-slate-900 mb-2">{T.forgotTitle}</h3>
+                                        <p className="text-slate-400 text-sm font-medium">{T.forgotDesc}</p>
                                     </div>
                                     <form onSubmit={handleForgotPassword} className="space-y-5">
                                         <div className="space-y-1">
-                                            <label className="text-xs font-bold text-slate-700 ml-1">อีเมลแอดเดรส</label>
+                                            <label className="text-xs font-bold text-slate-700 ml-1">{T.emailLabel}</label>
                                             <input type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-slate-50 border-none rounded-xl px-5 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-blue-600 focus:bg-white shadow-sm" />
                                         </div>
                                         <button type="submit" disabled={loading || !email} className="w-full py-4 mt-2 rounded-[18px] bg-blue-600 text-white text-[13px] font-black tracking-[.15em] uppercase shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-[0.98] transition-all disabled:bg-slate-300 flex items-center justify-center gap-2">
-                                            {loading ? "กำลังส่ง..." : "ส่งรหัส OTP"}
-                                            {!loading && <ArrowRight className="w-4 h-4" />}
                                         </button>
                                     </form>
                                 </div>
