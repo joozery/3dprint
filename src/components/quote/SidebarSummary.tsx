@@ -6,6 +6,7 @@ import { Info, Loader2, FileText, ShoppingCart, ShoppingBag, CheckCircle2, Alert
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface SidebarSummaryProps {
     quotes: any[];
@@ -17,6 +18,7 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
     const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
     const router = useRouter();
     const { data: session } = useSession();
+    const { t } = useLanguage();
 
     const totalPrice = quotes.reduce((sum, q) => sum + (q?.priceDetail?.totalPrice || 0), 0);
     const weight = quotes.reduce((sum, q) => sum + (q?.weightGrams || 0), 0);
@@ -58,19 +60,19 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
         <div className="space-y-4 sticky top-24">
             {/* Charge Details */}
             <div className="bg-white border rounded-xl p-6 shadow-sm">
-                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">รายละเอียดราคา</h2>
+                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">{t.quote.priceDetail}</h2>
 
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-slate-900">ราคาสุทธิ</span>
+                    <span className="text-sm font-bold text-slate-900">{t.quote.netPrice}</span>
                     <span className="text-2xl font-bold text-orange-600">
                         {totalPrice > 0 ? `฿${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "--"}
                     </span>
                 </div>
                 {quotes.length > 1 && (
-                    <p className="text-xs text-slate-400 mb-2">{quotes.length} รายการ · เฉลี่ย ฿{(totalPrice / quotes.length).toFixed(2)}/ชิ้น</p>
+                    <p className="text-xs text-slate-400 mb-2">{quotes.length} {t.quote.filesLabel} · ฿{(totalPrice / quotes.length).toFixed(2)}{t.quote.perPiece}</p>
                 )}
                 <p className="text-[10px] text-slate-400 mb-6">
-                    อาจมีค่าใช้จ่ายเพิ่มเติมสำหรับ <span className="underline cursor-pointer">กรณีพิเศษ</span>
+                    {t.quote.extraNote} <span className="underline cursor-pointer">{t.quote.termsLink}</span>
                 </p>
 
                 {/* Terms */}
@@ -82,7 +84,7 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                         className="mt-1"
                     />
                     <label htmlFor="terms" className="text-xs text-slate-500 leading-tight">
-                        ฉันยอมรับ <span className="text-blue-600 hover:underline cursor-pointer font-medium">เงื่อนไขการใช้งาน</span> ของ 3DEV
+                        {t.quote.termsCheck} <span className="text-blue-600 hover:underline cursor-pointer font-medium">{t.quote.termsLink}</span> {""}ของ 3DEV
                     </label>
                 </div>
 
@@ -98,7 +100,7 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
 
                 {/* Buttons */}
                 <div className="space-y-3">
-                    {/* ขอใบเสนอราคา — primary action */}
+                    {/* Request Quote — primary action */}
                     <button
                         disabled={!hasQuotes || !agreed || requestLoading}
                         onClick={handleRequestQuote}
@@ -107,39 +109,39 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                         {requestLoading
                             ? <Loader2 size={16} className="animate-spin" />
                             : <FileText size={16} />}
-                        {requestLoading ? "กำลังส่ง..." : "ขอใบเสนอราคา"}
+                        {requestLoading ? t.quote.sending : t.quote.requestQuote}
                     </button>
 
-                    {/* สั่งพิมพ์เลย */}
+                    {/* Order Now */}
                     <Button
                         disabled={!hasQuotes || !agreed}
                         onClick={() => router.push("/checkout")}
                         className="w-full py-6 text-base font-bold rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-none disabled:opacity-40"
                     >
                         <ShoppingBag size={16} className="mr-2" />
-                        สั่งพิมพ์เลย
+                        {t.quote.orderNow}
                     </Button>
 
-                    {/* บันทึกลงตะกร้า */}
+                    {/* Save to Cart */}
                     <Button
                         variant="outline"
                         disabled={!hasQuotes}
                         onClick={() => {
-                            import("sonner").then(m => m.toast.success("บันทึกลงตะกร้าเรียบร้อยแล้ว!", { 
-                                description: "ออเดอร์นี้จะถูกบันทึกไว้ในบัญชีของคุณอัตโนมัติ" 
+                            import("sonner").then(m => m.toast.success(t.quote.saveToCart + "!", { 
+                                description: t.quote.loginRequired
                             }));
                         }}
                         className="w-full py-6 text-base font-bold rounded-full border-blue-600 text-blue-600 hover:bg-blue-50 disabled:opacity-40"
                     >
                         <ShoppingCart size={16} className="mr-2" />
-                        บันทึกลงตะกร้า
+                        {t.quote.saveToCart}
                     </Button>
                 </div>
 
                 {/* Login hint */}
                 {!session?.user && hasQuotes && (
                     <p className="text-center text-[10px] text-slate-400 mt-3">
-                        ต้องเข้าสู่ระบบก่อนขอใบเสนอราคา
+                        {t.quote.loginRequired}
                     </p>
                 )}
             </div>
@@ -147,10 +149,10 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
             {/* Shipping Estimate */}
             <div className="bg-white border rounded-xl p-5 shadow-sm">
                 <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1 mb-1">
-                    ประมาณการค่าส่ง <Info className="w-3 h-3 text-slate-400" />
+                    {t.quote.shippingEstimate} <Info className="w-3 h-3 text-slate-400" />
                 </h3>
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">น้ำหนัก <Info className="w-3 h-3 inline text-slate-300" /></span>
+                    <span className="text-slate-500">{t.quote.weightLabel} <Info className="w-3 h-3 inline text-slate-300" /></span>
                     <span className="font-bold text-slate-900">
                         {weight > 0 ? `${weight.toFixed(2)} g` : "--"}
                     </span>
@@ -161,7 +163,7 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
             <div className="bg-white border rounded-xl p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                        คูปองส่วนลด <Info className="w-3 h-3 text-slate-400" />
+                        {t.quote.discountCoupon} <Info className="w-3 h-3 text-slate-400" />
                     </h3>
                     <div className="flex gap-1">
                         <div className="text-[9px] font-bold border border-orange-200 text-orange-500 px-1 rounded bg-orange-50">ลด ฿25.00</div>

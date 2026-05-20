@@ -122,6 +122,75 @@ export interface TranslationSchema {
     readonly terms: string;
     readonly cookies: string;
   };
+  readonly quote: {
+    readonly filesLabel: string;
+    readonly addFile: string;
+    readonly dropOrSelect: string;
+    readonly fileFormats: string;
+    readonly sslNote: string;
+    readonly configTitle: string;
+    readonly copyToAll: string;
+    readonly processLabel: string;
+    readonly materialLabel: string;
+    readonly colorLabel: string;
+    readonly finishLabel: string;
+    readonly qtyDeliveryLabel: string;
+    readonly qtyLabel: string;
+    readonly deliveryLabel: string;
+    readonly finishStandard: string;
+    readonly finishStandardPrice: string;
+    readonly finishSanded: string;
+    readonly finishPrimed: string;
+    readonly finishPainted: string;
+    readonly deliveryEconomy: string;
+    readonly deliveryStandard: string;
+    readonly deliveryExpress: string;
+    readonly deliveryDays710: string;
+    readonly deliveryDays45: string;
+    readonly deliveryDays2: string;
+    readonly priceBreakdown: string;
+    readonly perPiece: string;
+    readonly sanded: string;
+    readonly setupFee: string;
+    readonly coupon: string;
+    readonly removeBtn: string;
+    readonly shippingAddr: string;
+    readonly selectAddr: string;
+    readonly manageAddr: string;
+    readonly addAddr: string;
+    readonly shippingChannel: string;
+    readonly total: string;
+    readonly inclVat: string;
+    readonly placeOrder: string;
+    readonly quotation: string;
+    readonly saveCart: string;
+    readonly termsCheck: string;
+    readonly termsLink: string;
+    readonly termsTitle: string;
+    readonly termsSub: string;
+    readonly termsS1Title: string;
+    readonly termsS1Body: string;
+    readonly termsS2Title: string;
+    readonly termsS2Body: string;
+    readonly termsS3Title: string;
+    readonly termsS3Body: string;
+    readonly termsS4Title: string;
+    readonly termsS4Body: string;
+    readonly cancelBtn: string;
+    readonly acceptBtn: string;
+    readonly priceDetail: string;
+    readonly netPrice: string;
+    readonly extraNote: string;
+    readonly requestQuote: string;
+    readonly sending: string;
+    readonly orderNow: string;
+    readonly saveToCart: string;
+    readonly loginRequired: string;
+    readonly shippingEstimate: string;
+    readonly weightLabel: string;
+    readonly discountCoupon: string;
+    readonly uploadError: string;
+  };
 }
 
 export const I18N: Record<Language, TranslationSchema> = {
@@ -247,6 +316,75 @@ export const I18N: Record<Language, TranslationSchema> = {
       terms: "ข้อกำหนดการให้บริการ",
       cookies: "นโยบายคุกกี้",
     },
+    quote: {
+      filesLabel: "ไฟล์",
+      addFile: "เพิ่ม",
+      dropOrSelect: "ลากวางหรือเลือกไฟล์ 3D",
+      fileFormats: "STL · STEP · OBJ · 3MF",
+      sslNote: "การอัปโหลดเข้ารหัสและเป็นความลับ SSL",
+      configTitle: "ตั้งค่าการพิมพ์",
+      copyToAll: "คัดลอกการตั้งค่าทั้งหมด",
+      processLabel: "1. กระบวนการ (Process)",
+      materialLabel: "2. วัสดุ (Material)",
+      colorLabel: "3. สี (Color)",
+      finishLabel: "4. ผิวงาน (Finish)",
+      qtyDeliveryLabel: "5. จำนวน & เวลาจัดส่ง",
+      qtyLabel: "จำนวน",
+      deliveryLabel: "ความเร็วการจัดส่ง",
+      finishStandard: "มาตรฐาน (Standard)",
+      finishStandardPrice: "รวมในราคา",
+      finishSanded: "ขัดเรียบ (Sanded)",
+      finishPrimed: "พ่นรองพื้น (Primed)",
+      finishPainted: "พ่นสี (Painted)",
+      deliveryEconomy: "ประหยัด",
+      deliveryStandard: "ปกติ",
+      deliveryExpress: "ด่วน",
+      deliveryDays710: "7-10 วัน",
+      deliveryDays45: "4-5 วัน",
+      deliveryDays2: "2 วัน",
+      priceBreakdown: "รายละเอียดราคา",
+      perPiece: "/ชิ้น",
+      sanded: "ขัดเรียบ (Sanded)",
+      setupFee: "ค่าเตรียมงาน",
+      coupon: "คูปอง",
+      removeBtn: "นำออก",
+      shippingAddr: "ที่อยู่จัดส่ง",
+      selectAddr: "เลือกที่อยู่จัดส่ง",
+      manageAddr: "จัดการที่อยู่",
+      addAddr: "เพิ่มที่อยู่จัดส่ง",
+      shippingChannel: "ช่องทางการจัดส่ง",
+      total: "รวมทั้งหมด",
+      inclVat: "รวม VAT 7% แล้ว",
+      placeOrder: "สั่งพิมพ์เลย",
+      quotation: "ใบเสนอราคา",
+      saveCart: "บันทึกตะกร้า",
+      termsCheck: "ฉันยอมรับ",
+      termsLink: "เงื่อนไขการใช้งาน",
+      termsTitle: "เงื่อนไขการใช้งาน",
+      termsSub: "Terms and Conditions",
+      termsS1Title: "1. การรับประกันและขอบเขตความรับผิดชอบ",
+      termsS1Body: "บริษัทขอสงวนสิทธิ์ในการไม่รับผิดชอบต่อความเสียหายที่เกิดจากความผิดพลาดของไฟล์ต้นฉบับของผู้ใช้งาน งานพิมพ์ 3 มิติอาจมีร่องรอยของชั้นเลเยอร์ (Layer lines) ซึ่งเป็นลักษณะปกติของกระบวนการผลิต",
+      termsS2Title: "2. ระยะเวลาการผลิตและการจัดส่ง",
+      termsS2Body: "ระยะเวลาที่ระบุเป็นการประมาณการเบื้องต้น บริษัทจะเริ่มนับระยะเวลาการผลิตหลังจากได้รับหลักฐานการชำระเงินที่ถูกต้องและไฟล์งานผ่านการตรวจสอบความพร้อมทางเทคนิคแล้วเท่านั้น",
+      termsS3Title: "3. นโยบายการยกเลิกและคืนเงิน",
+      termsS3Body: "เนื่องจากเป็นสินค้าสั่งทำพิเศษ (Custom Made) เมื่อเริ่มกระบวนการพิมพ์แล้ว จะไม่สามารถยกเลิกหรือขอคืนเงินได้ เว้นแต่จะเกิดจากความผิดพลาดของบริษัทโดยตรง",
+      termsS4Title: "4. ความปลอดภัยของข้อมูล",
+      termsS4Body: "บริษัทให้ความสำคัญกับความเป็นส่วนตัวและลิขสิทธิ์ไฟล์งานของท่าน ไฟล์ที่อัปโหลดจะถูกเก็บรักษาเป็นความลับและใช้เพื่อวัตถุประสงค์ในการผลิตเท่านั้น",
+      cancelBtn: "ยกเลิก",
+      acceptBtn: "ฉันยอมรับเงื่อนไข",
+      priceDetail: "รายละเอียดราคา",
+      netPrice: "ราคาสุทธิ",
+      extraNote: "อาจมีค่าใช้จ่ายเพิ่มเติมสำหรับ",
+      requestQuote: "ขอใบเสนอราคา",
+      sending: "กำลังส่ง...",
+      orderNow: "สั่งพิมพ์เลย",
+      saveToCart: "บันทึกลงตะกร้า",
+      loginRequired: "ต้องเข้าสู่ระบบก่อนขอใบเสนอราคา",
+      shippingEstimate: "ประมาณการค่าส่ง",
+      weightLabel: "น้ำหนัก",
+      discountCoupon: "คูปองส่วนลด",
+      uploadError: "การอัปโหลดไฟล์ล้มเหลว",
+    },
   },
   en: {
     nav: {
@@ -369,6 +507,75 @@ export const I18N: Record<Language, TranslationSchema> = {
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       cookies: "Cookie Policy",
+    },
+    quote: {
+      filesLabel: "Files",
+      addFile: "Add",
+      dropOrSelect: "Drag & drop or select a 3D file",
+      fileFormats: "STL · STEP · OBJ · 3MF",
+      sslNote: "Uploads are SSL-encrypted & confidential",
+      configTitle: "Print Configuration",
+      copyToAll: "Copy to all",
+      processLabel: "1. Process",
+      materialLabel: "2. Material",
+      colorLabel: "3. Color",
+      finishLabel: "4. Finish",
+      qtyDeliveryLabel: "5. Quantity & Delivery",
+      qtyLabel: "Quantity",
+      deliveryLabel: "Delivery Speed",
+      finishStandard: "Standard",
+      finishStandardPrice: "Included",
+      finishSanded: "Sanded",
+      finishPrimed: "Primed",
+      finishPainted: "Painted",
+      deliveryEconomy: "Economy",
+      deliveryStandard: "Standard",
+      deliveryExpress: "Express",
+      deliveryDays710: "7-10 days",
+      deliveryDays45: "4-5 days",
+      deliveryDays2: "2 days",
+      priceBreakdown: "Price Breakdown",
+      perPiece: "/pc",
+      sanded: "+ Sanded",
+      setupFee: "Setup fee",
+      coupon: "Coupon",
+      removeBtn: "Remove",
+      shippingAddr: "Shipping Address",
+      selectAddr: "Select shipping address",
+      manageAddr: "Manage Addresses",
+      addAddr: "Add Shipping Address",
+      shippingChannel: "Shipping Method",
+      total: "Total",
+      inclVat: "Incl. 7% VAT",
+      placeOrder: "Place Order",
+      quotation: "Quotation",
+      saveCart: "Save to Cart",
+      termsCheck: "I agree to the",
+      termsLink: "Terms & Conditions",
+      termsTitle: "Terms and Conditions",
+      termsSub: "Terms and Conditions",
+      termsS1Title: "1. Warranty & Liability",
+      termsS1Body: "The company reserves the right not to be liable for damages caused by errors in the user's original files. 3D printed parts may show layer lines, which is a normal characteristic of the manufacturing process.",
+      termsS2Title: "2. Production & Delivery Timeline",
+      termsS2Body: "Stated timelines are preliminary estimates. Production countdown begins only after valid payment confirmation is received and the file passes technical readiness checks.",
+      termsS3Title: "3. Cancellation & Refund Policy",
+      termsS3Body: "As items are custom-made, once production begins, cancellation or refund requests are not possible under any circumstance, unless caused directly by company error.",
+      termsS4Title: "4. Data Security",
+      termsS4Body: "We take your file privacy and intellectual property seriously. Uploaded files are stored confidentially and used solely for production purposes.",
+      cancelBtn: "Cancel",
+      acceptBtn: "I Accept Terms",
+      priceDetail: "Price Details",
+      netPrice: "Net Price",
+      extraNote: "Additional charges may apply for",
+      requestQuote: "Request Quote",
+      sending: "Sending...",
+      orderNow: "Order Now",
+      saveToCart: "Save to Cart",
+      loginRequired: "Login required to request a quote",
+      shippingEstimate: "Shipping Estimate",
+      weightLabel: "Weight",
+      discountCoupon: "Discount Coupon",
+      uploadError: "File upload failed",
     },
   },
 };

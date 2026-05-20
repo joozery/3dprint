@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import axios from "axios";
 import { Viewer3D } from "./Viewer3D";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface QuoteAppProps {
     quotes: any[];
@@ -19,6 +20,7 @@ interface QuoteAppProps {
 export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const { data: session } = useSession();
     const router = useRouter();
+    const { t } = useLanguage();
     const [activeId, setActiveId] = useState<string | null>(quotes.length > 0 ? quotes[0]._id : null);
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -102,7 +104,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                 }
             } catch (err: any) {
                 console.error("Upload failed", err);
-                alert(err.response?.data?.message || "การอัปโหลดไฟล์ล้มเหลว");
+                alert(err.response?.data?.message || t.quote.uploadError);
             }
         }
         setUploading(false);
@@ -156,7 +158,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const handlePlaceOrder = async () => {
         if (!isTermsAccepted) return;
         if (quotes.length === 0) {
-            alert("กรุณาเพิ่มไฟล์ 3D อย่างน้อย 1 ไฟล์ก่อนดำเนินการ");
+            alert(t.quote.dropOrSelect);
             return;
         }
         
@@ -192,9 +194,9 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const vat = totalPrice * 0.07;
 
     const deliveryConfig: Record<string, { label: string; days: string; price: number }> = {
-        economy:  { label: 'ประหยัด',  days: '7-10 วัน', price: 60 },
-        standard: { label: 'ปกติ',    days: '4-5 วัน',  price: 85 },
-        express:  { label: 'ด่วน',    days: '2 วัน',    price: 285 },
+        economy:  { label: t.quote.deliveryEconomy,  days: t.quote.deliveryDays710, price: 60 },
+        standard: { label: t.quote.deliveryStandard, days: t.quote.deliveryDays45,  price: 85 },
+        express:  { label: t.quote.deliveryExpress,  days: t.quote.deliveryDays2,   price: 285 },
     };
     const currentDelivery = deliveryConfig[activeQuote?.deliverySpeed || 'standard'];
     const deliveryCost = currentDelivery.price;
@@ -217,16 +219,16 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                 <aside className="flex flex-col overflow-hidden" style={{ backgroundColor: bgSidebar, borderRight: `1px solid ${lineBorder}` }}>
                     <div className="p-4 bg-white" style={{ borderBottom: `1px solid ${lineBorder}` }}>
                         <div className="flex justify-between items-center mb-4">
-                            <div className="text-[11px] font-black text-slate-300 uppercase tracking-widest">ไฟล์ · {quotes.length}</div>
+                            <div className="text-[11px] font-black text-slate-300 uppercase tracking-widest">{t.quote.filesLabel} · {quotes.length}</div>
                             <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 px-2 py-1 text-[10px] bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold transition-all">
-                                <Plus className="w-3 h-3" /> เพิ่ม
+                                <Plus className="w-3 h-3" /> {t.quote.addFile}
                             </button>
                             <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} accept=".stl,.3mf,.obj,.step,.stp" />
                         </div>
                         <button onClick={() => fileInputRef.current?.click()} className="w-full py-8 px-3 border-[1.5px] border-dashed border-slate-200 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-50 text-slate-400 transition-all hover:border-slate-300">
                             <Upload className="w-7 h-7 opacity-20" />
-                            <div className="text-[11px] font-bold text-slate-600">ลากวางหรือเลือกไฟล์ 3D</div>
-                            <div className="text-[9px] font-mono tracking-wide opacity-50 uppercase">STL · STEP · OBJ · 3MF</div>
+                            <div className="text-[11px] font-bold text-slate-600">{t.quote.dropOrSelect}</div>
+                            <div className="text-[9px] font-mono tracking-wide opacity-50 uppercase">{t.quote.fileFormats}</div>
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-2">
@@ -247,7 +249,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         ))}
                     </div>
                     <div className="p-4 bg-white flex items-center gap-2 text-[10px] text-slate-300 font-bold uppercase tracking-tighter" style={{ borderTop: `1px solid ${lineBorder}` }}>
-                        <Lock className="w-3.5 h-3.5" /> การอัปโหลดเข้ารหัสและเป็นความลับ SSL
+                        <Lock className="w-3.5 h-3.5" /> {t.quote.sslNote}
                     </div>
                 </aside>
 
@@ -404,16 +406,16 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                     <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10 shadow-sm">
                         <div>
                             <div className="text-[11px] font-black tracking-widest uppercase text-slate-300">CONFIGURATION</div>
-                            <div className="text-[14px] font-black mt-0.5">ตั้งค่าการพิมพ์</div>
+                            <div className="text-[14px] font-black mt-0.5">{t.quote.configTitle}</div>
                         </div>
-                        <button className="text-[10px] font-black tracking-widest px-3 py-2 border border-slate-200 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-all uppercase">COPY TO ALL</button>
+                        <button className="text-[10px] font-black tracking-widest px-3 py-2 border border-slate-200 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-all uppercase">{t.quote.copyToAll}</button>
                     </div>
                     {activeQuote ? (
                         <div className="p-6 pb-32 space-y-10">
                             {/* Process */}
                             <div>
                                 <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
-                                    1. กระบวนการ (Process)
+                                    {t.quote.processLabel}
                                 </div>
                                 <div className="grid grid-cols-5 gap-2">
                                     {technologies.map(tech => (
@@ -425,7 +427,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             {/* Material */}
                             <div>
                                 <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
-                                    2. วัสดุ (Material)
+                                    {t.quote.materialLabel}
                                 </div>
                                 <div className="space-y-4">
                                     {dbMaterials.filter(m => m.technology?.toLowerCase() === (activeQuote.technology || 'sla').toLowerCase()).map(mat => (
@@ -473,7 +475,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             {/* Color */}
                             <div>
                                 <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
-                                    3. สี (Color)
+                                    {t.quote.colorLabel}
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     {(dbMaterials.find(m => m._id === (activeQuote.material || ''))?.colors || ['White', 'Black', 'Grey', 'Blue', 'Green', 'Yellow', 'Red']).map((c: string) => (
@@ -487,14 +489,14 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             {/* Finish */}
                             <div>
                                 <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
-                                    4. ผิวงาน (Finish)
+                                    {t.quote.finishLabel}
                                 </div>
                                 <div className="space-y-2">
                                     {[
-                                        { id: 'standard', label: 'มาตรฐาน (Standard)', price: 'รวมในราคา', active: activeQuote.finish !== 'sanded' },
-                                        { id: 'sanded', label: 'ขัดเรียบ (Sanded)', price: '฿80', active: activeQuote.finish === 'sanded' },
-                                        { id: 'primed', label: 'พ่นรองพื้น (Primed)', price: '฿150', active: false },
-                                        { id: 'painted', label: 'พ่นสี (Painted)', price: '฿250', active: false },
+                                        { id: 'standard', label: t.quote.finishStandard, price: t.quote.finishStandardPrice, active: activeQuote.finish !== 'sanded' },
+                                        { id: 'sanded', label: t.quote.finishSanded, price: '฿80', active: activeQuote.finish === 'sanded' },
+                                        { id: 'primed', label: t.quote.finishPrimed, price: '฿150', active: false },
+                                        { id: 'painted', label: t.quote.finishPainted, price: '฿250', active: false },
                                     ].map(f => (
                                         <button key={f.id} onClick={() => patchQuote(activeQuote._id, { finish: f.id })} className={cn("w-full flex justify-between items-center p-4 text-[13px] font-black rounded-xl border transition-all", f.active ? "bg-[#2563eb] text-white border-[#2563eb] shadow-lg shadow-blue-100" : "bg-white text-slate-700 border-slate-100 hover:border-slate-200")}>
                                             <span>{f.label}</span>
@@ -507,12 +509,12 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             {/* Section 5: Quantity & Delivery */}
                             <div>
                                 <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
-                                    5. จำนวน &amp; เวลาจัดส่ง
+                                    {t.quote.qtyDeliveryLabel}
                                 </div>
 
                                 {/* Quantity Stepper */}
                                 <div className="mb-5">
-                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">จำนวน</div>
+                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t.quote.qtyLabel}</div>
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => patchQuote(activeQuote._id, { quantity: Math.max(1, (activeQuote.quantity || 1) - 1) })}
@@ -535,9 +537,9 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 {/* Delivery Speed */}
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
-                                        { id: 'economy', label: 'ประหยัด', days: '7-10 วัน', extra: '' },
-                                        { id: 'standard', label: 'ปกติ', days: '4-5 วัน', extra: '' },
-                                        { id: 'express', label: 'ด่วน', days: '2 วัน', extra: '+฿200' },
+                                        { id: 'economy', label: t.quote.deliveryEconomy, days: t.quote.deliveryDays710, extra: '' },
+                                        { id: 'standard', label: t.quote.deliveryStandard, days: t.quote.deliveryDays45, extra: '' },
+                                        { id: 'express', label: t.quote.deliveryExpress, days: t.quote.deliveryDays2, extra: '+฿200' },
                                     ].map(d => (
                                         <button
                                             key={d.id}
@@ -566,8 +568,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                 {/* 3.4 PRICE: Right 2 */}
                 <aside className="border-l border-slate-200 bg-[#fafafa] flex flex-col overflow-hidden">
                     <div className="p-4 border-b border-slate-200 bg-white">
-                        <div className="text-[10px] font-black tracking-widest uppercase text-slate-300">PRICE BREAKDOWN</div>
-                        <div className="text-[12px] font-black mt-0.5">รายละเอียดราคา</div>
+                        <div className="text-[10px] font-black tracking-widest uppercase text-slate-300">{t.quote.priceBreakdown}</div>
+                        <div className="text-[12px] font-black mt-0.5">{t.quote.priceBreakdown}</div>
                     </div>
                     
                     <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -584,8 +586,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                         <div className="text-[12px] font-mono font-black text-slate-800">฿{q.priceDetail?.totalPrice?.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                                     </div>
                                     <div className="flex justify-between items-center text-[9px] font-bold text-slate-300 mt-1">
-                                        <span>฿{q.priceDetail?.pricePerUnit?.toLocaleString() || "0"}/ชิ้น</span>
-                                        {q.finish === 'sanded' && <span className="text-[#2563eb]">+ ขัดเรียบ (Sanded)</span>}
+                                        <span>฿{q.priceDetail?.pricePerUnit?.toLocaleString() || "0"}{t.quote.perPiece}</span>
+                                        {q.finish === 'sanded' && <span className="text-[#2563eb]">+ {t.quote.finishSanded}</span>}
                                     </div>
                                 </div>
                             ))}
@@ -593,20 +595,20 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
                         <div className="px-4 space-y-1.5 font-mono text-[11px] font-black">
                             <div className="flex justify-between text-slate-700"><span>Subtotal</span><span>฿{totalPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
-                            <div className="flex justify-between text-slate-300 font-bold"><span>ค่าเตรียมงาน</span><span>฿150.00</span></div>
-                            <div className="flex justify-between text-[#2563eb]"><span>FIRST25 คูปอง</span><span>-฿25.00</span></div>
+                            <div className="flex justify-between text-slate-300 font-bold"><span>{t.quote.setupFee}</span><span>฿150.00</span></div>
+                            <div className="flex justify-between text-[#2563eb]"><span>FIRST25 {t.quote.coupon}</span><span>-฿25.00</span></div>
                             <div className="flex justify-between text-slate-300 font-bold"><span>VAT 7%</span><span>฿{vat.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
                         </div>
 
                         <div className="p-3 mt-2">
-                            <div className="text-[8px] font-black tracking-widest uppercase text-slate-300 mb-2">COUPON</div>
+                            <div className="text-[8px] font-black tracking-widest uppercase text-slate-300 mb-2">{t.quote.coupon}</div>
                             <div className="flex gap-2">
                                 <div className="flex-1 flex items-center gap-2 px-2.5 py-1.5 bg-white border border-slate-100 rounded-lg shadow-sm">
                                     <ShoppingCart className="w-3 h-3 text-[#2563eb] shrink-0" />
                                     <input type="text" value="FIRST25" readOnly className="flex-1 bg-transparent border-none outline-none text-[10px] font-black tracking-[0.2em] text-slate-700" />
                                     <span className="text-[7px] font-black text-[#2563eb] bg-purple-50 px-1 py-0.5 rounded uppercase">ACTIVE</span>
                                 </div>
-                                <button className="px-2 text-[9px] font-black text-slate-400 hover:text-red-500 uppercase transition-all">นำออก</button>
+                                <button className="px-2 text-[9px] font-black text-slate-400 hover:text-red-500 uppercase transition-all">{t.quote.removeBtn}</button>
                             </div>
                         </div>
 
@@ -614,7 +616,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         <div className="p-3 border-t border-slate-100 bg-white relative">
                             <div className="flex items-center gap-2 mb-2">
                                 <MapPin className="w-4 h-4 shrink-0 text-blue-600" />
-                                <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">ที่อยู่จัดส่ง</div>
+                                <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{t.quote.shippingAddr}</div>
                             </div>
 
                             <div className="relative">
@@ -626,7 +628,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                         >
                                             <div className="flex flex-col items-start gap-0.5 min-w-0">
                                                 <span className="text-slate-900 font-black truncate w-full text-left">
-                                                    {userAddresses.find(a => a._id === selectedAddressId)?.label || "เลือกที่อยู่จัดส่ง"}
+                                                    {userAddresses.find(a => a._id === selectedAddressId)?.label || t.quote.selectAddr}
                                                 </span>
                                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight truncate w-full text-left">
                                                     {userAddresses.find(a => a._id === selectedAddressId)?.receiverName || session?.user?.name}
@@ -667,7 +669,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                                             className="w-full flex items-center gap-2 p-3 rounded-xl hover:bg-slate-50 text-blue-600 transition-all border-t border-slate-50 mt-1"
                                                         >
                                                             <Plus className="w-3.5 h-3.5" />
-                                                            <span className="text-[11px] font-black">จัดการที่อยู่</span>
+                                                            <span className="text-[11px] font-black">{t.quote.manageAddr}</span>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -679,7 +681,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                         onClick={() => router.push('/profile/account')}
                                         className="w-full flex items-center justify-center gap-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3.5 py-4 text-[11px] font-black text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all"
                                     >
-                                        <Plus className="w-4 h-4" /> เพิ่มที่อยู่จัดส่ง
+                                        <Plus className="w-4 h-4" /> {t.quote.addAddr}
                                     </button>
                                 )}
                             </div>
@@ -689,7 +691,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         <div className="p-3 border-t border-slate-100 bg-white relative">
                             <div className="flex items-center gap-2 mb-2">
                                 <Truck className="w-4 h-4 shrink-0 text-blue-600" />
-                                <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">ช่องทางการจัดส่ง</div>
+                                <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{t.quote.shippingChannel}</div>
                             </div>
                             
                             <div className="relative">
@@ -749,8 +751,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         <div className="p-4 bg-[#1d4ed8] text-white flex justify-between items-center relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12 blur-3xl"></div>
                             <div className="relative z-10">
-                                <div className="text-[10px] font-black tracking-[0.2em] uppercase opacity-40">TOTAL · รวม</div>
-                                <div className="text-[8px] font-black opacity-30 mt-0.5 tracking-widest uppercase">รวม VAT 7% แล้ว</div>
+                                <div className="text-[10px] font-black tracking-[0.2em] uppercase opacity-40">TOTAL · {t.quote.total}</div>
+                                <div className="text-[8px] font-black opacity-30 mt-0.5 tracking-widest uppercase">{t.quote.inclVat}</div>
                             </div>
                             <div className="text-[26px] font-mono font-black tracking-tighter relative z-10 leading-none">฿{finalPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                         </div>
@@ -764,7 +766,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                     className="mt-0.5 w-3 h-3 accent-[#2563eb] rounded border-slate-300 cursor-pointer" 
                                 />
                                 <label htmlFor="terms-checkbox" className="group-hover:text-slate-600 transition-colors leading-relaxed cursor-pointer">
-                                    ฉันยอมรับ <span 
+                                    {t.quote.termsCheck} <span 
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
@@ -772,7 +774,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                         }}
                                         className="text-slate-900 font-black underline decoration-slate-200 underline-offset-4 hover:decoration-[#2563eb]"
                                     >
-                                        เงื่อนไขการใช้งาน
+                                        {t.quote.termsLink}
                                     </span>
                                 </label>
                             </div>
@@ -784,11 +786,11 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                     isTermsAccepted ? "bg-[#2563eb] text-white hover:bg-[#1d4ed8] active:scale-[0.98]" : "bg-slate-100 text-slate-400 cursor-not-allowed"
                                 )}
                             >
-                                สั่งพิมพ์เลย · Place order
+                                {t.quote.placeOrder} · Place order
                             </button>
                             <div className="grid grid-cols-2 gap-2">
-                                <button onClick={handleGetQuotation} className="py-2 text-[10px] font-black border border-slate-100 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5 text-slate-400 transition-all uppercase tracking-widest shadow-sm"><Info className="w-3.5 h-3.5 opacity-50" /> ใบเสนอราคา</button>
-                                <button onClick={handleSaveToCart} className="py-2 text-[10px] font-black border border-slate-100 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5 text-slate-400 transition-all uppercase tracking-widest shadow-sm"><ShoppingCart className="w-3.5 h-3.5 opacity-50" /> บันทึกตะกร้า</button>
+                                <button onClick={handleGetQuotation} className="py-2 text-[10px] font-black border border-slate-100 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5 text-slate-400 transition-all uppercase tracking-widest shadow-sm"><Info className="w-3.5 h-3.5 opacity-50" /> {t.quote.quotation}</button>
+                                <button onClick={handleSaveToCart} className="py-2 text-[10px] font-black border border-slate-100 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5 text-slate-400 transition-all uppercase tracking-widest shadow-sm"><ShoppingCart className="w-3.5 h-3.5 opacity-50" /> {t.quote.saveCart}</button>
                             </div>
                         </div>
                     </div>
@@ -803,27 +805,27 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                     <div className="relative bg-white w-full max-w-lg rounded-[24px] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0">
                             <div>
-                                <h3 className="text-lg font-black text-slate-900">เงื่อนไขการใช้งาน</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Terms and Conditions</p>
+                                <h3 className="text-lg font-black text-slate-900">{t.quote.termsTitle}</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{t.quote.termsSub}</p>
                             </div>
                             <button onClick={() => setShowTermsModal(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400"><Plus className="w-6 h-6 rotate-45" /></button>
                         </div>
                         <div className="p-8 overflow-y-auto text-slate-600 text-[13px] leading-relaxed space-y-6">
                             <section>
-                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">1. การรับประกันและขอบเขตความรับผิดชอบ</h4>
-                                <p>บริษัทขอสงวนสิทธิ์ในการไม่รับผิดชอบต่อความเสียหายที่เกิดจากความผิดพลาดของไฟล์ต้นฉบับของผู้ใช้งาน งานพิมพ์ 3 มิติอาจมีร่องรอยของชั้นเลเยอร์ (Layer lines) ซึ่งเป็นลักษณะปกติของกระบวนการผลิต</p>
+                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">{t.quote.termsS1Title}</h4>
+                                <p>{t.quote.termsS1Body}</p>
                             </section>
                             <section>
-                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">2. ระยะเวลาการผลิตและการจัดส่ง</h4>
-                                <p>ระยะเวลาที่ระบุเป็นการประมาณการเบื้องต้น บริษัทจะเริ่มนับระยะเวลาการผลิตหลังจากได้รับหลักฐานการชำระเงินที่ถูกต้องและไฟล์งานผ่านการตรวจสอบความพร้อมทางเทคนิคแล้วเท่านั้น</p>
+                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">{t.quote.termsS2Title}</h4>
+                                <p>{t.quote.termsS2Body}</p>
                             </section>
                             <section>
-                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">3. นโยบายการยกเลิกและคืนเงิน</h4>
-                                <p>เนื่องจากเป็นสินค้าสั่งทำพิเศษ (Custom Made) เมื่อเริ่มกระบวนการพิมพ์แล้ว จะไม่สามารถยกเลิกรายการหรือขอคืนเงินได้ในทุกกรณี เว้นแต่จะเกิดจากความผิดพลาดของบริษัทโดยตรง</p>
+                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">{t.quote.termsS3Title}</h4>
+                                <p>{t.quote.termsS3Body}</p>
                             </section>
                             <section>
-                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">4. ความปลอดภัยของข้อมูล</h4>
-                                <p>บริษัทให้ความสำคัญกับความเป็นส่วนตัวและลิขสิทธิ์ไฟล์งานของท่าน ไฟล์ที่อัปโหลดจะถูกเก็บรักษาเป็นความลับและใช้เพื่อวัตถุประสงค์ในการผลิตเท่านั้น</p>
+                                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">{t.quote.termsS4Title}</h4>
+                                <p>{t.quote.termsS4Body}</p>
                             </section>
                         </div>
                         <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
@@ -831,7 +833,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 onClick={() => setShowTermsModal(false)}
                                 className="flex-1 py-3 px-6 rounded-xl font-black text-[12px] text-slate-400 hover:text-slate-600 transition-all uppercase tracking-widest"
                             >
-                                ยกเลิก
+                                {t.quote.cancelBtn}
                             </button>
                             <button 
                                 onClick={() => {
@@ -840,7 +842,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 }}
                                 className="flex-[2] py-3 px-6 bg-[#2563eb] text-white rounded-xl font-black text-[12px] hover:bg-[#1d4ed8] shadow-lg shadow-blue-200 transition-all uppercase tracking-widest"
                             >
-                                ฉันยอมรับเงื่อนไข
+                                {t.quote.acceptBtn}
                             </button>
                         </div>
                     </div>
