@@ -25,7 +25,7 @@ const OrderSchema = new mongoose.Schema(
             zipCode: { type: String, required: true },
         },
         paymentDetails: {
-            method: { type: String, enum: ["bank_transfer", "promptpay", "credit_card"], required: true },
+            method: { type: String, enum: ["bank_transfer", "promptpay", "credit_card", "paysolutions"], required: true },
             status: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
             slipUrl: { type: String },
             transactionId: { type: String },
@@ -62,5 +62,10 @@ OrderSchema.pre("validate", function (next: any) {
         next();
     }
 });
+
+// แก้ปัญหา Next.js แคช Mongoose Model ในโหมด Dev
+if (mongoose.models.Order) {
+    delete mongoose.models.Order;
+}
 
 export default mongoose.models.Order || mongoose.model("Order", OrderSchema);

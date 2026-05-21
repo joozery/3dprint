@@ -20,10 +20,18 @@ export async function GET(req: NextRequest) {
             if (userDb) userId = userDb._id;
         }
 
-        const quotes = await Quote.find({
-            userId: userId,
-            status: "pending"
-        });
+        const idsParam = req.nextUrl.searchParams.get("ids");
+
+        let query: any = { userId: userId, status: "draft" };
+        if (idsParam) {
+            const mongoose = require("mongoose");
+            const ids = idsParam.split(',').map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
+            if (ids.length > 0) {
+                query._id = { $in: ids };
+            }
+        }
+
+        const quotes = await Quote.find(query);
         return NextResponse.json({ success: true, data: quotes });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -58,7 +66,7 @@ export async function POST(req: NextRequest) {
         const quotes = await Quote.find({
             _id: { $in: quoteIds },
             userId: userId,
-            status: "pending" 
+            status: "draft" 
         });
 
         if (quotes.length !== quoteIds.length) {

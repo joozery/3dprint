@@ -161,13 +161,17 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             alert(t.quote.dropOrSelect);
             return;
         }
-        
         const ids = quotes.map(q => q._id).join(',');
-        router.push(`/quote/request?ids=${ids}`);
+        router.push(`/checkout?addressId=${selectedAddressId || ""}&ids=${ids}`);
     };
 
     const handleGetQuotation = () => {
-        alert("กำลังสร้างใบเสนอราคา PDF...");
+        if (quotes.length === 0) {
+            alert(t.quote.dropOrSelect);
+            return;
+        }
+        const ids = quotes.map(q => q._id).join(',');
+        router.push(`/quote/request?ids=${ids}`);
     };
 
     const handleSaveToCart = () => {

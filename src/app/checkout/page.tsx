@@ -358,16 +358,14 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
     );
 }
 
-function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: any; onBack: () => void }) {
+function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shipping: any; onBack: () => void, quotes: any[] }) {
     const [placed, setPlaced] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleCheckout = async () => {
         setLoading(true);
         try {
-            const resCart = await fetch("/api/checkout");
-            const resData = await resCart.json();
-            const pendingQuotes = resData.data || [];
+            const pendingQuotes = quotes || [];
             
             if (pendingQuotes.length === 0) {
                 alert("ไม่มีสินค้าในตะกร้าเหลือให้สั่งซื้อ");
@@ -375,8 +373,13 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
                 return;
             }
 
+            // คำนวณยอดรวม (ราคาสินค้า + ค่าจัดส่ง)
+            const subtotal = pendingQuotes.reduce((sum: number, q: any) => sum + (q.priceDetail?.totalPrice || 0), 0);
+            const total = subtotal + (shipping.price || 0);
+
             const quoteIds = pendingQuotes.map((q: any) => q._id);
 
+            // 1. สร้างออเดอร์ในระบบของเรา
             const res = await fetch("/api/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -389,20 +392,53 @@ function ConfirmOrder({ address, shipping, onBack }: { address: any; shipping: a
                         province: address.state,
                         zipCode: address.postal
                     },
-                    paymentMethod: "bank_transfer", // ตั้งเป็นมาตรฐาน
+                    paymentMethod: "paysolutions",
                     customerNotes: ""
                 })
             });
             const data = await res.json();
+            
             if (data.success) {
-                setPlaced(true);
+                // 2. สร้าง Form เพื่อส่งไป Paysolutions
+                const form = document.createElement("form");
+                form.method = "POST";
+                // ใช้ endpoint ของ Thaiepay/Paysolutions
+                form.action = "https://www.thaiepay.com/epaylink/payment.aspx";
+
+                const origin = window.location.origin;
+
+                const rawOrderNumber: string = data.data?.orderNumber || "";
+                const refno = rawOrderNumber.replace(/[^0-9]/g, ""); // ตัดตัวอักษร/ขีดออก เหลือแต่ตัวเลข
+                console.log("[Paysolutions] refno:", refno, "total:", total.toFixed(2), "rawOrderNumber:", rawOrderNumber);
+
+                const params: Record<string, string> = {
+                    merchantid: "77650214",
+                    refno: refno,
+                    customeremail: "customer@3dprint.com",
+                    productdetail: "3D Print Service Order",
+                    total: total.toFixed(2),
+                    cardtype: "V,M,J,C,A,B,D,PP,WE,AL,TM,CT,P,X,AT,SHPP,SHPL,SHPD,SHPC",
+                    returnurl: `${origin}/profile/orders`,
+                    postbackurl: `${origin}/api/webhook/paysolutions`
+                };
+
+                for (const key in params) {
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = key;
+                    input.value = params[key];
+                    form.appendChild(input);
+                }
+
+                document.body.appendChild(form);
+                form.submit(); // พุ่งไปหน้าจ่ายเงิน
             } else {
                 alert("สร้างรายการสั่งซื้อไม่สำเร็จ: " + data.error);
+                setLoading(false);
             }
         } catch (error) {
             console.error(error);
             alert("ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง");
-        } finally {
             setLoading(false);
         }
     };
@@ -524,20 +560,67 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchQuotes = async () => {
+        const fetchCheckoutData = async () => {
             try {
-                const res = await fetch("/api/checkout");
-                const data = await res.json();
-                if (data.success) {
-                    setQuotes(data.data || []);
+                const params = new URLSearchParams(window.location.search);
+                const addressId = params.get("addressId");
+                const idsParam = params.get("ids");
+
+                // ดึงข้อมูลตะกร้าเฉพาะไอเท็มที่ส่งมาจากหน้า Quote
+                const checkoutUrl = idsParam ? `/api/checkout?ids=${idsParam}` : "/api/checkout";
+                const resQuotes = await fetch(checkoutUrl);
+                const dataQuotes = await resQuotes.json();
+
+                // ดึงข้อมูล Profile ผู้ใช้ (เพื่อเอาที่อยู่) - ต้องชี้ไปที่ /api/profile/billing
+                const resProfile = await fetch("/api/profile/billing");
+                const dataProfile = await resProfile.json();
+
+                if (dataQuotes.success && dataQuotes.data) {
+                    setQuotes(dataQuotes.data);
+
+                    let targetAddress = null;
+                    if (dataProfile.user?.shippingAddresses?.length > 0) {
+                        const addrs = dataProfile.user.shippingAddresses;
+                        if (addressId) {
+                            targetAddress = addrs.find((a: any) => a._id === addressId);
+                        }
+                        if (!targetAddress) {
+                            targetAddress = addrs.find((a: any) => a.isDefault) || addrs[0];
+                        }
+                    }
+
+                    if (targetAddress) {
+                        setAddress({
+                            firstName: targetAddress.receiverName || targetAddress.fullName || targetAddress.label || "Customer",
+                            lastName: "",
+                            company: "",
+                            country: "Thailand",
+                            state: targetAddress.province || "",
+                            city: targetAddress.district || targetAddress.subDistrict || "",
+                            address: targetAddress.address || "",
+                            building: "",
+                            postal: targetAddress.zipCode || targetAddress.postalCode || "",
+                            phone: targetAddress.phone || "0000000000",
+                            countryCode: "+66"
+                        });
+                        
+                        // สมมติฐานราคา Kerry ตามรูป
+                        setShipping({
+                            method: "kerry",
+                            price: 85
+                        });
+                        
+                        // ข้ามไปหน้า Confirm Order เลย
+                        setStep(3);
+                    }
                 }
             } catch (error) {
-                console.error("Failed to fetch quotes:", error);
+                console.error("Failed to fetch checkout data:", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchQuotes();
+        fetchCheckoutData();
     }, []);
 
     if (loading) {
@@ -604,6 +687,7 @@ export default function CheckoutPage() {
                                 address={address}
                                 shipping={shipping}
                                 onBack={() => setStep(2)}
+                                quotes={quotes}
                             />
                         )}
                     </div>
