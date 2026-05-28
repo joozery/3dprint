@@ -79,7 +79,21 @@ export async function POST(req: NextRequest) {
             console.error("R2 Upload Failed:", r2Error.message || r2Error);
         }
 
-        // Delete local file after analysis and upload
+        // If R2 upload fails, we must keep the file locally so admin can download it
+        if (!r2FileUrl) {
+            console.warn("R2 upload failed, falling back to local public storage...");
+            const publicUploadDir = path.join(process.cwd(), "public", "uploads");
+            try {
+                await fs.access(publicUploadDir);
+            } catch {
+                await fs.mkdir(publicUploadDir, { recursive: true });
+            }
+            const publicFilePath = path.join(publicUploadDir, fileName);
+            await fs.copyFile(filePath, publicFilePath);
+            r2FileUrl = `/uploads/${fileName}`;
+        }
+
+        // Always Delete local temp file after it's either in R2 or in public/uploads
         try {
             await fs.unlink(filePath);
         } catch (err) {
@@ -121,8 +135,12 @@ export async function POST(req: NextRequest) {
             if (userDb) userId = userDb._id;
         }
 
+        // Generate a random quote number to avoid MongoDB unique constraint errors for null values
+        const randomQuoteNumber = `QT-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+
         const quote = await Quote.create({
             userId: userId || null,
+            quoteNumber: randomQuoteNumber,
             fileName,
             originalName: file.name,
             fileUrl: r2FileUrl || null,

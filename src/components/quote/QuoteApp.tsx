@@ -112,11 +112,17 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const deleteQuote = (id: string) => {
-        onRemove(id);
-        if (activeId === id) {
-            const remaining = quotes.filter(q => q._id !== id);
-            setActiveId(remaining.length > 0 ? remaining[0]._id : null);
+    const deleteQuote = async (id: string) => {
+        try {
+            await axios.delete(`/api/quote/${id}`);
+            onRemove(id);
+            if (activeId === id) {
+                const remaining = quotes.filter(q => q._id !== id);
+                setActiveId(remaining.length > 0 ? remaining[0]._id : null);
+            }
+        } catch (error) {
+            console.error("Delete failed", error);
+            alert("ไม่สามารถลบไฟล์ได้ กรุณาลองใหม่อีกครั้ง");
         }
     };
 
@@ -187,11 +193,11 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     };
 
     const technologies = [
-        { id: 'fdm', name: 'FDM' },
-        { id: 'sla', name: 'SLA' },
-        { id: 'mjf', name: 'MJF' },
-        { id: 'sls', name: 'SLS' },
-        { id: 'slm', name: 'SLM' },
+        { id: 'fdm', name: 'FDM', desc: 'แบบเส้น · โชว์ Support · .ini' },
+        { id: 'sla', name: 'SLA', desc: 'เรซิ่น · โชว์ Support' },
+        { id: 'mjf', name: 'MJF', desc: 'เรซิ่น · โชว์ Support' },
+        { id: 'sls', name: 'SLS', desc: 'เรซิ่น · ปิด Support' },
+        { id: 'slm', name: 'SLM', desc: 'เรซิ่น · โชว์ Support' },
     ];
 
     const totalPrice = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
@@ -425,6 +431,11 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                     {technologies.map(tech => (
                                         <button key={tech.id} onClick={() => patchQuote(activeQuote._id, { technology: tech.id })} className={cn("py-2.5 text-[11px] font-black rounded-lg border transition-all uppercase tracking-tighter", (activeQuote.technology || 'sla') === tech.id ? "bg-[#2563eb] text-white border-[#2563eb] shadow-sm" : "bg-white text-slate-400 border-slate-100 hover:border-slate-300")}>{tech.id}</button>
                                     ))}
+                                </div>
+                                <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50 flex items-center justify-center gap-2">
+                                    <span className="text-[11px] font-black text-[#2563eb]">
+                                        {technologies.find(t => t.id === (activeQuote.technology || 'sla'))?.desc}
+                                    </span>
                                 </div>
                             </div>
 

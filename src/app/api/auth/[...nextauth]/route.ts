@@ -106,48 +106,49 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     // Callback ตรวจจับตอนมีคนกดเข้าสู่ระบบ
-    async signIn({ user, account, profile }: any) {
-      if (account?.provider !== "credentials") {
-        await dbConnect();
-        
-        // 1. ดึงข้อมูลพื้นฐาน (พยายามหาอีเมลจากทุกช่องทาง)
-        let email = user.email || profile?.email;
-        const name = user.name || profile?.name || profile?.displayName || "SSO User";
-        const image = user.image || profile?.pictureUrl || profile?.picture;
-        const providerId = account?.provider; // google, facebook, line
+        async signIn({ user, account, profile }: any) {
+      try {
+        if (account?.provider !== "credentials") {
+          await dbConnect();
+          
+          let email = user.email || profile?.email;
+          const name = user.name || profile?.name || profile?.displayName || "SSO User";
+          const image = user.image || profile?.pictureUrl || profile?.picture;
+          const providerId = account?.provider;
 
-        // 2. [แผนสำรอง] ถ้าไม่มีอีเมลจริงๆ (เช่น LINE ยังไม่กดยืนยัน หรือไม่ได้เปิดสิทธิ์)
-        // เราจะสร้าง Fake Email จาก Provider ID เพื่อให้ระบบ DB รับรองได้ (MongoDB Schema ของเราบังคับมี Email)
-        if (!email) {
-          const ssoId = user.id || profile?.sub || account?.providerAccountId;
-          email = `${providerId}_${ssoId}@sso.com`;
-          console.log(`Fallback: Created fake email for ${providerId} user: ${email}`);
-        }
-
-        const existingUser = await User.findOne({ email });
-        
-        if (!existingUser) {
-          const newUser = await User.create({
-             name: name,
-             email: email,
-             image: image,
-             provider: providerId,
-             isVerified: true,
-             verificationStatus: "verified"
-          });
-          user.id = newUser._id.toString(); 
-          (user as any).isVerified = true;
-        } else {
-          // มีในระบบแล้ว อัปเดตรูปภาพ (ถ้ามีรูปใหม่มา)
-          if (image) {
-            existingUser.image = image;
-            await existingUser.save();
+          if (!email) {
+            const ssoId = user.id || profile?.sub || account?.providerAccountId;
+            email = `${providerId}_${ssoId}@sso.com`;
+            console.log(`Fallback: Created fake email for ${providerId} user: ${email}`);
           }
-          user.id = existingUser._id.toString();
-          (user as any).isVerified = existingUser.isVerified;
+
+          const existingUser = await User.findOne({ email });
+          
+          if (!existingUser) {
+            const newUser = await User.create({
+               name: name,
+               email: email,
+               image: image,
+               provider: providerId,
+               isVerified: true,
+               verificationStatus: "verified"
+            });
+            user.id = newUser._id.toString(); 
+            (user as any).isVerified = true;
+          } else {
+            if (image) {
+              existingUser.image = image;
+              await existingUser.save();
+            }
+            user.id = existingUser._id.toString();
+            (user as any).isVerified = existingUser.isVerified;
+          }
         }
+        return true;
+      } catch (err) {
+        console.error("NextAuth signIn callback error:", err);
+        return "/login?error=OAuthCallback";
       }
-      return true;
     },
     // ฝังข้อมูลลงตั๋ว Token ที่ระบบรับรอง
     async jwt({ token, user, account, trigger, session }) {
