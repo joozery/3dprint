@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UAT Report — /quote Page | 3D Print Pro</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --blue-light: #eff6ff;
+      --red: #dc2626;
+      --red-light: #fef2f2;
+      --yellow: #d97706;
+      --yellow-light: #fffbeb;
+      --green: #16a34a;
+      --green-light: #f0fdf4;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: #fff;
+      color: var(--slate-800);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ── COVER PAGE ─────────────────────────────── */
+    .cover {
+      page-break-after: always;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 80px 72px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -120px; right: -120px;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: -80px;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+    .cover h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+    .cover h1 span { color: #93c5fd; }
+    .cover .subtitle {
+      font-size: 18px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 56px;
+      max-width: 480px;
+    }
+    .cover-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      width: 100%;
+      max-width: 600px;
+    }
+    .cover-meta-item label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 4px;
+    }
+    .cover-meta-item span {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+    }
+    .cover-line {
+      width: 60px;
+      height: 3px;
+      background: #60a5fa;
+      border-radius: 2px;
+      margin-bottom: 40px;
+    }
+
+    /* ── PAGE LAYOUT ────────────────────────────── */
+    .page {
+      padding: 56px 64px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .page-break { page-break-after: always; }
+
+    /* ── SECTION HEADER ─────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--slate-100);
+    }
+    .section-num {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.3px;
+    }
+    .section-sub {
+      font-size: 12px;
+      color: var(--slate-400);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    /* ── SUMMARY CARDS ──────────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .summary-card {
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .summary-card .num {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .summary-card .lbl {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .card-total { background: var(--slate-900); color: #fff; }
+    .card-critical { background: var(--red-light); color: var(--red); }
+    .card-medium { background: var(--yellow-light); color: var(--yellow); }
+    .card-low { background: var(--green-light); color: var(--green); }
+
+    /* ── FLOW DIAGRAM ───────────────────────────── */
+    .flow-container {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .flow-step:last-child { margin-bottom: 0; }
+    .flow-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 42px;
+      bottom: -20px;
+      width: 2px;
+      background: var(--slate-200);
+    }
+    .flow-icon {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1.5px solid var(--slate-200);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .flow-content { flex: 1; padding-top: 8px; }
+    .flow-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 4px;
+    }
+    .flow-desc {
+      font-size: 12px;
+      color: var(--slate-500);
+      line-height: 1.6;
+    }
+    .flow-api {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      background: var(--blue-light);
+      color: var(--blue);
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+    .flow-branch {
+      margin-left: 56px;
+      padding: 12px 16px;
+      background: #fff;
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--slate-600);
+    }
+    .flow-branch strong { color: var(--slate-800); }
+
+    /* ── BUG TABLE ──────────────────────────────── */
+    .bug-card {
+      border-radius: 14px;
+      border: 1.5px solid;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+    }
+    .bug-card.critical {
+      border-color: #fca5a5;
+      background: var(--red-light);
+    }
+    .bug-card.medium {
+      border-color: #fcd34d;
+      background: var(--yellow-light);
+    }
+    .bug-card.low {
+      border-color: #86efac;
+      background: var(--green-light);
+    }
+    .bug-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .bug-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .bug-badge.critical { background: var(--red); color: #fff; }
+    .bug-badge.medium { background: var(--yellow); color: #fff; }
+    .bug-badge.low { background: var(--green); color: #fff; }
+    .bug-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+    .bug-body {
+      font-size: 12.5px;
+      color: var(--slate-600);
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+    .bug-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .bug-tag {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 10px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 6px;
+      color: var(--slate-700);
+    }
+
+    /* ── SUMMARY TABLE ──────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--slate-200);
+    }
+    thead tr { background: var(--slate-900); color: #fff; }
+    thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    tbody tr { border-bottom: 1px solid var(--slate-100); }
+    tbody tr:hover { background: var(--slate-50); }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: 12px 16px; vertical-align: top; color: var(--slate-700); }
+    td:first-child { font-weight: 600; }
+    .pri-critical { color: var(--red); font-weight: 700; }
+    .pri-medium { color: var(--yellow); font-weight: 700; }
+    .pri-low { color: var(--green); font-weight: 700; }
+    .code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--blue); background: var(--blue-light); padding: 2px 6px; border-radius: 4px; }
+
+    /* ── RECOMMENDATION ─────────────────────────── */
+    .rec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .rec-card {
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--slate-200);
+    }
+    .rec-card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--slate-900);
+    }
+    .rec-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .rec-card ul li {
+      font-size: 12px;
+      color: var(--slate-600);
+      padding: 4px 0;
+      padding-left: 16px;
+      position: relative;
+    }
+    .rec-card ul li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    /* ── FOOTER ─────────────────────────────────── */
+    .doc-footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--slate-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--slate-400);
+      font-size: 11px;
+    }
+
+    /* ── PRINT ──────────────────────────────────── */
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cover { min-height: 100vh; }
+      .no-print { display: none; }
+    }
+
+    /* ── PRINT BUTTON ───────────────────────────── */
+    .print-btn {
+      position: fixed;
+      bottom: 32px; right: 32px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      padding: 14px 28px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.4);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 999;
+    }
+    .print-btn:hover { background: var(--blue-dark); transform: translateY(-2px); }
+    @media print { .print-btn { display: none; } }
+
+    .divider {
+      height: 1px;
+      background: var(--slate-200);
+      margin: 36px 0;
+    }
+
+    .info-box {
+      background: var(--blue-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 12.5px;
+      color: #1e40af;
+      margin-bottom: 28px;
+    }
+    .info-box strong { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════ COVER ════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">📋 User Acceptance Testing</div>
+  <h1>UAT Report<br/><span>/quote</span> Page</h1>
+  <p class="subtitle">รายงานการทดสอบการใช้งาน หน้าคำนวณราคาและขอใบเสนอราคา 3D Printing</p>
+  <div class="cover-line"></div>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <label>โปรเจค</label>
+      <span>3D Print Pro</span>
+    </div>
+    <div class="cover-meta-item">
+      <label>วันที่ทดสอบ</label>
+      <span>5 มิถุนายน 2568</span>
+    </div>
+    <div class="cover-meta-item">
+      <label>Version</label>
+      <span>0.1.0</span>
+    </div>
+    <div class="cover-meta-item">
+      <label>Framework</label>
+      <span>Next.js 16</span>
+    </div>
+    <div class="cover-meta-item">
+      <label>Environment</label>
+      <span>localhost:3000</span>
+    </div>
+    <div class="cover-meta-item">
+      <label>สถานะโดยรวม</label>
+      <span>⚠️ มีปัญหา</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ PAGE 1 ════════════════════════════════ -->
+<div class="page page-break">
+
+  <!-- Section 1: Overview -->
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div>
+      <div class="section-title">ภาพรวมผลการทดสอบ</div>
+      <div class="section-sub">Executive Summary</div>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card card-total">
+      <div class="num">8</div>
+      <div class="lbl">ปัญหาทั้งหมด</div>
+    </div>
+    <div class="summary-card card-critical">
+      <div class="num">2</div>
+      <div class="lbl">Critical</div>
+    </div>
+    <div class="summary-card card-medium">
+      <div class="num">4</div>
+      <div class="lbl">Medium</div>
+    </div>
+    <div class="summary-card card-low">
+      <div class="num">2</div>
+      <div class="lbl">Low</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>สรุปผล:</strong> หน้า /quote มี flow หลักที่ทำงานได้ครบ ตั้งแต่อัพโหลดไฟล์ 3D → กำหนดค่า → คำนวณราคา → ขอใบเสนอราคา/สั่งซื้อ แต่พบปัญหา Critical 2 รายการที่ส่งผลต่อ user experience และความถูกต้องของข้อมูลราคา ควรแก้ก่อน release
+  </div>
+
+  <!-- Section 2: Flow -->
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div>
+      <div class="section-title">User Flow และ Logic การทำงาน</div>
+      <div class="section-sub">End-to-End Flow Diagram</div>
+    </div>
+  </div>
+
+  <div class="flow-container">
+
+    <div class="flow-step">
+      <div class="flow-icon">🌐</div>
+      <div class="flow-content">
+        <div class="flow-title">เปิดหน้า /quote</div>
+        <div class="flow-desc">โหลด pending quotes จาก <strong>localStorage</strong> (guest_quote_ids) และ/หรือจาก <strong>userId</strong> ของผู้ที่ login แล้ว</div>
+        <span class="flow-api">GET /api/quote/pending?ids=...</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-icon">📁</div>
+      <div class="flow-content">
+        <div class="flow-title">อัพโหลดไฟล์ 3D Model</div>
+        <div class="flow-desc">รองรับไฟล์: .stl, .3mf, .obj, .step, .stp — สามารถอัพโหลดได้หลายไฟล์พร้อมกัน</div>
+        <span class="flow-api">POST /api/quote/upload</span>
+        <div class="flow-desc" style="margin-top:8px;">
+          Server ทำงาน 4 ขั้น: <br/>
+          1. บันทึกไฟล์ชั่วคราว → 2. วิเคราะห์ (volume, weight, dimensions, printTime) → 3. อัพโหลด Cloudflare R2 (fallback: /public/uploads) → 4. สร้าง Quote ใน MongoDB (status: "draft")
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-icon">⚙️</div>
+      <div class="flow-content">
+        <div class="flow-title">กำหนดค่าชิ้นงาน (Configuration Panel)</div>
+        <div class="flow-desc">ทุกการเปลี่ยนแปลงจะ recalculate ราคาฝั่ง client ทันที และบันทึกลง DB</div>
+        <span class="flow-api">PATCH /api/quote/:id</span>
+        <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="flow-branch"><strong>Technology</strong><br/>ดึงจาก DB (FDM, SLA, ...)</div>
+          <div class="flow-branch"><strong>Material</strong><br/>filter ตาม technology ที่เลือก</div>
+          <div class="flow-branch"><strong>Color</strong><br/>ดึงจาก colors[] ของวัสดุ</div>
+          <div class="flow-branch"><strong>Finish</strong><br/>Standard + postProcessing ของวัสดุ</div>
+          <div class="flow-branch"><strong>Quantity</strong><br/>Stepper ปุ่ม +/−</div>
+          <div class="flow-branch"><strong>Delivery Speed</strong><br/>Economy / Standard / Express</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-icon">💰</div>
+      <div class="flow-content">
+        <div class="flow-title">Price Breakdown (Right Sidebar)</div>
+        <div class="flow-desc">
+          แสดงรายการแต่ละชิ้น + สรุปยอด<br/>
+          <strong>สูตร:</strong> (volume × density × pricePerGram + finishPrice) × quantity + VAT 7% + deliveryCost<br/>
+          เลือก Shipping Address (ถ้า login) + Delivery Channel (Kerry Express)
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-icon">🔀</div>
+      <div class="flow-content">
+        <div class="flow-title">เลือก Action (3 ทางเลือก)</div>
+      </div>
+    </div>
+
+    <div class="flow-branch">
+      <strong>🛍️ Place Order</strong> — ต้องยอมรับ Terms & Conditions + login → redirect ไป <code>/checkout?ids=...&addressId=...</code>
+    </div>
+    <div class="flow-branch">
+      <strong>📄 ขอใบเสนอราคา</strong> → POST /api/quote/request (กำหนด sharedQuoteNumber) → redirect <code>/quote/request?ids=...</code> → กรอก billing/shipping → POST /api/quote/confirm → Success Modal → <code>/profile/quotes/:id</code>
+    </div>
+    <div class="flow-branch">
+      <strong>🛒 Save to Cart</strong> — <span style="color: var(--red); font-weight:700;">ยังไม่ได้ implement จริง</span> (แค่ alert)
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════ PAGE 2 ════════════════════════════════ -->
+<div class="page page-break">
+
+  <!-- Section 3: Bugs Critical -->
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div>
+      <div class="section-title">ปัญหาที่พบ — Critical</div>
+      <div class="section-sub">ต้องแก้ก่อน Release</div>
+    </div>
+  </div>
+
+  <!-- Bug C1 -->
+  <div class="bug-card critical">
+    <div class="bug-header">
+      <span class="bug-badge critical">🔴 Critical · C-01</span>
+      <div class="bug-title">Upload ไฟล์ต้องการ Login แต่ UI ไม่ตรวจสอบก่อน</div>
+    </div>
+    <div class="bug-body">
+      API <code>/api/quote/upload</code> ส่งกลับ <strong>HTTP 401</strong> ถ้าผู้ใช้ยังไม่ได้ login แต่ปุ่ม "อัพโหลดไฟล์" ใน UI ไม่มีการตรวจสอบ <code>session</code> ก่อน ผู้ใช้ที่ยังไม่ได้ login จะเห็นแค่ alert error message แทนที่จะถูก redirect ไปหน้า login อย่างเหมาะสม ส่งผลให้ประสบการณ์ผู้ใช้แย่และ flow ขาดตอน
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">QuoteApp.tsx : line 94</span>
+      <span class="bug-tag">api/quote/upload/route.ts : line 18</span>
+      <span class="bug-tag">Impact: ผู้ใช้ใหม่ทุกคน</span>
+    </div>
+    <div style="margin-top:14px; padding:12px 14px; background:rgba(0,0,0,0.05); border-radius:8px; font-size:11.5px; color: var(--slate-700);">
+      <strong>แนวทางแก้:</strong> เพิ่มการตรวจสอบ <code>if (!session) { router.push('/login?callbackUrl=/quote'); return; }</code> ใน <code>handleFileUpload</code> ก่อนส่ง request ไป server
+    </div>
+  </div>
+
+  <!-- Bug C2 -->
+  <div class="bug-card critical">
+    <div class="bug-header">
+      <span class="bug-badge critical">🔴 Critical · C-02</span>
+      <div class="bug-title">การคำนวณราคา Client vs Server ไม่ตรงกัน</div>
+    </div>
+    <div class="bug-body">
+      Client-side ใช้ <code>material._id</code> (MongoDB ObjectId) ค้นหาวัสดุใน <code>patchQuote()</code> เพื่อคำนวณราคา แต่ Server-side PATCH endpoint ใช้ <code>Material.findOne({ systemId: material })</code> ทำให้ server หา material ไม่เจอ → ราคาที่แสดงใน UI กับที่บันทึกลง Database ต่างกัน ส่งผลต่อความถูกต้องของ quote ที่ส่งให้ admin
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">QuoteApp.tsx : line 154</span>
+      <span class="bug-tag">api/quote/[id]/route.ts : line 47</span>
+      <span class="bug-tag">Impact: ราคาใน DB ผิด</span>
+    </div>
+    <div style="margin-top:14px; padding:12px 14px; background:rgba(0,0,0,0.05); border-radius:8px; font-size:11.5px; color: var(--slate-700);">
+      <strong>แนวทางแก้:</strong> แก้ server ให้ใช้ <code>Material.findById(material)</code> แทน <code>findOne({ systemId })</code> หรือให้ client ส่ง materialId ที่ถูกต้องและ consistent กัน
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════ PAGE 3 ════════════════════════════════ -->
+<div class="page page-break">
+
+  <!-- Section 4: Bugs Medium -->
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div>
+      <div class="section-title">ปัญหาที่พบ — Medium</div>
+      <div class="section-sub">ควรแก้ในรอบถัดไป</div>
+    </div>
+  </div>
+
+  <!-- Bug M1 -->
+  <div class="bug-card medium">
+    <div class="bug-header">
+      <span class="bug-badge medium">🟡 Medium · M-01</span>
+      <div class="bug-title">Coupon FIRST25 และ Setup Fee แสดงใน UI แต่ไม่ได้หักจากยอดรวมจริง</div>
+    </div>
+    <div class="bug-body">
+      Price Breakdown แสดง "FIRST25 ลด ฿25.00" และ "Setup Fee ฿150.00" ในรายการ แต่สูตรคำนวณยอดสุดท้าย <code>finalPrice = totalPrice + vat + deliveryCost</code> ไม่ได้รวม/หัก ค่าทั้งสองนี้ ผู้ใช้เข้าใจว่าได้รับส่วนลดแล้ว แต่ยอดชำระจริงไม่เปลี่ยนแปลง
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">QuoteApp.tsx : line 247</span>
+      <span class="bug-tag">QuoteApp.tsx : line 665–669</span>
+      <span class="bug-tag">Impact: ราคาแสดงผลผิดพลาด</span>
+    </div>
+  </div>
+
+  <!-- Bug M2 -->
+  <div class="bug-card medium">
+    <div class="bug-header">
+      <span class="bug-badge medium">🟡 Medium · M-02</span>
+      <div class="bug-title">ปุ่ม "Save to Cart" ไม่ได้บันทึกข้อมูลจริง</div>
+    </div>
+    <div class="bug-body">
+      ฟังก์ชัน <code>handleSaveToCart</code> มีเพียง <code>alert("บันทึกลงตะกร้าเรียบร้อยแล้ว!")</code> ไม่มี logic การบันทึกจริง ผู้ใช้ที่กดปุ่มนี้จะเข้าใจผิดว่าข้อมูลถูกบันทึกแล้ว แต่จริงๆ ไม่มีการเปลี่ยนแปลงใดๆ
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">QuoteApp.tsx : line 219–221</span>
+      <span class="bug-tag">Impact: Feature ใช้งานไม่ได้</span>
+    </div>
+  </div>
+
+  <!-- Bug M3 -->
+  <div class="bug-card medium">
+    <div class="bug-header">
+      <span class="bug-badge medium">🟡 Medium · M-03</span>
+      <div class="bug-title">"ขอใบเสนอราคา" ไม่ตรวจสอบว่า Login หรือยัง</div>
+    </div>
+    <div class="bug-body">
+      <code>handleGetQuotation()</code> ใน QuoteApp.tsx ไม่มีการ check session ก่อน POST ไป <code>/api/quote/request</code> ทำให้ผู้ใช้ที่ไม่ได้ login สามารถ proceed ไปหน้า <code>/quote/request</code> ได้ แต่เมื่อกด submit จะไม่สามารถผูก userId กับ Quote ได้ (ต่างจาก SidebarSummary.tsx ที่ redirect login ก่อน)
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">QuoteApp.tsx : line 199</span>
+      <span class="bug-tag">SidebarSummary.tsx : line 32</span>
+      <span class="bug-tag">Impact: Quote ไม่ผูก User</span>
+    </div>
+  </div>
+
+  <!-- Bug M4 -->
+  <div class="bug-card medium">
+    <div class="bug-header">
+      <span class="bug-badge medium">🟡 Medium · M-04</span>
+      <div class="bug-title">ปุ่ม "Copy to All" ไม่มี onClick Handler</div>
+    </div>
+    <div class="bug-body">
+      ปุ่ม "Copy to All" ใน Configuration Panel มีแค่ UI ไม่มี event handler ผูกอยู่ กดแล้วไม่มีอะไรเกิดขึ้น ควร implement ฟังก์ชันที่ copy config ของ activeQuote ไปยัง quote อื่นทุกชิ้นในรายการ
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">QuoteApp.tsx : line 464</span>
+      <span class="bug-tag">Impact: Feature ใช้งานไม่ได้</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════ PAGE 4 ════════════════════════════════ -->
+<div class="page page-break">
+
+  <!-- Section 5: Bugs Low -->
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div>
+      <div class="section-title">ปัญหาที่พบ — Low</div>
+      <div class="section-sub">Technical Debt / ปรับปรุงได้ในอนาคต</div>
+    </div>
+  </div>
+
+  <!-- Bug L1 -->
+  <div class="bug-card low">
+    <div class="bug-header">
+      <span class="bug-badge low">🟢 Low · L-01</span>
+      <div class="bug-title">Property Bars (ความแข็ง/ผิวงาน/ทนร้อน) Hardcode ทุกวัสดุ</div>
+    </div>
+    <div class="bug-body">
+      Property bars แสดงค่าคงที่ level: 4, 5, 3 สำหรับทุกวัสดุโดยไม่ดึงจาก Database ทำให้วัสดุทุกชนิดดูมีคุณสมบัติเหมือนกันหมด ควร map ค่าจาก field ใน MaterialConfig model
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">QuoteApp.tsx : line 512–515</span>
+    </div>
+  </div>
+
+  <!-- Bug L2 -->
+  <div class="bug-card low">
+    <div class="bug-header">
+      <span class="bug-badge low">🟢 Low · L-02</span>
+      <div class="bug-title">SidebarSummary.tsx ไม่ได้ถูกใช้งาน (Dead Code)</div>
+    </div>
+    <div class="bug-body">
+      Component <code>SidebarSummary.tsx</code> มีอยู่แต่ไม่ได้ถูก import ใน QuoteApp.tsx หรือที่ไหนเลย น่าจะเป็น version เก่าที่ถูกแทนที่ด้วย inline sidebar ใน QuoteApp.tsx แล้ว ควร remove ออกเพื่อลด confusion
+    </div>
+    <div class="bug-meta">
+      <span class="bug-tag">src/components/quote/SidebarSummary.tsx</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Section 6: Summary Table -->
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div>
+      <div class="section-title">ตารางสรุปปัญหาทั้งหมด</div>
+      <div class="section-sub">Bug Summary Table</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Priority</th>
+        <th>ปัญหา</th>
+        <th>ไฟล์</th>
+        <th>ผลกระทบ</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>C-01</td>
+        <td><span class="pri-critical">🔴 Critical</span></td>
+        <td>Upload ไม่ redirect login</td>
+        <td><span class="code">QuoteApp.tsx:94</span></td>
+        <td>ผู้ใช้ใหม่ทุกคน</td>
+      </tr>
+      <tr>
+        <td>C-02</td>
+        <td><span class="pri-critical">🔴 Critical</span></td>
+        <td>Price mismatch client vs server</td>
+        <td><span class="code">api/quote/[id]/route.ts:47</span></td>
+        <td>ราคาใน DB ผิด</td>
+      </tr>
+      <tr>
+        <td>M-01</td>
+        <td><span class="pri-medium">🟡 Medium</span></td>
+        <td>Coupon/Setup fee ไม่หักจากยอดจริง</td>
+        <td><span class="code">QuoteApp.tsx:247</span></td>
+        <td>ราคาแสดงผลผิด</td>
+      </tr>
+      <tr>
+        <td>M-02</td>
+        <td><span class="pri-medium">🟡 Medium</span></td>
+        <td>Save to Cart ไม่ทำงาน</td>
+        <td><span class="code">QuoteApp.tsx:219</span></td>
+        <td>Feature ใช้งานไม่ได้</td>
+      </tr>
+      <tr>
+        <td>M-03</td>
+        <td><span class="pri-medium">🟡 Medium</span></td>
+        <td>Get Quotation ไม่ check login</td>
+        <td><span class="code">QuoteApp.tsx:199</span></td>
+        <td>Quote ไม่ผูก User</td>
+      </tr>
+      <tr>
+        <td>M-04</td>
+        <td><span class="pri-medium">🟡 Medium</span></td>
+        <td>Copy to All ไม่มี handler</td>
+        <td><span class="code">QuoteApp.tsx:464</span></td>
+        <td>Feature ใช้งานไม่ได้</td>
+      </tr>
+      <tr>
+        <td>L-01</td>
+        <td><span class="pri-low">🟢 Low</span></td>
+        <td>Property bars hardcode</td>
+        <td><span class="code">QuoteApp.tsx:512</span></td>
+        <td>ข้อมูลไม่ถูกต้อง</td>
+      </tr>
+      <tr>
+        <td>L-02</td>
+        <td><span class="pri-low">🟢 Low</span></td>
+        <td>SidebarSummary ไม่ถูกใช้งาน</td>
+        <td><span class="code">SidebarSummary.tsx</span></td>
+        <td>Dead code</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- ════════════════════════════════ PAGE 5 ════════════════════════════════ -->
+<div class="page">
+
+  <!-- Section 7: Recommendation -->
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <div>
+      <div class="section-title">คำแนะนำและขั้นตอนการแก้ไข</div>
+      <div class="section-sub">Recommended Actions</div>
+    </div>
+  </div>
+
+  <div class="rec-grid">
+    <div class="rec-card" style="border-color:#fca5a5; background:#fef2f2;">
+      <h4 style="color:var(--red);">🔴 ต้องแก้ทันที (Sprint นี้)</h4>
+      <ul>
+        <li>เพิ่ม session check ก่อน call upload API → redirect /login ถ้ายังไม่ได้ login</li>
+        <li>แก้ server PATCH ให้ใช้ <code>Material.findById()</code> แทน findOne systemId เพื่อให้ราคา consistent</li>
+      </ul>
+    </div>
+    <div class="rec-card" style="border-color:#fcd34d; background:#fffbeb;">
+      <h4 style="color:var(--yellow);">🟡 Sprint ถัดไป</h4>
+      <ul>
+        <li>Implement ฟังก์ชัน Save to Cart จริง (บันทึก session หรือ DB)</li>
+        <li>แก้สูตร finalPrice ให้หัก coupon และบวก setup fee จริง</li>
+        <li>เพิ่ม login check ใน handleGetQuotation</li>
+        <li>Implement "Copy to All" configuration</li>
+      </ul>
+    </div>
+    <div class="rec-card" style="border-color:#86efac; background:#f0fdf4;">
+      <h4 style="color:var(--green);">🟢 Backlog</h4>
+      <ul>
+        <li>Map property bars (ความแข็ง/ผิวงาน/ทนร้อน) จาก MaterialConfig DB</li>
+        <li>Remove SidebarSummary.tsx ออกจาก codebase</li>
+      </ul>
+    </div>
+    <div class="rec-card" style="border-color:var(--slate-200); background:var(--slate-50);">
+      <h4>✅ ที่ทำงานได้ดีแล้ว</h4>
+      <ul>
+        <li>3D Viewer (rotate, zoom, view modes)</li>
+        <li>File upload + R2 storage + fallback</li>
+        <li>Material/Technology/Color จาก DB จริง</li>
+        <li>Quantity stepper + Delivery speed</li>
+        <li>Address picker สำหรับ logged-in user</li>
+        <li>Quote request form + billing/shipping</li>
+        <li>localStorage persistence (guest flow)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Component Architecture -->
+  <div class="section-header">
+    <div class="section-num">8</div>
+    <div>
+      <div class="section-title">โครงสร้าง Component และ API</div>
+      <div class="section-sub">Architecture Overview</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ไฟล์</th>
+        <th>หน้าที่</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="code">app/quote/page.tsx</span></td>
+        <td>Page root — จัดการ state quotes[], localStorage, ส่ง onAdd/onUpdate/onRemove ไปให้ QuoteApp</td>
+      </tr>
+      <tr>
+        <td><span class="code">components/quote/QuoteApp.tsx</span></td>
+        <td>Main UI — 4 panel layout: File List | 3D Viewer | Config | Price Summary</td>
+      </tr>
+      <tr>
+        <td><span class="code">components/quote/Viewer3D.tsx</span></td>
+        <td>Three.js 3D model renderer (Shaded/Wireframe/Wall Thickness/Size modes)</td>
+      </tr>
+      <tr>
+        <td><span class="code">api/quote/upload/route.ts</span></td>
+        <td>POST — วิเคราะห์ไฟล์ + อัพโหลด R2 + สร้าง Quote ใน DB</td>
+      </tr>
+      <tr>
+        <td><span class="code">api/quote/[id]/route.ts</span></td>
+        <td>GET/PATCH/DELETE — ดึง/อัพเดท/ลบ Quote รายชิ้น</td>
+      </tr>
+      <tr>
+        <td><span class="code">api/quote/pending/route.ts</span></td>
+        <td>GET — โหลด draft quotes จาก localStorage IDs หรือ userId</td>
+      </tr>
+      <tr>
+        <td><span class="code">api/quote/request/route.ts</span></td>
+        <td>POST — กำหนด sharedQuoteNumber ให้ quotes batch</td>
+      </tr>
+      <tr>
+        <td><span class="code">api/quote/confirm/route.ts</span></td>
+        <td>POST — บันทึก billing/shipping + เปลี่ยน status เป็น "pending"</td>
+      </tr>
+      <tr>
+        <td><span class="code">app/quote/request/page.tsx</span></td>
+        <td>หน้ากรอก billing/shipping สำหรับขอใบเสนอราคา</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">
+    <div>UAT Report — 3D Print Pro · /quote Page</div>
+    <div>จัดทำวันที่ 5 มิถุนายน 2568 · Version 0.1.0</div>
+  </div>
+
+</div>
+
+<!-- Print Button -->
+<button class="print-btn no-print" onclick="window.print()">
+  🖨️ พิมพ์ / บันทึก PDF
+</button>
+
+</body>
+</html>

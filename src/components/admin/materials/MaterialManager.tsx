@@ -22,6 +22,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
     maxPrintSize: { width: 0, length: 0, height: 0 },
     pricing: { costPerGram: 0, sellPerGram: 0, costPerMinute: 0, sellPerMinute: 0 },
     colors: "",
+    colorOptions: [] as { name: string, hex: string }[],
     postProcessing: [] as { name: string, costPrice: number, sellPrice: number }[]
   });
 
@@ -32,7 +33,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       technology: "SLA", name: "", description: "", tdsLink: "", sdsLink: "",
       maxPrintSize: { width: 0, length: 0, height: 0 },
       pricing: { costPerGram: 0, sellPerGram: 0, costPerMinute: 0, sellPerMinute: 0 },
-      colors: "", postProcessing: []
+      colors: "", colorOptions: [], postProcessing: []
     });
     setEditingId(null);
     setShowCustomTech(false);
@@ -48,6 +49,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       maxPrintSize: m.maxPrintSize || { width: 0, length: 0, height: 0 },
       pricing: m.pricing || { costPerGram: 0, sellPerGram: 0, costPerMinute: 0, sellPerMinute: 0 },
       colors: m.colors ? m.colors.join(", ") : "",
+      colorOptions: m.colorOptions && m.colorOptions.length > 0 ? m.colorOptions : (m.colors || []).map((c: string) => ({ name: c, hex: "#ffffff" })),
       postProcessing: m.postProcessing || []
     });
     setEditingId(m._id);
@@ -74,7 +76,8 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       const payload = {
         ...formData,
         technology: formData.technology.toUpperCase(),
-        colors: formData.colors.split(",").map(s => s.trim()).filter(Boolean)
+        colors: formData.colorOptions.map(c => c.name), // sync names for backwards compatibility
+        colorOptions: formData.colorOptions
       };
 
       if (editingId) {
@@ -107,6 +110,12 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
     const newItems = [...formData.postProcessing];
     (newItems[idx] as any)[key] = val;
     setFormData({...formData, postProcessing: newItems});
+  };
+
+  const handleColorOptionChange = (idx: number, key: string, val: string) => {
+    const newOptions = [...formData.colorOptions];
+    (newOptions[idx] as any)[key] = val;
+    setFormData({...formData, colorOptions: newOptions});
   };
 
   // Group materials by technology
@@ -304,9 +313,28 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
                            <input type="number" value={formData.maxPrintSize.height} onChange={e => setFormData({...formData, maxPrintSize: {...formData.maxPrintSize, height: Number(e.target.value)}})} className="w-full text-sm font-medium bg-white border border-slate-200 px-4 py-2 rounded-xl text-center" placeholder="สูง" />
                        </div>
                     </div>
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">สีที่รองรับการพิมพ์ (คั่นด้วยลูกน้ำ)</label>
-                       <input type="text" value={formData.colors} onChange={e => setFormData({...formData, colors: e.target.value})} className="w-full text-sm font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl" placeholder="e.g. ขาวด้าน (Matte White), ดำเงา" />
+                    <div className="space-y-3">
+                       <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">สีที่รองรับการพิมพ์ (Colors)</label>
+                          <button onClick={() => setFormData({...formData, colorOptions: [...formData.colorOptions, { name: "ใหม่", hex: "#ffffff" }]})} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:bg-blue-50 px-2 py-1 rounded transition-colors">+ เพิ่มสี</button>
+                       </div>
+                       {formData.colorOptions.length === 0 ? (
+                           <p className="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-xl border border-slate-100">ยังไม่มีสี (สามารถกดปุ่มเพิ่มสีได้)</p>
+                       ) : (
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {formData.colorOptions.map((co, idx) => (
+                                <div key={idx} className="flex gap-2 items-center bg-white border border-slate-200 p-2 rounded-xl relative group">
+                                   <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                                      <input type="color" value={co.hex} onChange={e => handleColorOptionChange(idx, "hex", e.target.value)} className="w-16 h-16 -ml-3 -mt-3 cursor-pointer" />
+                                   </div>
+                                   <div className="flex-1">
+                                      <input type="text" value={co.name} onChange={e => handleColorOptionChange(idx, "name", e.target.value)} className="w-full text-xs font-semibold border-b border-slate-200 px-1 py-1 focus:outline-none focus:border-blue-500" placeholder="ชื่อสี (เช่น สีขาว)" />
+                                   </div>
+                                   <button onClick={() => setFormData({...formData, colorOptions: formData.colorOptions.filter((_, i) => i !== idx)})} className="w-6 h-6 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-red-50 shrink-0 hover:bg-red-100"><X size={12}/></button>
+                                </div>
+                              ))}
+                           </div>
+                       )}
                     </div>
                  </section>
 

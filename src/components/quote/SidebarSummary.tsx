@@ -85,7 +85,7 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                         className="mt-1"
                     />
                     <label htmlFor="terms" className="text-xs text-slate-500 leading-tight">
-                        {t.quote.termsCheck} <span className="text-blue-600 hover:underline cursor-pointer font-medium">{t.quote.termsLink}</span> {""}ของ 3DEV
+                        {t.quote.termsCheck} <span className="text-blue-600 hover:underline cursor-pointer font-medium">{t.quote.termsLink}</span> {""}ของ PrintMyDesign
                     </label>
                 </div>
 

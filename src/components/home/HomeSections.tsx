@@ -201,14 +201,17 @@ export function Footer() {
                 {/* Top Section: Newsletter & Branding */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16 pb-16 border-b border-slate-800/60">
                     <div className="lg:col-span-5">
-                        <div className="mb-6">
+                        <div className="mb-6 flex items-center gap-2.5">
                             <Image
-                                src="/logo/3devwhite.png"
-                                alt="3DEV Logo"
-                                width={140}
-                                height={44}
-                                className="object-contain"
+                                src="/logo/PDM_Logo_Icon_40x40px.svg"
+                                alt="PrintMyDesign Logo"
+                                width={40}
+                                height={40}
+                                className="h-10 w-auto object-contain"
                             />
+                            <span className="font-black text-2xl tracking-[0.2em] text-white uppercase ml-1">
+                                PrintMyDesign
+                            </span>
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed max-w-md mb-8">
                             {t.footer.tagline}
@@ -262,11 +265,11 @@ export function Footer() {
                         </div>
                         <div className="space-y-3 mt-8">
                             <h4 className="text-white font-bold tracking-wide text-sm uppercase mb-4">Contact</h4>
-                            <a href="mailto:info@3dev.com" className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
-                                <Mail className="w-4 h-4" /> info@3dev.com
+                            <a href="mailto:services@printmydesign.net" className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                                <Mail className="w-4 h-4" /> services@printmydesign.net
                             </a>
-                            <a href="tel:+6621234567" className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
-                                <Phone className="w-4 h-4" /> +66 2 123 4567
+                            <a href="tel:+6620287445" className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                                <Phone className="w-4 h-4" /> +66 2 028 7445
                             </a>
                         </div>
                     </div>
@@ -276,9 +279,6 @@ export function Footer() {
                         <ul className="space-y-3 text-sm text-slate-400">
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s1}</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s2}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s3}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s4}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s5}</Link></li>
                         </ul>
                     </div>
 
@@ -289,6 +289,7 @@ export function Footer() {
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">Nylon (SLS/MJF)</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">Stainless Steel (SLM)</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">Standard Plastic (FDM)</Link></li>
+                            <li><Link href="#" className="hover:text-blue-400 transition-colors">Wax (MJF)</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.m5}</Link></li>
                         </ul>
                     </div>
@@ -308,9 +309,6 @@ export function Footer() {
                         <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.companyHeading}</h4>
                         <ul className="space-y-3 text-sm text-slate-400">
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c1}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c2}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c3}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c4}</Link></li>
                             <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c5}</Link></li>
                         </ul>
                     </div>

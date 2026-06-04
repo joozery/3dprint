@@ -7,32 +7,29 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
-const showcaseItems = [
-    {
-        image: "/showcase/metal.png",
-        label: "BJ - 316L Stainless Steel",
-    },
-    {
-        image: "/showcase/resin.png",
-        label: "WJP - Full Color Resin",
-    },
-    {
-        image: "/showcase/black.png",
-        label: "SLA - Black Resin",
-    },
-    {
-        image: "/showcase/clear.png",
-        label: "SLA - 8001 Resin",
-    },
-    {
-        image: "/showcase/sls.png",
-        label: "SLS - Nylon 11/12",
-    },
-];
-
 export function ShowcaseSection() {
     const scrollRef = useRef<HTMLDivElement>(null);
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
+
+    const showcaseItems = [
+        {
+            image: "/showcase/metal.png",
+            label: lang === 'th' ? "วัสดุโลหะ" : "Metal Materials",
+        },
+        {
+            image: "/showcase/black.png",
+            label: lang === 'th' ? "วัสดุ เรซิ่น ผิวเรียบ" : "Smooth Texture Resin Materials",
+        },
+        {
+            image: "/showcase/clear.png",
+            label: lang === 'th' ? "วัสดุ เรซิ่น ใส" : "Transparent Resin Materials",
+        },
+        {
+            image: "/showcase/sls.png",
+            label: lang === 'th' ? "วัสดุ ไนลอน 11, 12" : "Nylon 11, 12 Materials",
+        },
+    ];
+
 
     const scroll = (direction: "left" | "right") => {
         if (scrollRef.current) {

@@ -44,7 +44,7 @@ export async function PATCH(
         let setupFee = 0;
         let weight = quote.weightGrams || 0;
 
-        const matConfig = await Material.findOne({ systemId: material || quote.material });
+        const matConfig = await Material.findById(material || quote.material).catch(() => null);
         if (matConfig) {
             weight = volume * (matConfig.density || 1.15);
             basePricePerUnit = weight * matConfig.pricePerGram;

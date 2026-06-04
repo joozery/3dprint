@@ -24,6 +24,10 @@ const MaterialConfigSchema = new mongoose.Schema({
     sellPerMinute: { type: Number, default: 0, required: true },
   },
   colors: [{ type: String }],
+  colorOptions: [{
+    name: { type: String, required: true },
+    hex: { type: String, required: true }
+  }],
   postProcessing: [PostProcessingSchema],
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });

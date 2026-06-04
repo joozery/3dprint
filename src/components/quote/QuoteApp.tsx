@@ -25,6 +25,28 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentFile, setCurrentFile] = useState("");
+    const [debugStack, setDebugStack] = useState<string | null>(null);
+
+    // Coupon states
+    const [couponCode, setCouponCode] = useState("");
+    const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountValue: number } | null>(null);
+    const [couponError, setCouponError] = useState("");
+    const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+    useEffect(() => {
+        const originalError = console.error;
+        console.error = (...args) => {
+            if (args[0] === true) {
+                const stack = new Error().stack;
+                console.log("🚨 Caught 'true' being passed to console.error! Stack trace:", stack);
+                setDebugStack(stack || "No stack trace available");
+            }
+            originalError.apply(console, args);
+        };
+        return () => {
+            console.error = originalError;
+        };
+    }, []);
     const [rawFiles, setRawFiles] = useState<Record<string, File>>({});
     const [dbMaterials, setDbMaterials] = useState<any[]>([]);
     const [viewMode, setViewMode] = useState("shaded");
@@ -78,6 +100,11 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
+
+        if (!session) {
+            router.push('/login?callbackUrl=/quote');
+            return;
+        }
 
         setUploading(true);
         for (let i = 0; i < files.length; i++) {
@@ -177,10 +204,49 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             return;
         }
         const ids = quotes.map(q => q._id).join(',');
-        router.push(`/checkout?addressId=${selectedAddressId || ""}&ids=${ids}`);
+        const url = `/checkout?addressId=${selectedAddressId || ""}&ids=${ids}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`;
+        router.push(url);
+    };
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode) return;
+        setValidatingCoupon(true);
+        setCouponError("");
+
+        try {
+            const totalPrice = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
+            const res = await fetch("/api/coupons/validate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: couponCode, orderValue: totalPrice })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                setAppliedCoupon({
+                    code: data.coupon.code,
+                    discountValue: data.discountValue
+                });
+                setCouponCode("");
+            } else {
+                setCouponError(data.error || "เกิดข้อผิดพลาด");
+            }
+        } catch (err) {
+            setCouponError("ตรวจสอบคูปองไม่สำเร็จ");
+        } finally {
+            setValidatingCoupon(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
     };
 
     const handleGetQuotation = async () => {
+        if (!session) {
+            router.push('/login?callbackUrl=/quote');
+            return;
+        }
         if (quotes.length === 0) {
             alert(t.quote.dropOrSelect);
             return;
@@ -201,13 +267,52 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     };
 
     const handleSaveToCart = () => {
-        alert("บันทึกลงตะกร้าเรียบร้อยแล้ว!");
+        import("sonner").then(m => m.toast.success("บันทึกลงตะกร้าแล้ว!", {
+            description: "ชิ้นงานของคุณถูกบันทึกไว้แล้ว สามารถกลับมาดำเนินการต่อได้ภายหลัง"
+        }));
+    };
+
+    const handleCopyToAll = async () => {
+        if (!activeQuote || quotes.length <= 1) return;
+        const others = quotes.filter(q => q._id !== activeQuote._id);
+        for (const q of others) {
+            await patchQuote(q._id, {
+                technology: activeQuote.technology,
+                material: activeQuote.material,
+                color: activeQuote.color,
+                finish: activeQuote.finish,
+                quantity: activeQuote.quantity,
+                deliverySpeed: activeQuote.deliverySpeed,
+            });
+        }
+        import("sonner").then(m => m.toast.success("คัดลอกการตั้งค่าสำเร็จ!", {
+            description: `คัดลอกไปยัง ${others.length} ชิ้นงานแล้ว`
+        }));
     };
 
     const getModelColor = (tech: string, matId: string) => {
-        if (activeQuote?.color) return activeQuote.color;
+        const getColorHex = (colorName: string) => {
+            const name = colorName.toLowerCase().trim();
+            if (name.includes('black') || name.includes('ดำ')) return '#222';
+            if (name.includes('grey') || name.includes('gray') || name.includes('เทา')) return '#888';
+            if (name.includes('blue') || name.includes('น้ำเงิน') || name.includes('ฟ้า')) return '#3b82f6';
+            if (name.includes('green') || name.includes('เขียว')) return '#22c55e';
+            if (name.includes('yellow') || name.includes('เหลือง')) return '#fbbf24';
+            if (name.includes('red') || name.includes('แดง')) return '#ef4444';
+            if (name.includes('orange') || name.includes('ส้ม')) return '#f97316';
+            if (name.includes('purple') || name.includes('ม่วง')) return '#a855f7';
+            if (name.includes('pink') || name.includes('ชมพู')) return '#ec4899';
+            if (name.includes('brown') || name.includes('น้ำตาล')) return '#78350f';
+            if (name.includes('transparent') || name.includes('ใส')) return 'rgba(255, 255, 255, 0.5)';
+            return '#fff';
+        };
+
+        if (activeQuote?.color) return getColorHex(activeQuote.color);
         const mat = dbMaterials.find(m => m._id === matId);
-        if (mat && mat.colors && mat.colors.length > 0) return mat.colors[0];
+        if (mat) {
+            if (mat.colorOptions && mat.colorOptions.length > 0) return mat.colorOptions[0].hex;
+            if (mat.colors && mat.colors.length > 0) return getColorHex(mat.colors[0]);
+        }
         if (tech.toLowerCase() === 'sla') return '#94a3b8';
         return '#3b82f6';
     };
@@ -228,7 +333,9 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const currentDelivery = deliveryConfig[activeQuote?.deliverySpeed || 'standard'];
     const deliveryCost = currentDelivery.price;
 
-    const finalPrice = totalPrice + vat + deliveryCost;
+    const SETUP_FEE = 150;
+    const COUPON_DISCOUNT = appliedCoupon ? appliedCoupon.discountValue : 0;
+    const finalPrice = Math.max(0, totalPrice + SETUP_FEE - COUPON_DISCOUNT + vat + deliveryCost);
 
     const brandPrimary = "#2563eb";
     const brandPrimaryDeep = "#1d4ed8";
@@ -238,6 +345,16 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
     return (
         <div className="h-full w-full flex flex-col text-slate-900 font-sans overflow-hidden" style={{ fontFamily: 'Sarabun, sans-serif', backgroundColor: bgMain }}>
+            {debugStack && (
+                <div className="absolute top-0 left-0 z-[9999] bg-red-600 text-white p-6 rounded-xl w-full shadow-2xl">
+                    <h3 className="font-bold text-xl mb-2">Caught console.error(true)</h3>
+                    <p>Please copy this stack trace and send it to the AI:</p>
+                    <pre className="mt-4 p-4 bg-black text-green-400 overflow-auto text-xs rounded-lg">
+                        {debugStack}
+                    </pre>
+                    <button onClick={() => setDebugStack(null)} className="mt-4 bg-white text-red-600 px-4 py-2 rounded font-bold">Dismiss</button>
+                </div>
+            )}
 
             {/* 3. MAIN GRID */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-[260px_1fr_320px_280px] xl:grid-cols-[280px_1fr_340px_300px] overflow-hidden">
@@ -371,7 +488,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 z-20">
                                     <div 
                                         onClick={() => viewerRef.current?.setView('ISO')}
-                                        className="h-[30px] px-2 bg-white/90 border border-slate-200 rounded-[4px] text-slate-500 flex items-center justify-center text-[10px] font-mono tracking-widest cursor-pointer hover:bg-white"
+                                        className="h-[30px] px-2 bg-white/90 border border-slate-200 rounded-[4px] text-slate-50 flex items-center justify-center text-[10px] font-mono tracking-widest cursor-pointer hover:bg-white"
                                     >
                                         ISO
                                     </div>
@@ -435,7 +552,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             <div className="text-[11px] font-black tracking-widest uppercase text-slate-300">CONFIGURATION</div>
                             <div className="text-[14px] font-black mt-0.5">{t.quote.configTitle}</div>
                         </div>
-                        <button className="text-[10px] font-black tracking-widest px-3 py-2 border border-slate-200 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-all uppercase">{t.quote.copyToAll}</button>
+                        <button onClick={handleCopyToAll} disabled={quotes.length <= 1} className="text-[10px] font-black tracking-widest px-3 py-2 border border-slate-200 rounded-lg text-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-all uppercase disabled:opacity-30 disabled:cursor-not-allowed">{t.quote.copyToAll}</button>
                     </div>
                     {activeQuote ? (
                         <div className="p-6 pb-32 space-y-10">
@@ -510,11 +627,42 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                     {t.quote.colorLabel}
                                 </div>
                             <div className="flex flex-wrap gap-3">
-                                    {(dbMaterials.find(m => m._id === (activeQuote.material || ''))?.colors || ['White', 'Black', 'Grey', 'Blue', 'Green', 'Yellow', 'Red']).map((c: string) => (
-                                        <button key={c} onClick={() => patchQuote(activeQuote._id, { color: c })} className={cn("w-10 h-10 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center relative shadow-md", activeQuote.color === c ? "border-[#2563eb] ring-4 ring-blue-50" : "border-white outline outline-1 outline-slate-100")} style={{ backgroundColor: c.toLowerCase().includes('black') ? '#222' : c.toLowerCase().includes('grey') ? '#888' : c.toLowerCase().includes('blue') ? '#3b82f6' : c.toLowerCase().includes('green') ? '#22c55e' : c.toLowerCase().includes('yellow') ? '#fbbf24' : c.toLowerCase().includes('red') ? '#ef4444' : '#fff' }} title={c}>
-                                            {activeQuote.color === c && <Check className={cn("w-5 h-5 drop-shadow-lg", c.toLowerCase().includes('white') ? "text-slate-900" : "text-white")} />}
-                                        </button>
-                                    ))}
+                                    {(() => {
+                                        const mat = dbMaterials.find(m => m._id === (activeQuote.material || ''));
+                                        if (mat && mat.colorOptions && mat.colorOptions.length > 0) {
+                                            return mat.colorOptions.map((co: any) => {
+                                                const isLightColor = co.hex.toLowerCase() === '#ffffff' || co.name.toLowerCase().includes('white') || co.name.includes('ขาว') || co.name.includes('ใส') || co.name.toLowerCase().includes('transparent');
+                                                return (
+                                                    <button key={co.name} onClick={() => patchQuote(activeQuote._id, { color: co.name })} className={cn("w-10 h-10 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center relative shadow-md", activeQuote.color === co.name ? "border-[#2563eb] ring-4 ring-blue-50" : "border-white outline outline-1 outline-slate-100")} style={{ backgroundColor: co.hex }} title={co.name}>
+                                                        {activeQuote.color === co.name && <Check className={cn("w-5 h-5 drop-shadow-lg", isLightColor ? "text-slate-900" : "text-white")} />}
+                                                    </button>
+                                                )
+                                            });
+                                        }
+
+                                        return (mat?.colors || ['White', 'Black', 'Grey', 'Blue', 'Green', 'Yellow', 'Red']).map((c: string) => {
+                                            const getColorHex = (colorName: string) => {
+                                                const name = colorName.toLowerCase().trim();
+                                                if (name.includes('black') || name.includes('ดำ')) return '#222';
+                                                if (name.includes('grey') || name.includes('gray') || name.includes('เทา')) return '#888';
+                                                if (name.includes('blue') || name.includes('น้ำเงิน') || name.includes('ฟ้า')) return '#3b82f6';
+                                                if (name.includes('green') || name.includes('เขียว')) return '#22c55e';
+                                                if (name.includes('yellow') || name.includes('เหลือง')) return '#fbbf24';
+                                                if (name.includes('red') || name.includes('แดง')) return '#ef4444';
+                                                if (name.includes('orange') || name.includes('ส้ม')) return '#f97316';
+                                                if (name.includes('purple') || name.includes('ม่วง')) return '#a855f7';
+                                                if (name.includes('pink') || name.includes('ชมพู')) return '#ec4899';
+                                                if (name.includes('brown') || name.includes('น้ำตาล')) return '#78350f';
+                                                if (name.includes('transparent') || name.includes('ใส')) return 'rgba(255, 255, 255, 0.5)';
+                                                return '#fff';
+                                            };
+                                            const isLightColor = c.toLowerCase().includes('white') || c.includes('ขาว') || c.includes('ใส') || c.toLowerCase().includes('yellow') || c.includes('เหลือง') || c.toLowerCase().includes('transparent');
+                                            return (
+                                            <button key={c} onClick={() => patchQuote(activeQuote._id, { color: c })} className={cn("w-10 h-10 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center relative shadow-md", activeQuote.color === c ? "border-[#2563eb] ring-4 ring-blue-50" : "border-white outline outline-1 outline-slate-100")} style={{ backgroundColor: getColorHex(c) }} title={c}>
+                                                {activeQuote.color === c && <Check className={cn("w-5 h-5 drop-shadow-lg", isLightColor ? "text-slate-900" : "text-white")} />}
+                                            </button>
+                                        )});
+                                    })()}
                                 </div>
                             </div>
 
@@ -638,20 +786,48 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         <div className="px-4 space-y-1.5 font-mono text-[11px] font-black">
                             <div className="flex justify-between text-slate-700"><span>Subtotal</span><span>฿{totalPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
                             <div className="flex justify-between text-slate-300 font-bold"><span>{t.quote.setupFee}</span><span>฿150.00</span></div>
-                            <div className="flex justify-between text-[#2563eb]"><span>FIRST25 {t.quote.coupon}</span><span>-฿25.00</span></div>
+                            {appliedCoupon && (
+                                <div className="flex justify-between text-[#2563eb]"><span>{appliedCoupon.code} {t.quote.coupon}</span><span>-฿{appliedCoupon.discountValue.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
+                            )}
                             <div className="flex justify-between text-slate-300 font-bold"><span>VAT 7%</span><span>฿{vat.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
                         </div>
 
                         <div className="p-3 mt-2">
                             <div className="text-[8px] font-black tracking-widest uppercase text-slate-300 mb-2">{t.quote.coupon}</div>
-                            <div className="flex gap-2">
-                                <div className="flex-1 flex items-center gap-2 px-2.5 py-1.5 bg-white border border-slate-100 rounded-lg shadow-sm">
-                                    <ShoppingCart className="w-3 h-3 text-[#2563eb] shrink-0" />
-                                    <input type="text" value="FIRST25" readOnly className="flex-1 bg-transparent border-none outline-none text-[10px] font-black tracking-[0.2em] text-slate-700" />
-                                    <span className="text-[7px] font-black text-[#2563eb] bg-purple-50 px-1 py-0.5 rounded uppercase">ACTIVE</span>
+                            {appliedCoupon ? (
+                                <div className="flex gap-2">
+                                    <div className="flex-1 flex items-center gap-2 px-2.5 py-1.5 bg-blue-50/50 border border-blue-100 rounded-lg shadow-sm">
+                                        <ShoppingCart className="w-3 h-3 text-[#2563eb] shrink-0" />
+                                        <div className="flex-1 text-[10px] font-black tracking-[0.15em] text-slate-700">{appliedCoupon.code}</div>
+                                        <span className="text-[7px] font-black text-[#2563eb] bg-blue-100 px-1 py-0.5 rounded uppercase">ACTIVE</span>
+                                    </div>
+                                    <button onClick={handleRemoveCoupon} className="px-2 text-[9px] font-black text-slate-400 hover:text-red-500 uppercase transition-all">{t.quote.removeBtn}</button>
                                 </div>
-                                <button className="px-2 text-[9px] font-black text-slate-400 hover:text-red-500 uppercase transition-all">{t.quote.removeBtn}</button>
-                            </div>
+                            ) : (
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex gap-2">
+                                        <div className="flex-1 flex items-center gap-2 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm focus-within:border-blue-500 transition-all">
+                                            <ShoppingCart className="w-3 h-3 text-slate-400 shrink-0" />
+                                            <input 
+                                                type="text" 
+                                                value={couponCode} 
+                                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                placeholder="ENTER CODE"
+                                                className="flex-1 bg-transparent border-none outline-none text-[10px] font-black tracking-[0.1em] text-slate-700 placeholder:text-slate-300 uppercase" 
+                                                onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                            />
+                                        </div>
+                                        <button 
+                                            onClick={handleApplyCoupon}
+                                            disabled={validatingCoupon || !couponCode}
+                                            className="px-3 text-[9px] font-black text-white bg-slate-800 rounded-lg hover:bg-black disabled:bg-slate-300 disabled:text-slate-500 uppercase transition-all"
+                                        >
+                                            {validatingCoupon ? "..." : "APPLY"}
+                                        </button>
+                                    </div>
+                                    {couponError && <div className="text-[9px] font-bold text-red-500 mt-1">{couponError}</div>}
+                                </div>
+                            )}
                         </div>
 
                         {/* Shipping Address Selection */}
