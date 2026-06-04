@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose";
 import Coupon from "@/models/Coupon";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
@@ -16,10 +16,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     await dbConnect();
 
     if (data.code) {
-        const existing = await Coupon.findOne({ code: data.code.toUpperCase(), _id: { $ne: id } });
-        if (existing) {
-            return NextResponse.json({ success: false, error: "รหัสคูปองนี้มีอยู่แล้ว" }, { status: 400 });
-        }
+      const existing = await Coupon.findOne({ code: data.code.toUpperCase(), _id: { $ne: id } });
+      if (existing) {
+        return NextResponse.json({ success: false, error: "รหัสคูปองนี้มีอยู่แล้ว" }, { status: 400 });
+      }
     }
 
     const updated = await Coupon.findByIdAndUpdate(
@@ -39,7 +39,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
@@ -60,4 +60,3 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
-

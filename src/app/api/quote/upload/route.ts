@@ -4,8 +4,8 @@ import path from "path";
 import fs from "fs/promises";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
-import Material from "@/models/Material";
 import { analyzeFile } from "@/lib/slicer";
+import { calculatePrice, parsePrintTimeToMinutes } from "@/lib/pricing";
 import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getServerSession } from "next-auth/next";
@@ -100,34 +100,42 @@ export async function POST(req: NextRequest) {
             console.warn("Failed to delete local temp file:", err);
         }
 
-        // Dynamic price calculation using MaterialConfig
+        // Dynamic price calculation using MaterialConfig (สูตรที่ 3: วัสดุ + เวลา + setup)
         const MaterialConfig = require("@/models/MaterialConfig").default;
         const defaultMat = await MaterialConfig.findOne({ isActive: true }).sort({ createdAt: 1 });
         let selTech = "sla";
         let selMat = "";
         let selColor = "ขาวด้าน (Matte White)";
-        let unitPrice = 0;
-        let setupPrice = 0;
+
+        const density       = defaultMat?.density || 1.15;
+        const sellPerGram   = defaultMat?.pricing?.sellPerGram   || 1;
+        const sellPerMinute = defaultMat?.pricing?.sellPerMinute || 0;
+        const setupFee      = defaultMat?.pricing?.setupFee      || 0;
 
         if (defaultMat) {
-            selTech = defaultMat.technology;
-            selMat = defaultMat._id.toString();
-            selColor = (defaultMat.colors && defaultMat.colors.length > 0) ? defaultMat.colors[0] : "ขาวด้าน (Matte White)";
-            
-            // Weight = Volume * Density (or we use analysis.weightGrams directly but ideally update it based on material density)
-            const weight = analysis.volumeCm3 * 1.15; // default density
-            unitPrice = weight * (defaultMat.pricing?.sellPerGram || 1);
-            // setupPrice = defaultMat.setupFee || 0;
-        } else {
-            // fallback
-            const basePrice = 50; 
-            const pricePerCm3 = 5; 
-            unitPrice = basePrice + (analysis.volumeCm3 * pricePerCm3);
+            selTech  = defaultMat.technology;
+            selMat   = defaultMat._id.toString();
+            selColor = defaultMat.colors?.[0] || "ขาวด้าน (Matte White)";
         }
 
-        const totalPrice = unitPrice + setupPrice;
+        const printTimeMinutes = parsePrintTimeToMinutes(analysis.printTime);
 
-        // ดึง userId อย่างรัดกุม (กรณีคุกกี้เก่าไม่มี id ฝังอยู่)
+        const priceBreakdown = calculatePrice({
+            filamentCm3:       (analysis as any).filamentCm3      || analysis.volumeCm3,
+            supportVolumeCm3:  (analysis as any).supportVolumeCm3 || 0,
+            density,
+            sellPerGram,
+            printTimeMinutes,
+            sellPerMinute,
+            setupFee,
+            quantity:    1,
+            finishPrice: 0,
+        });
+
+        const weightGrams  = priceBreakdown.weightGrams;
+        const totalPrice   = priceBreakdown.totalPrice;
+
+        // ดึง userId อย่างรัดกุม
         let userId = (session?.user as any)?.id;
         if (!userId && session?.user?.email) {
             const User = require("@/models/User").default;
@@ -135,7 +143,6 @@ export async function POST(req: NextRequest) {
             if (userDb) userId = userDb._id;
         }
 
-        // Generate a random quote number to avoid MongoDB unique constraint errors for null values
         const randomQuoteNumber = `QT-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
         const quote = await Quote.create({
@@ -151,13 +158,18 @@ export async function POST(req: NextRequest) {
             color: selColor,
             quantity: 1,
             volumeCm3: analysis.volumeCm3,
-            weightGrams: defaultMat ? (analysis.volumeCm3 * (defaultMat.density || 1.15)) : analysis.weightGrams,
+            weightGrams,
             printTime: analysis.printTime,
             dimensions: analysis.dimensions,
+            needsSupport: (analysis as any).needsSupport ?? false,
+            supportVolumeCm3: (analysis as any).supportVolumeCm3 ?? 0,
+            isManifold: (analysis as any).isManifold ?? true,
             priceDetail: {
-                pricePerUnit: totalPrice,
-                totalPrice: totalPrice,
-                setupFee: setupPrice,
+                pricePerUnit:  priceBreakdown.pricePerUnit,
+                totalPrice:    priceBreakdown.totalPrice,
+                setupFee:      priceBreakdown.setupFee,
+                materialCost:  priceBreakdown.materialCost,
+                timeCost:      priceBreakdown.timeCost,
             }
         });
 

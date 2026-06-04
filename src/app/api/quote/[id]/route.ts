@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
-import Material from "@/models/Material";
+import { calculatePrice, parsePrintTimeToMinutes } from "@/lib/pricing";
 
 export async function GET(
-    req: NextRequest,
+    _req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const { id } = await params;
         await dbConnect();
-
         const quote = await Quote.findById(id);
-
-        if (!quote) {
-            return NextResponse.json({ error: "Quote not found" }, { status: 404 });
-        }
-
+        if (!quote) return NextResponse.json({ error: "Quote not found" }, { status: 404 });
         return NextResponse.json({ success: true, data: quote });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -34,47 +29,60 @@ export async function PATCH(
         const { technology, material, color, quantity, deliverySpeed, finish, billing, shipping } = body;
 
         const quote = await Quote.findById(id);
-        if (!quote) {
-            return NextResponse.json({ error: "Quote not found" }, { status: 404 });
+        if (!quote) return NextResponse.json({ error: "Quote not found" }, { status: 404 });
+
+        // ดึง MaterialConfig ด้วย _id ของ material ที่เลือก
+        const MaterialConfig = require("@/models/MaterialConfig").default;
+        const matConfig = await MaterialConfig.findById(material || quote.material).catch(() => null);
+
+        const density       = matConfig?.density            || 1.15;
+        const sellPerGram   = matConfig?.pricing?.sellPerGram   || 1;
+        const sellPerMinute = matConfig?.pricing?.sellPerMinute || 0;
+        const setupFee      = matConfig?.pricing?.setupFee      || 0;
+
+        // หา finish price จาก postProcessing ของ material
+        const finalFinish = finish || quote.finish || "standard";
+        let finishPrice = 0;
+        if (finalFinish !== "standard" && matConfig?.postProcessing?.length) {
+            const proc = matConfig.postProcessing.find((p: any) => p.name === finalFinish);
+            if (proc) finishPrice = proc.sellPrice || 0;
         }
 
-        // Calc dynamic price
-        const volume = quote.volumeCm3 || 0;
-        let basePricePerUnit = 50;
-        let setupFee = 0;
-        let weight = quote.weightGrams || 0;
+        const finalQuantity      = quantity ?? quote.quantity ?? 1;
+        const printTimeMinutes   = parsePrintTimeToMinutes(quote.printTime || "0m");
+        const filamentCm3        = (quote as any).filamentCm3      || quote.volumeCm3 || 0;
+        const supportVolumeCm3   = (quote as any).supportVolumeCm3 || 0;
 
-        const matConfig = await Material.findById(material || quote.material).catch(() => null);
-        if (matConfig) {
-            weight = volume * (matConfig.density || 1.15);
-            basePricePerUnit = weight * matConfig.pricePerGram;
-            setupFee = matConfig.setupFee || 0;
-        } else {
-            // fallback
-            if (technology === "fdm") basePricePerUnit = 2 + (volume * 1.5);
-            else if (technology === "sla") basePricePerUnit = 10 + (volume * 5.0);
-            else basePricePerUnit = 100 + (volume * 15.0);
-        }
-
-        const pricePerUnit = basePricePerUnit + setupFee;
-        const finalQuantity = quantity || quote.quantity || 1;
-        const totalPrice = pricePerUnit * finalQuantity;
+        const priceBreakdown = calculatePrice({
+            filamentCm3,
+            supportVolumeCm3,
+            density,
+            sellPerGram,
+            printTimeMinutes,
+            sellPerMinute,
+            setupFee,
+            quantity: finalQuantity,
+            finishPrice,
+        });
 
         const updatedQuote = await Quote.findByIdAndUpdate(
             id,
             {
-                technology: technology || quote.technology,
-                material: material || quote.material,
-                color: color || quote.color,
-                quantity: finalQuantity,
+                technology:    technology    || quote.technology,
+                material:      material      || quote.material,
+                color:         color         || quote.color,
+                quantity:      finalQuantity,
                 deliverySpeed: deliverySpeed || quote.deliverySpeed,
-                finish: finish || quote.finish,
-                billing: billing || quote.billing,
-                shipping: shipping || quote.shipping,
-                weightGrams: weight,
-                "priceDetail.pricePerUnit": pricePerUnit,
-                "priceDetail.totalPrice": totalPrice,
-                "priceDetail.setupFee": setupFee,
+                finish:        finalFinish,
+                billing:       billing       || quote.billing,
+                shipping:      shipping      || quote.shipping,
+                weightGrams:   priceBreakdown.weightGrams,
+                "priceDetail.pricePerUnit":  priceBreakdown.pricePerUnit,
+                "priceDetail.totalPrice":    priceBreakdown.totalPrice,
+                "priceDetail.setupFee":      priceBreakdown.setupFee,
+                "priceDetail.materialCost":  priceBreakdown.materialCost,
+                "priceDetail.timeCost":      priceBreakdown.timeCost,
+                "priceDetail.finishCost":    priceBreakdown.finishCost,
             },
             { new: true }
         );
@@ -92,7 +100,6 @@ export async function DELETE(
     try {
         const { id } = await params;
         await dbConnect();
-
         await Quote.findByIdAndDelete(id);
         return NextResponse.json({ success: true });
     } catch (error: any) {

@@ -160,30 +160,52 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             if (!current) return;
             const updated = { ...current, ...updates };
             
-            // Recalculate price if material or technology or quantity changed
+            // Recalculate price: สูตรที่ 3 — วัสดุ + เวลา + setup
             if (updates.material || updates.technology || updates.quantity || updates.finish) {
                 const mat = dbMaterials.find(m => m._id === (updates.material || current.material));
                 if (mat) {
-                    const qty = updates.quantity || current.quantity || 1;
-                    const vol = current.volumeCm3 || 10;
-                    const density = 1.15; // default density if needed, or just use vol directly if sellPerGram actually means sellPerCm3
-                    const pricePerUnit = mat.pricing?.sellPerGram || 1; // Actually this is sellPerGram in schema, so weight = vol * density
-                    const weight = vol * density;
-                    const basePrice = weight * pricePerUnit;
-                    
+                    const qty            = updates.quantity ?? current.quantity ?? 1;
+                    const filamentCm3    = current.filamentCm3    || current.volumeCm3 || 10;
+                    const supportCm3     = current.supportVolumeCm3 || 0;
+                    const density        = mat.density            || 1.15;
+                    const sellPerGram    = mat.pricing?.sellPerGram   || 1;
+                    const sellPerMinute  = mat.pricing?.sellPerMinute || 0;
+                    const setupFee       = mat.pricing?.setupFee      || 0;
+
+                    // แปลง printTime → นาที (client-side)
+                    const parseMins = (s: string) => {
+                        if (!s || s === "N/A") return 0;
+                        let m = 0;
+                        const h = s.match(/(\d+)h/); const min = s.match(/(\d+)m/); const sec = s.match(/(\d+)s/);
+                        if (h) m += parseInt(h[1]) * 60;
+                        if (min) m += parseInt(min[1]);
+                        if (sec) m += parseInt(sec[1]) / 60;
+                        return m;
+                    };
+                    const printTimeMinutes = parseMins(current.printTime || "0m");
+
+                    // finish price
+                    const finishId = updates.finish || current.finish || "standard";
                     let finishPrice = 0;
-                    const finishId = updates.finish || current.finish || 'standard';
-                    if (finishId !== 'standard') {
-                        const postProc = mat.postProcessing?.find((p: any) => p.name === finishId);
-                        if (postProc) finishPrice = postProc.sellPrice;
+                    if (finishId !== "standard") {
+                        const proc = mat.postProcessing?.find((p: any) => p.name === finishId);
+                        if (proc) finishPrice = proc.sellPrice || 0;
                     }
-                    
-                    const total = (basePrice + finishPrice) * qty;
-                    
+
+                    const chargeableVol = filamentCm3 + supportCm3;
+                    const weight        = chargeableVol * density;
+                    const materialCost  = weight * sellPerGram;
+                    const timeCost      = printTimeMinutes * sellPerMinute;
+                    const pricePerUnit  = materialCost + timeCost + finishPrice;
+                    const totalPrice    = pricePerUnit * qty + setupFee;
+
                     updated.priceDetail = {
-                        totalPrice: total,
-                        pricePerUnit: basePrice + finishPrice,
-                        materialPrice: basePrice
+                        totalPrice:   parseFloat(totalPrice.toFixed(2)),
+                        pricePerUnit: parseFloat(pricePerUnit.toFixed(2)),
+                        materialCost: parseFloat(materialCost.toFixed(2)),
+                        timeCost:     parseFloat(timeCost.toFixed(2)),
+                        finishCost:   parseFloat(finishPrice.toFixed(2)),
+                        setupFee:     parseFloat(setupFee.toFixed(2)),
                     };
                 }
             }
