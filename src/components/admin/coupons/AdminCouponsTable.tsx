@@ -110,7 +110,7 @@ export default function AdminCouponsTable() {
       const method = isEditing ? "PUT" : "POST";
       const url = isEditing ? `/api/admin/coupons/${formData._id}` : "/api/admin/coupons";
       
-      const payload = { ...formData };
+      const payload: any = { ...formData };
       if (payload.expiresAt === "") payload.expiresAt = null;
       if (payload.maxDiscount === "") payload.maxDiscount = null;
       if (payload.usageLimit === "") payload.usageLimit = null;

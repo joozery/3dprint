@@ -4,10 +4,11 @@ import Coupon from "@/models/Coupon";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
+    if (!session || (session.user as any).role !== "admin") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -15,14 +16,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     await dbConnect();
 
     if (data.code) {
-        const existing = await Coupon.findOne({ code: data.code.toUpperCase(), _id: { $ne: params.id } });
+        const existing = await Coupon.findOne({ code: data.code.toUpperCase(), _id: { $ne: id } });
         if (existing) {
             return NextResponse.json({ success: false, error: "รหัสคูปองนี้มีอยู่แล้ว" }, { status: 400 });
         }
     }
 
     const updated = await Coupon.findByIdAndUpdate(
-      params.id,
+      id,
       { ...data, ...(data.code && { code: data.code.toUpperCase() }) },
       { new: true }
     );
@@ -38,16 +39,17 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
+    if (!session || (session.user as any).role !== "admin") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     await dbConnect();
 
-    const deleted = await Coupon.findByIdAndDelete(params.id);
+    const deleted = await Coupon.findByIdAndDelete(id);
     if (!deleted) {
       return NextResponse.json({ success: false, error: "Coupon not found" }, { status: 404 });
     }
@@ -58,3 +60,4 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
