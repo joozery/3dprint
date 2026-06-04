@@ -26,13 +26,19 @@ export default async function AdminQuoteViewPage({ params }: { params: Promise<{
   if (!rawQuote) redirect("/admin/quotes");
   
   const quote = JSON.parse(JSON.stringify(rawQuote));
+  
+  // Fetch all items sharing the same quoteNumber
+  const rawItems = await Quote.find({ quoteNumber: quote.quoteNumber }).lean();
+  const allItems = JSON.parse(JSON.stringify(rawItems));
 
   const { billing, priceDetail } = quote;
   const isCompany = billing?.type === "company";
   
   const formatCur = (num: number) => num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const vat = (priceDetail?.totalPrice || 0) * 0.07;
-  const grandTotal = (priceDetail?.totalPrice || 0) + vat;
+  
+  const subtotal = allItems.reduce((sum: number, item: any) => sum + (item.priceDetail?.totalPrice || 0), 0);
+  const vat = subtotal * 0.07;
+  const grandTotal = subtotal + vat;
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 font-sans">
@@ -127,24 +133,26 @@ export default async function AdminQuoteViewPage({ params }: { params: Promise<{
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {/* Quote item */}
-                        <tr className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-center align-top">1</td>
+                        {/* Quote items */}
+                        {allItems.map((item: any, index: number) => (
+                        <tr key={item._id} className="group hover:bg-slate-50/50 transition-colors">
+                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-center align-top">{index + 1}</td>
                             <td className="py-3 px-2 align-top">
-                                <p className="text-xs font-bold text-slate-900 mb-1">{quote.originalName || quote.fileName}</p>
+                                <p className="text-xs font-bold text-slate-900 mb-1">{item.originalName || item.fileName}</p>
                                 <div className="text-[10px] text-slate-500 space-y-0.5 leading-snug">
-                                    <p>• เทคโนโลยี: <span className="font-semibold">{quote.technology?.toUpperCase()}</span></p>
-                                    <p>• วัสดุ: <span className="font-semibold">{quote.material}</span> / สี: {quote.color}</p>
-                                    <p>• ปริมาตร: {quote.volumeCm3?.toFixed(2)} cm³</p>
-                                    {quote.dimensions && (
-                                        <p>• ขนาด (X,Y,Z): {quote.dimensions.x?.toFixed(1)} x {quote.dimensions.y?.toFixed(1)} x {quote.dimensions.z?.toFixed(1)} mm</p>
+                                    <p>• เทคโนโลยี: <span className="font-semibold">{item.technology?.toUpperCase()}</span></p>
+                                    <p>• วัสดุ: <span className="font-semibold">{item.material}</span> / สี: {item.color}</p>
+                                    <p>• ปริมาตร: {item.volumeCm3?.toFixed(2)} cm³</p>
+                                    {item.dimensions && (
+                                        <p>• ขนาด (X,Y,Z): {item.dimensions.x?.toFixed(1)} x {item.dimensions.y?.toFixed(1)} x {item.dimensions.z?.toFixed(1)} mm</p>
                                     )}
                                 </div>
                             </td>
-                            <td className="py-3 px-2 text-xs text-slate-800 font-bold text-center align-top">{quote.quantity}</td>
-                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-right align-top"> {priceDetail?.pricePerUnit ? `฿${formatCur(priceDetail.pricePerUnit)}` : 'รอประเมิน'}</td>
-                            <td className="py-3 px-2 text-xs text-slate-800 font-black text-right align-top">{priceDetail?.totalPrice ? `฿${formatCur(priceDetail.totalPrice)}` : 'รอประเมิน'}</td>
+                            <td className="py-3 px-2 text-xs text-slate-800 font-bold text-center align-top">{item.quantity}</td>
+                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-right align-top"> {item.priceDetail?.pricePerUnit ? `฿${formatCur(item.priceDetail.pricePerUnit)}` : 'รอประเมิน'}</td>
+                            <td className="py-3 px-2 text-xs text-slate-800 font-black text-right align-top">{item.priceDetail?.totalPrice ? `฿${formatCur(item.priceDetail.totalPrice)}` : 'รอประเมิน'}</td>
                         </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>

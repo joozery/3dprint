@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
+import mongoose from "mongoose";
 import Quote from "@/models/Quote";
 import { redirect } from "next/navigation";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
@@ -29,15 +30,32 @@ export default async function ProfileQuotesPage({ searchParams }: { searchParams
   const limit = 8;
   const skip = (pageNum - 1) * limit;
 
-  const totalItems = await Quote.countDocuments({ userId });
+  const totalGroupsAgg = await Quote.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    { $group: { _id: "$quoteNumber" } },
+    { $count: "total" }
+  ]);
+  const totalItems = totalGroupsAgg[0]?.total || 0;
   const totalPages = Math.ceil(totalItems / limit);
 
-  const raw = await Quote.find({ userId })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
-  const quotes = JSON.parse(JSON.stringify(raw));
+  const raw = await Quote.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    { $sort: { createdAt: -1 } },
+    { $group: {
+        _id: "$quoteNumber",
+        doc: { $first: "$$ROOT" },
+        totalItems: { $sum: 1 },
+        totalAmount: { $sum: "$priceDetail.totalPrice" }
+    }},
+    { $sort: { "doc.createdAt": -1 } },
+    { $skip: skip },
+    { $limit: limit }
+  ]);
+  const quotes = JSON.parse(JSON.stringify(raw)).map((g: any) => ({
+      ...g.doc,
+      priceDetail: { ...g.doc.priceDetail, totalPrice: g.totalAmount },
+      groupedItemsCount: g.totalItems
+  }));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans relative overflow-hidden">
@@ -124,6 +142,9 @@ export default async function ProfileQuotesPage({ searchParams }: { searchParams
                                <div className="flex items-center gap-2 mt-0.5">
                                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase">{q.technology}</span>
                                  <span className="text-slate-500 text-[12px] truncate">{q.material} · {q.quantity} ชิ้น</span>
+                                 {q.groupedItemsCount > 1 && (
+                                     <span className="text-[10px] font-bold text-blue-500 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">+ อีก {q.groupedItemsCount - 1} รายการ</span>
+                                 )}
                                </div>
                              </div>
                           </div>

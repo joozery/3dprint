@@ -38,17 +38,18 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
         setFeedback(null);
 
         try {
+            const ids = quotes.map((q: any) => q._id).filter(Boolean);
             const res = await fetch("/api/quote/request", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ quotes }),
+                body: JSON.stringify({ ids }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
 
             // redirect ไปหน้ากรอกข้อมูลพร้อม ids
-            const ids = data.ids.join(",");
-            router.push(`/quote/request?ids=${ids}`);
+            const idsParam = data.ids.join(",");
+            router.push(`/quote/request?ids=${idsParam}`);
         } catch (err: any) {
             setFeedback({ text: err.message, type: "error" });
         } finally {

@@ -4,24 +4,59 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
 
-// POST /api/quote/request — บันทึก quote items เป็น "pending" ในฐานข้อมูล
+// POST /api/quote/request — อัปเดต quote items ที่มีอยู่แล้วให้มี sharedQuoteNumber เดียวกัน
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
   await dbConnect();
   const body = await req.json();
-  const { quotes } = body;
 
+  // Support two modes:
+  // 1. Legacy: { quotes: [...fullQuoteObjects] } — creates new Quote docs
+  // 2. New: { ids: [...mongoIds] } — updates existing Quote docs with shared quoteNumber
+  const { quotes, ids } = body;
+
+  // --- New mode: update existing quotes ---
+  if (ids && Array.isArray(ids) && ids.length > 0) {
+    try {
+      const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, "");
+      const randomStr = Math.floor(1000 + Math.random() * 9000);
+      const sharedQuoteNumber = `QT-${dateStr}-${randomStr}`;
+
+      await Quote.updateMany(
+        { _id: { $in: ids } },
+        { $set: { quoteNumber: sharedQuoteNumber } }
+      );
+
+      return NextResponse.json({
+        success: true,
+        count: ids.length,
+        ids,
+        quoteNumber: sharedQuoteNumber,
+      });
+    } catch (err: any) {
+      console.error("Quote request (update) error:", err);
+      return NextResponse.json({ error: "ไม่สามารถอัปเดตใบเสนอราคาได้" }, { status: 500 });
+    }
+  }
+
+  // --- Legacy mode: body has full quote objects ---
   if (!quotes || quotes.length === 0) {
     return NextResponse.json({ error: "ไม่มีรายการชิ้นงาน" }, { status: 400 });
   }
 
   try {
+    // Generate one Quote Number for this batch
+    const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, "");
+    const randomStr = Math.floor(1000 + Math.random() * 9000);
+    const sharedQuoteNumber = `QT-${dateStr}-${randomStr}`;
+
     // สร้าง Quote documents ทีละรายการ
     const created = await Promise.all(
       quotes.map((q: any) =>
         Quote.create({
           userId: (session?.user as any)?.id || null,
+          quoteNumber: sharedQuoteNumber,
           fileName: q.fileName || "unknown",
           originalName: q.originalName || q.fileName || "unknown",
           fileUrl: q.fileUrl || "",

@@ -8,7 +8,6 @@ const QuoteSchema = new mongoose.Schema(
         },
         quoteNumber: {
             type: String,
-            unique: true,
         },
         fileName: {
             type: String,

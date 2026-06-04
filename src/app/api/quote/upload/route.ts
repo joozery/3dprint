@@ -100,24 +100,24 @@ export async function POST(req: NextRequest) {
             console.warn("Failed to delete local temp file:", err);
         }
 
-        // Dynamic price calculation
-        const defaultMat = await Material.findOne({ isActive: true }).sort({ createdAt: 1 });
+        // Dynamic price calculation using MaterialConfig
+        const MaterialConfig = require("@/models/MaterialConfig").default;
+        const defaultMat = await MaterialConfig.findOne({ isActive: true }).sort({ createdAt: 1 });
         let selTech = "sla";
-        let selMat = "9600";
+        let selMat = "";
         let selColor = "ขาวด้าน (Matte White)";
         let unitPrice = 0;
         let setupPrice = 0;
 
         if (defaultMat) {
             selTech = defaultMat.technology;
-            selMat = defaultMat.systemId;
-            selColor = defaultMat.color || "ขาวด้าน (Matte White)";
+            selMat = defaultMat._id.toString();
+            selColor = (defaultMat.colors && defaultMat.colors.length > 0) ? defaultMat.colors[0] : "ขาวด้าน (Matte White)";
             
-            // Calc unit price based on default material config (Density is applied on the slicer side for Grams. Here we use WeightGrams directly if possible)
             // Weight = Volume * Density (or we use analysis.weightGrams directly but ideally update it based on material density)
-            const weight = analysis.volumeCm3 * (defaultMat.density || 1.15);
-            unitPrice = weight * defaultMat.pricePerGram;
-            setupPrice = defaultMat.setupFee || 0;
+            const weight = analysis.volumeCm3 * 1.15; // default density
+            unitPrice = weight * (defaultMat.pricing?.sellPerGram || 1);
+            // setupPrice = defaultMat.setupFee || 0;
         } else {
             // fallback
             const basePrice = 50; 

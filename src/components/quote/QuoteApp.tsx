@@ -139,9 +139,18 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                 if (mat) {
                     const qty = updates.quantity || current.quantity || 1;
                     const vol = current.volumeCm3 || 10;
-                    const pricePerCm3 = mat.pricePerGram || 1; // Backend uses pricePerGram as pricePerCm3 logic
-                    const basePrice = vol * pricePerCm3;
-                    const finishPrice = (updates.finish === 'sanded' || (current.finish === 'sanded' && !updates.finish)) ? 80 : 0;
+                    const density = 1.15; // default density if needed, or just use vol directly if sellPerGram actually means sellPerCm3
+                    const pricePerUnit = mat.pricing?.sellPerGram || 1; // Actually this is sellPerGram in schema, so weight = vol * density
+                    const weight = vol * density;
+                    const basePrice = weight * pricePerUnit;
+                    
+                    let finishPrice = 0;
+                    const finishId = updates.finish || current.finish || 'standard';
+                    if (finishId !== 'standard') {
+                        const postProc = mat.postProcessing?.find((p: any) => p.name === finishId);
+                        if (postProc) finishPrice = postProc.sellPrice;
+                    }
+                    
                     const total = (basePrice + finishPrice) * qty;
                     
                     updated.priceDetail = {
@@ -171,13 +180,24 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         router.push(`/checkout?addressId=${selectedAddressId || ""}&ids=${ids}`);
     };
 
-    const handleGetQuotation = () => {
+    const handleGetQuotation = async () => {
         if (quotes.length === 0) {
             alert(t.quote.dropOrSelect);
             return;
         }
-        const ids = quotes.map(q => q._id).join(',');
-        router.push(`/quote/request?ids=${ids}`);
+        const ids = quotes.map(q => q._id).filter(Boolean);
+        try {
+            const res = await fetch("/api/quote/request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
+            router.push(`/quote/request?ids=${data.ids.join(",")}`);
+        } catch (err: any) {
+            alert(err.message || "เกิดข้อผิดพลาด");
+        }
     };
 
     const handleSaveToCart = () => {
@@ -192,13 +212,10 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         return '#3b82f6';
     };
 
-    const technologies = [
-        { id: 'fdm', name: 'FDM', desc: 'แบบเส้น · โชว์ Support · .ini' },
-        { id: 'sla', name: 'SLA', desc: 'เรซิ่น · โชว์ Support' },
-        { id: 'mjf', name: 'MJF', desc: 'เรซิ่น · โชว์ Support' },
-        { id: 'sls', name: 'SLS', desc: 'เรซิ่น · ปิด Support' },
-        { id: 'slm', name: 'SLM', desc: 'เรซิ่น · โชว์ Support' },
-    ];
+    // Dynamic technologies derived from active materials in DB
+    const technologies = Array.from(
+        new Set(dbMaterials.map((m: any) => m.technology?.toLowerCase()).filter(Boolean))
+    ).map((tech: any) => ({ id: tech, name: tech.toUpperCase() }));
 
     const totalPrice = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
     const vat = totalPrice * 0.07;
@@ -432,11 +449,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                         <button key={tech.id} onClick={() => patchQuote(activeQuote._id, { technology: tech.id })} className={cn("py-2.5 text-[11px] font-black rounded-lg border transition-all uppercase tracking-tighter", (activeQuote.technology || 'sla') === tech.id ? "bg-[#2563eb] text-white border-[#2563eb] shadow-sm" : "bg-white text-slate-400 border-slate-100 hover:border-slate-300")}>{tech.id}</button>
                                     ))}
                                 </div>
-                                <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50 flex items-center justify-center gap-2">
-                                    <span className="text-[11px] font-black text-[#2563eb]">
-                                        {technologies.find(t => t.id === (activeQuote.technology || 'sla'))?.desc}
-                                    </span>
-                                </div>
+
                             </div>
 
                             {/* Material */}
@@ -450,15 +463,19 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                             <div onClick={() => patchQuote(activeQuote._id, { material: mat._id })} className={cn("w-full text-left p-5 rounded-[20px] border transition-all relative overflow-hidden group cursor-pointer", (activeQuote.material || '') === mat._id ? "bg-[#2563eb] text-white border-[#2563eb] shadow-md" : "bg-white border-slate-100 hover:border-slate-200 shadow-sm")}>
                                                 <div className="flex justify-between items-start mb-2.5">
                                                     <span className={cn("text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-[0.2em]", (activeQuote.material || '') === mat._id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400")}>{(activeQuote.technology || 'sla')}</span>
-                                                    <span className={cn("text-[13px] font-mono font-black", (activeQuote.material || '') === mat._id ? "text-white" : "text-slate-300")}>฿{(mat.pricePerGram || 1).toFixed(2)}/cm³</span>
+                                                    <span className={cn("text-[13px] font-mono font-black", (activeQuote.material || '') === mat._id ? "text-white" : "text-slate-300")}>฿{(mat.pricing?.sellPerGram || 1).toFixed(2)}/g</span>
                                                 </div>
                                                 <div className="text-[16px] font-black tracking-tight">{mat.name}</div>
                                                 <div className={cn("text-[12px] mt-1.5 opacity-80 truncate font-medium leading-relaxed", (activeQuote.material || '') === mat._id ? "text-white" : "text-slate-400")}>{mat.description || 'คุณภาพระดับอุตสาหกรรม'}</div>
                                                 
-                                                {(activeQuote.material || '') === mat._id && (
+                                                {(activeQuote.material || '') === mat._id && (mat.tdsLink || mat.sdsLink) && (
                                                     <div className="flex gap-2 mt-5">
-                                                        <button className="flex-1 py-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-[11px] font-black flex items-center justify-center gap-1.5 transition-colors uppercase tracking-widest"><Info className="w-3.5 h-3.5" /> TDS</button>
-                                                        <button className="flex-1 py-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-[11px] font-black flex items-center justify-center gap-1.5 transition-colors uppercase tracking-widest"><Info className="w-3.5 h-3.5" /> SDS</button>
+                                                        {mat.tdsLink && (
+                                                            <button onClick={(e) => { e.stopPropagation(); window.open(mat.tdsLink, '_blank'); }} className="flex-1 py-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-[11px] font-black flex items-center justify-center gap-1.5 transition-colors uppercase tracking-widest"><Info className="w-3.5 h-3.5" /> TDS</button>
+                                                        )}
+                                                        {mat.sdsLink && (
+                                                            <button onClick={(e) => { e.stopPropagation(); window.open(mat.sdsLink, '_blank'); }} className="flex-1 py-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 text-[11px] font-black flex items-center justify-center gap-1.5 transition-colors uppercase tracking-widest"><Info className="w-3.5 h-3.5" /> SDS</button>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -492,7 +509,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
                                     {t.quote.colorLabel}
                                 </div>
-                                <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-3">
                                     {(dbMaterials.find(m => m._id === (activeQuote.material || ''))?.colors || ['White', 'Black', 'Grey', 'Blue', 'Green', 'Yellow', 'Red']).map((c: string) => (
                                         <button key={c} onClick={() => patchQuote(activeQuote._id, { color: c })} className={cn("w-10 h-10 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center relative shadow-md", activeQuote.color === c ? "border-[#2563eb] ring-4 ring-blue-50" : "border-white outline outline-1 outline-slate-100")} style={{ backgroundColor: c.toLowerCase().includes('black') ? '#222' : c.toLowerCase().includes('grey') ? '#888' : c.toLowerCase().includes('blue') ? '#3b82f6' : c.toLowerCase().includes('green') ? '#22c55e' : c.toLowerCase().includes('yellow') ? '#fbbf24' : c.toLowerCase().includes('red') ? '#ef4444' : '#fff' }} title={c}>
                                             {activeQuote.color === c && <Check className={cn("w-5 h-5 drop-shadow-lg", c.toLowerCase().includes('white') ? "text-slate-900" : "text-white")} />}
@@ -501,25 +518,35 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 </div>
                             </div>
 
-                            {/* Finish */}
-                            <div>
-                                <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
-                                    {t.quote.finishLabel}
-                                </div>
-                                <div className="space-y-2">
-                                    {[
-                                        { id: 'standard', label: t.quote.finishStandard, price: t.quote.finishStandardPrice, active: activeQuote.finish !== 'sanded' },
-                                        { id: 'sanded', label: t.quote.finishSanded, price: '฿80', active: activeQuote.finish === 'sanded' },
-                                        { id: 'primed', label: t.quote.finishPrimed, price: '฿150', active: false },
-                                        { id: 'painted', label: t.quote.finishPainted, price: '฿250', active: false },
-                                    ].map(f => (
-                                        <button key={f.id} onClick={() => patchQuote(activeQuote._id, { finish: f.id })} className={cn("w-full flex justify-between items-center p-4 text-[13px] font-black rounded-xl border transition-all", f.active ? "bg-[#2563eb] text-white border-[#2563eb] shadow-lg shadow-blue-100" : "bg-white text-slate-700 border-slate-100 hover:border-slate-200")}>
-                                            <span>{f.label}</span>
-                                            <span className={cn("text-[11px] font-mono font-black uppercase tracking-tight", f.active ? "text-white/60" : "text-slate-300")}>{f.price}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Finish — dynamic from selected material's postProcessing */}
+                            {(() => {
+                                const activeMat = dbMaterials.find((m: any) => m._id === (activeQuote.material || ''));
+                                const postProcessingOpts: any[] = activeMat?.postProcessing || [];
+                                const standardOption = { id: 'standard', label: t.quote.finishStandard, price: t.quote.finishStandardPrice };
+                                const allOptions = [standardOption, ...postProcessingOpts.map((p: any) => ({
+                                    id: p.name,
+                                    label: p.name,
+                                    price: p.sellPrice > 0 ? `฿${p.sellPrice.toLocaleString()}` : t.quote.finishStandardPrice,
+                                }))];
+                                return (
+                                    <div>
+                                        <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
+                                            {t.quote.finishLabel}
+                                        </div>
+                                        <div className="space-y-2">
+                                            {allOptions.map(f => {
+                                                const isActive = (activeQuote.finish || 'standard') === f.id;
+                                                return (
+                                                    <button key={f.id} onClick={() => patchQuote(activeQuote._id, { finish: f.id })} className={cn("w-full flex justify-between items-center p-4 text-[13px] font-black rounded-xl border transition-all", isActive ? "bg-[#2563eb] text-white border-[#2563eb] shadow-lg shadow-blue-100" : "bg-white text-slate-700 border-slate-100 hover:border-slate-200")}>
+                                                        <span>{f.label}</span>
+                                                        <span className={cn("text-[11px] font-mono font-black uppercase tracking-tight", isActive ? "text-white/60" : "text-slate-300")}>{f.price}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Section 5: Quantity & Delivery */}
                             <div>

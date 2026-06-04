@@ -36,13 +36,17 @@ export default async function QuoteViewPage({
       redirect("/profile/quotes");
   }
 
-  const { billing, shipping: quoteShipping, priceDetail, userId } = quote;
+  // Fetch all items sharing the same quoteNumber
+  const rawItems = await Quote.find({ quoteNumber: quote.quoteNumber }).lean();
+  const allItems = JSON.parse(JSON.stringify(rawItems));
+
+  const { billing, shipping: quoteShipping, userId } = quote;
   const isCompany = billing?.type === "company";
   const shipping = quoteShipping || userId?.shippingAddress;
   
   const formatCur = (num: number) => num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
-  const subtotal = priceDetail?.totalPrice || 0;
+  const subtotal = allItems.reduce((sum: number, item: any) => sum + (item.priceDetail?.totalPrice || 0), 0);
   const vat = subtotal * 0.07;
   
   const deliveryConfig: Record<string, { label: string; days: string; price: number }> = {
@@ -176,22 +180,24 @@ export default async function QuoteViewPage({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        <tr className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-center align-top">1</td>
+                        {allItems.map((item: any, index: number) => (
+                        <tr key={item._id} className="group hover:bg-slate-50/50 transition-colors">
+                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-center align-top">{index + 1}</td>
                             <td className="py-3 px-2 align-top">
-                                <p className="text-xs font-bold text-slate-900 mb-1">{quote.originalName || quote.fileName}</p>
+                                <p className="text-xs font-bold text-slate-900 mb-1">{item.originalName || item.fileName}</p>
                                 <div className="text-[10px] text-slate-500 space-y-0.5 leading-snug">
-                                    <p>• {isEng ? 'Technology' : 'เทคโนโลยี'}: <span className="font-semibold">{quote.technology?.toUpperCase()}</span></p>
-                                    <p>• {isEng ? 'Material' : 'วัสดุ'}: <span className="font-semibold">{quote.material}</span> / {isEng ? 'Color' : 'สี'}: {quote.color}</p>
-                                    <p>• {isEng ? 'Finish' : 'ผิวงาน'}: <span className="font-semibold text-blue-600">{quote.finish === 'sanded' ? 'ขัดเรียบ (Sanded)' : quote.finish || 'มาตรฐาน'}</span></p>
-                                    <p>• {isEng ? 'Volume' : 'ปริมาตร'}: {quote.volumeCm3?.toFixed(2)} cm³</p>
-                                    <p>• {isEng ? 'Dimensions (X,Y,Z)' : 'ขนาด (X,Y,Z)'}: {quote.dimensions?.x?.toFixed(1)} x {quote.dimensions?.y?.toFixed(1)} x {quote.dimensions?.z?.toFixed(1)} mm</p>
+                                    <p>• {isEng ? 'Technology' : 'เทคโนโลยี'}: <span className="font-semibold">{item.technology?.toUpperCase()}</span></p>
+                                    <p>• {isEng ? 'Material' : 'วัสดุ'}: <span className="font-semibold">{item.material}</span> / {isEng ? 'Color' : 'สี'}: {item.color}</p>
+                                    <p>• {isEng ? 'Finish' : 'ผิวงาน'}: <span className="font-semibold text-blue-600">{item.finish === 'sanded' ? 'ขัดเรียบ (Sanded)' : item.finish || 'มาตรฐาน'}</span></p>
+                                    <p>• {isEng ? 'Volume' : 'ปริมาตร'}: {item.volumeCm3?.toFixed(2)} cm³</p>
+                                    <p>• {isEng ? 'Dimensions (X,Y,Z)' : 'ขนาด (X,Y,Z)'}: {item.dimensions?.x?.toFixed(1)} x {item.dimensions?.y?.toFixed(1)} x {item.dimensions?.z?.toFixed(1)} mm</p>
                                 </div>
                             </td>
-                            <td className="py-3 px-2 text-xs text-slate-800 font-bold text-center align-top">{quote.quantity}</td>
-                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-right align-top"> {priceDetail?.pricePerUnit ? `฿${formatCur(priceDetail.pricePerUnit)}` : (isEng ? 'Pending' : 'รอประเมิน')}</td>
-                            <td className="py-3 px-2 text-xs text-slate-800 font-black text-right align-top">{priceDetail?.totalPrice ? `฿${formatCur(priceDetail.totalPrice)}` : (isEng ? 'Pending' : 'รอประเมิน')}</td>
+                            <td className="py-3 px-2 text-xs text-slate-800 font-bold text-center align-top">{item.quantity}</td>
+                            <td className="py-3 px-2 text-xs text-slate-600 font-medium text-right align-top"> {item.priceDetail?.pricePerUnit ? `฿${formatCur(item.priceDetail.pricePerUnit)}` : (isEng ? 'Pending' : 'รอประเมิน')}</td>
+                            <td className="py-3 px-2 text-xs text-slate-800 font-black text-right align-top">{item.priceDetail?.totalPrice ? `฿${formatCur(item.priceDetail.totalPrice)}` : (isEng ? 'Pending' : 'รอประเมิน')}</td>
                         </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
