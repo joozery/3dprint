@@ -33,20 +33,6 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [couponError, setCouponError] = useState("");
     const [validatingCoupon, setValidatingCoupon] = useState(false);
 
-    useEffect(() => {
-        const originalError = console.error;
-        console.error = (...args) => {
-            if (args[0] === true) {
-                const stack = new Error().stack;
-                console.log("🚨 Caught 'true' being passed to console.error! Stack trace:", stack);
-                setDebugStack(stack || "No stack trace available");
-            }
-            originalError.apply(console, args);
-        };
-        return () => {
-            console.error = originalError;
-        };
-    }, []);
     const [rawFiles, setRawFiles] = useState<Record<string, File>>({});
     const [dbMaterials, setDbMaterials] = useState<any[]>([]);
     const [viewMode, setViewMode] = useState("shaded");
@@ -367,17 +353,6 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
     return (
         <div className="h-full w-full flex flex-col text-slate-900 font-sans overflow-hidden" style={{ fontFamily: 'Sarabun, sans-serif', backgroundColor: bgMain }}>
-            {debugStack && (
-                <div className="absolute top-0 left-0 z-[9999] bg-red-600 text-white p-6 rounded-xl w-full shadow-2xl">
-                    <h3 className="font-bold text-xl mb-2">Caught console.error(true)</h3>
-                    <p>Please copy this stack trace and send it to the AI:</p>
-                    <pre className="mt-4 p-4 bg-black text-green-400 overflow-auto text-xs rounded-lg">
-                        {debugStack}
-                    </pre>
-                    <button onClick={() => setDebugStack(null)} className="mt-4 bg-white text-red-600 px-4 py-2 rounded font-bold">Dismiss</button>
-                </div>
-            )}
-
             {/* 3. MAIN GRID */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-[260px_1fr_320px_280px] xl:grid-cols-[280px_1fr_340px_300px] overflow-hidden">
                 
