@@ -2,12 +2,14 @@
 
 import { useTransition, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, RefreshCw, ExternalLink, FileText, SlidersHorizontal, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, FileText, SlidersHorizontal, Loader2, Download, X, Package } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuoteFile {
   _id: string;
   originalName: string;
+  fileName?: string;
+  fileUrl?: string;
   volumeCm3: number;
   priceDetail: { pricePerUnit: number; totalPrice: number };
 }
@@ -61,6 +63,7 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [downloadPopup, setDownloadPopup] = useState<{ quoteNumber: string; files: QuoteFile[] } | null>(null);
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -94,6 +97,66 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
   };
 
   return (
+    <>
+    {/* Download Popup Modal */}
+    {downloadPopup && (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setDownloadPopup(null)}>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <Package size={18} className="text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">ดาวน์โหลดไฟล์ 3D</p>
+                <p className="text-sm font-black text-slate-900">{downloadPopup.quoteNumber}</p>
+              </div>
+            </div>
+            <button onClick={() => setDownloadPopup(null)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+          {/* File list */}
+          <div className="p-4 space-y-2 max-h-[420px] overflow-y-auto">
+            {downloadPopup.files.map((f, i) => (
+              <div key={f._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group">
+                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-blue-500 group-hover:border-blue-200 transition-colors">
+                  <FileText size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-800 truncate">{f.originalName}</p>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    {f.volumeCm3 ? `${f.volumeCm3.toFixed(2)} cm³` : "—"}
+                    {f.priceDetail?.totalPrice ? ` · ฿${f.priceDetail.totalPrice.toLocaleString("th-TH", { minimumFractionDigits: 2 })}` : ""}
+                  </p>
+                </div>
+                {f.fileUrl ? (
+                  <a
+                    href={f.fileUrl}
+                    download={f.originalName}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black rounded-lg transition-all shadow-sm shadow-blue-200"
+                  >
+                    <Download size={12} />
+                    ดาวน์โหลด
+                  </a>
+                ) : (
+                  <span className="shrink-0 px-3 py-1.5 bg-slate-100 text-slate-400 text-[11px] font-bold rounded-lg">ไม่มีไฟล์</span>
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Footer */}
+          <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+            <p className="text-[11px] text-slate-400">{downloadPopup.files.length} ไฟล์ในชุดนี้</p>
+            <button onClick={() => setDownloadPopup(null)} className="px-4 py-1.5 text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors">ปิด</button>
+          </div>
+        </div>
+      </div>
+    )}
+
     <div className="space-y-4">
       {/* Filter bar */}
       <div className="bg-white border border-slate-100 rounded-xl px-5 py-3.5 flex items-center gap-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
@@ -163,8 +226,8 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                         {/* File list for batch */}
                         {q.files && q.files.length > 0 ? (
                           <div className="mt-1 space-y-0.5">
-                            {q.files.slice(0, 3).map((f, i) => (
-                              <p key={i} className="text-slate-700 text-xs font-medium truncate max-w-[220px] group-hover:text-blue-600 transition-colors">
+                            {q.files.slice(0, 3).map((f) => (
+                              <p key={f._id} className="text-slate-700 text-xs font-medium truncate max-w-[220px] group-hover:text-blue-600 transition-colors">
                                 {f.originalName}
                               </p>
                             ))}
@@ -257,23 +320,21 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                       {/* Actions */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                            {q.fileUrl && (
-                              <a
-                                href={q.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="โหลดไฟล์ 3D"
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 hover:bg-blue-600 text-slate-500 hover:text-white transition-all shadow-sm"
+                            {q.files && q.files.length > 0 && (
+                              <button
+                                onClick={() => setDownloadPopup({ quoteNumber: q.quoteNumber || q._id, files: q.files! })}
+                                title="ดาวน์โหลดไฟล์ 3D"
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 hover:bg-emerald-600 text-slate-500 hover:text-white transition-all shadow-sm"
                               >
-                                <ExternalLink size={13} />
-                              </a>
+                                <Download size={13} />
+                              </button>
                             )}
                             <a
                               href={`/admin/quotes/${q._id}`}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white font-bold text-[11px] transition-all shadow-sm"
                             >
                               <FileText size={12} strokeWidth={2.5} />
-                              จัดการราคา
+                              จัดการ
                             </a>
                         </div>
                       </td>
@@ -312,5 +373,6 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -27,7 +27,7 @@ async function getQuotes(page: number, status: string, userId?: string) {
         technology: { $first: "$technology" },
         userId: { $first: "$userId" },
         createdAt: { $max: "$createdAt" },
-        files: { $push: { _id: "$_id", originalName: "$originalName", volumeCm3: "$volumeCm3", priceDetail: "$priceDetail" } },
+        files: { $push: { _id: "$_id", originalName: "$originalName", fileUrl: "$fileUrl", fileName: "$fileName", volumeCm3: "$volumeCm3", priceDetail: "$priceDetail" } },
       },
     },
     { $sort: { createdAt: -1 } },
