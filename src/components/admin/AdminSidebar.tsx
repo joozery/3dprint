@@ -4,12 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Users, 
-  Settings, 
-  LogOut, 
-  Database, 
+  LayoutDashboard,
+  ShoppingBag,
+  Users,
+  Settings,
+  LogOut,
+  Database,
   FileText,
   ChevronRight,
   ShieldCheck,
@@ -20,6 +20,7 @@ import {
   Box,
   Image as ImageIcon,
   Ticket,
+  Activity,
   X
 } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -36,6 +37,7 @@ const menuItems = [
   { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },
+  { label: "Monitor คิว Slicer", icon: Activity, href: "/admin/slicer-queue", badge: null },
   { label: "ประวัติระบบ", icon: ClipboardList, href: "/admin/logs", badge: null },
   { label: "ตั้งค่าระบบ", icon: Settings, href: "/admin/settings", badge: null },
 ];

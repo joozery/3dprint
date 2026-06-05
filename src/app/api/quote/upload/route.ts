@@ -6,6 +6,7 @@ import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
 import { analyzeFile } from "@/lib/slicer";
 import { calculatePrice, parsePrintTimeToMinutes } from "@/lib/pricing";
+import { createJob, finishJob } from "@/lib/slicerQueue";
 import { r2Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from "@/lib/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getServerSession } from "next-auth/next";
@@ -50,8 +51,17 @@ export async function POST(req: NextRequest) {
         await fs.writeFile(filePath, buffer);
 
         console.log("3. Analyzing file...");
-        // Analyze the file
-        const analysis = await analyzeFile(filePath);
+        const jobId = fileName.replace(/\.[^.]+$/, ""); // use uuid part as jobId
+        const userIdForJob = (session?.user as any)?.id || session?.user?.email || "unknown";
+        createJob(jobId, fileName, file.name, userIdForJob);
+        let analysis;
+        try {
+            analysis = await analyzeFile(filePath, 1.15, jobId);
+            finishJob(jobId, true);
+        } catch (slicerErr: any) {
+            finishJob(jobId, false, slicerErr.message);
+            throw slicerErr;
+        }
 
         console.log("4. Uploading to Cloudflare R2...");
         let r2FileUrl = null;
@@ -132,8 +142,7 @@ export async function POST(req: NextRequest) {
             finishPrice: 0,
         });
 
-        const weightGrams  = priceBreakdown.weightGrams;
-        const totalPrice   = priceBreakdown.totalPrice;
+        const weightGrams = priceBreakdown.weightGrams;
 
         // ดึง userId อย่างรัดกุม
         let userId = (session?.user as any)?.id;

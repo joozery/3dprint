@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs";
+import { updateJob } from "@/lib/slicerQueue";
 
 const execPromise = promisify(exec);
 
@@ -10,19 +11,16 @@ const PRUSA_SLICER_PATH =
     "/Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer";
 
 export interface SlicerResult {
-    volumeCm3: number;       // ปริมาตรจริงของชิ้นงาน (cm³)
-    weightGrams: number;     // น้ำหนักวัสดุ (g) — คำนวณจาก volume × density
-    printTime: string;       // เวลาพิมพ์ เช่น "1h 23m"
-    dimensions: { x: number; y: number; z: number }; // bounding box (mm)
-    supportVolumeCm3: number; // ปริมาตร support (cm³)
-    filamentCm3: number;     // ปริมาตร filament จริงที่ใช้รวม support (cm³)
-    needsSupport: boolean;   // ชิ้นงานต้องการ support หรือไม่
-    isManifold: boolean;     // mesh ปิดสนิท (ไม่มีรู)
+    volumeCm3: number;
+    weightGrams: number;
+    printTime: string;
+    dimensions: { x: number; y: number; z: number };
+    supportVolumeCm3: number;
+    filamentCm3: number;
+    needsSupport: boolean;
+    isManifold: boolean;
 }
 
-// ──────────────────────────────────────────────────────────────
-// ขั้นตอน 1: --info → ปริมาตรจริงของ mesh + dimensions
-// ──────────────────────────────────────────────────────────────
 async function runInfo(filePath: string): Promise<{
     volumeMm3: number;
     dimensions: { x: number; y: number; z: number };
@@ -49,9 +47,6 @@ async function runInfo(filePath: string): Promise<{
     };
 }
 
-// ──────────────────────────────────────────────────────────────
-// ขั้นตอน 2: --export-gcode → เวลาพิมพ์ + filament usage (รวม support)
-// ──────────────────────────────────────────────────────────────
 async function runSlice(filePath: string, withSupport: boolean): Promise<{
     printTime: string;
     filamentCm3: number;
@@ -77,30 +72,32 @@ async function runSlice(filePath: string, withSupport: boolean): Promise<{
     };
 }
 
-// ──────────────────────────────────────────────────────────────
-// ฟังก์ชันหลัก
-// ──────────────────────────────────────────────────────────────
 export async function analyzeFile(
     filePath: string,
-    densityGPerCm3 = 1.15
+    densityGPerCm3 = 1.15,
+    jobId?: string
 ): Promise<SlicerResult> {
     console.log(`[SLICER] Analyzing: ${filePath}`);
 
     if (!fs.existsSync(PRUSA_SLICER_PATH)) {
         console.warn(`[SLICER] ❌ PrusaSlicer not found at: ${PRUSA_SLICER_PATH}`);
         console.warn(`[SLICER] Set PRUSA_SLICER_PATH in .env.local to enable real analysis`);
+        if (jobId) updateJob(jobId, { status: "processing", step: "Mock (PrusaSlicer ไม่พบ)" });
         return mockAnalyze(densityGPerCm3);
     }
 
     try {
-        // Step 1: ดึง volume จริงและ dimensions
+        // Step 1: ดึง volume และ dimensions
+        if (jobId) updateJob(jobId, { status: "processing", step: "วิเคราะห์ mesh (--info)" });
         const info = await runInfo(filePath);
-        const volumeCm3 = info.volumeMm3 / 1000; // mm³ → cm³
+        const volumeCm3 = info.volumeMm3 / 1000;
 
-        // Step 2: Slice ครั้งแรก (ไม่มี support) → เวลาพิมพ์
+        // Step 2: Slice ไม่มี support → เวลาพิมพ์
+        if (jobId) updateJob(jobId, { status: "processing", step: "Slice ไม่มี support" });
         const sliceNoSupport = await runSlice(filePath, false);
 
-        // Step 3: Slice ครั้งสอง (มี support) → filament รวม support
+        // Step 3: Slice มี support → filament รวม support
+        if (jobId) updateJob(jobId, { status: "processing", step: "Slice พร้อม support" });
         let sliceWithSupport = sliceNoSupport;
         let needsSupport = false;
         let supportVolumeCm3 = 0;
@@ -109,19 +106,18 @@ export async function analyzeFile(
             sliceWithSupport = await runSlice(filePath, true);
             const diff = sliceWithSupport.filamentCm3 - sliceNoSupport.filamentCm3;
             supportVolumeCm3 = Math.max(0, diff);
-            needsSupport = supportVolumeCm3 > 0.01; // ถ้า support > 0.01 cm³ ถือว่าต้องการ
+            needsSupport = supportVolumeCm3 > 0.01;
         } catch {
             // ถ้า slice with support ล้มเหลว ใช้ค่า no-support
         }
 
-        // น้ำหนักคำนวณจากปริมาตร mesh จริง × density ของวัสดุที่เลือก
         const weightGrams = volumeCm3 * densityGPerCm3;
 
         const result: SlicerResult = {
-            volumeCm3:       parseFloat(volumeCm3.toFixed(4)),
-            weightGrams:     parseFloat(weightGrams.toFixed(2)),
-            printTime:       sliceNoSupport.printTime,
-            dimensions:      {
+            volumeCm3:        parseFloat(volumeCm3.toFixed(4)),
+            weightGrams:      parseFloat(weightGrams.toFixed(2)),
+            printTime:        sliceNoSupport.printTime,
+            dimensions: {
                 x: parseFloat(info.dimensions.x.toFixed(2)),
                 y: parseFloat(info.dimensions.y.toFixed(2)),
                 z: parseFloat(info.dimensions.z.toFixed(2)),
@@ -141,16 +137,13 @@ export async function analyzeFile(
     }
 }
 
-// ──────────────────────────────────────────────────────────────
-// Fallback เมื่อ PrusaSlicer ไม่พร้อมใช้งาน
-// ──────────────────────────────────────────────────────────────
 function mockAnalyze(densityGPerCm3 = 1.15): SlicerResult {
     const volumeCm3 = parseFloat((Math.random() * 50 + 5).toFixed(4));
     return {
         volumeCm3,
         weightGrams:      parseFloat((volumeCm3 * densityGPerCm3).toFixed(2)),
         printTime:        "2h 45m",
-        dimensions:       {
+        dimensions: {
             x: Math.round(Math.random() * 100 + 20),
             y: Math.round(Math.random() * 100 + 20),
             z: Math.round(Math.random() * 50 + 10),
