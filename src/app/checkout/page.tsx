@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
     ArrowLeft, MapPin, Truck, CheckCircle2, ChevronRight,
-    Package, Home, Building2, Phone, Globe, User, Info, Warehouse
+    Package, Building2, Phone, User, Info, Warehouse
 } from "lucide-react";
 import Link from "next/link";
+import ThaiAddressPicker from "@/components/ui/ThaiAddressPicker";
 
 import { useEffect } from "react";
 
@@ -56,19 +57,28 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
     const [type, setType] = useState<"individual" | "company">("individual");
     const [form, setForm] = useState({
         firstName: "", lastName: "", company: "",
-        country: "Thailand", state: "", city: "", subDistrict: "",
-        address: "", building: "", postal: "",
+        address: "", building: "",
         phone: "", countryCode: "+66"
+    });
+    const [thaiAddr, setThaiAddr] = useState({
+        province: "", amphure: "", district: "", zipcode: ""
     });
 
     const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
     const handleSave = () => {
-        if (!form.firstName || !form.lastName || !form.address || !form.postal || !form.phone) {
-            alert("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
+        if (!form.firstName || !form.lastName || !form.address || !thaiAddr.zipcode || !form.phone || !thaiAddr.province) {
+            alert("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (รวมรหัสไปรษณีย์)");
             return;
         }
-        onNext({ ...form, type });
+        onNext({
+            ...form,
+            type,
+            state:       thaiAddr.province,
+            city:        thaiAddr.amphure,
+            subDistrict: thaiAddr.district,
+            postal:      thaiAddr.zipcode,
+        });
     };
 
     return (
@@ -143,86 +153,46 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">จังหวัด <span className="text-red-500">*</span></label>
-                    <input
-                        placeholder="จังหวัด"
-                        value={form.state}
-                        onChange={e => set("state", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
-                    />
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">เขต/อำเภอ <span className="text-red-500">*</span></label>
-                    <input
-                        placeholder="เขต / อำเภอ"
-                        value={form.city}
-                        onChange={e => set("city", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
-                    />
-                </div>
+            <div className="mb-4">
+                <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">ที่อยู่จัดส่ง <span className="text-red-500">*</span></label>
+                <input
+                    placeholder="เลขที่บ้าน / ถนน / ซอย"
+                    value={form.address}
+                    onChange={e => set("address", e.target.value)}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
+                />
             </div>
             <div className="mb-4">
-                <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">แขวง/ตำบล</label>
+                <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">อาคาร / หมู่บ้าน</label>
                 <input
-                    placeholder="แขวง / ตำบล"
-                    value={form.subDistrict}
-                    onChange={e => set("subDistrict", e.target.value)}
+                    placeholder="ชื่ออาคาร / หมู่บ้าน (ถ้ามี)"
+                    value={form.building}
+                    onChange={e => set("building", e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                 />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">ที่อยู่จัดส่ง <span className="text-red-500">*</span></label>
-                    <input
-                        placeholder="เลขที่บ้าน / ถนน / ซอย"
-                        value={form.address}
-                        onChange={e => set("address", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
-                    />
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">อาคาร / หมู่บ้าน</label>
-                    <input
-                        placeholder="ชื่ออาคาร / หมู่บ้าน (ถ้ามี)"
-                        value={form.building}
-                        onChange={e => set("building", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
-                    />
-                </div>
-            </div>
+            {/* Thai Address Picker (zipcode → auto-fill) */}
+            <ThaiAddressPicker value={thaiAddr} onChange={setThaiAddr} className="mb-4" />
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">รหัสไปรษณีย์ <span className="text-red-500">*</span></label>
+            <div className="mb-6">
+                <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
+                <div className="flex gap-2">
+                    <select
+                        value={form.countryCode}
+                        onChange={e => set("countryCode", e.target.value)}
+                        className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-slate-900 w-20 shrink-0 bg-white"
+                    >
+                        <option>+66</option>
+                        <option>+1</option>
+                        <option>+81</option>
+                    </select>
                     <input
-                        placeholder="รหัสไปรษณีย์"
-                        value={form.postal}
-                        onChange={e => set("postal", e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
+                        placeholder="0xx-xxx-xxxx"
+                        value={form.phone}
+                        onChange={e => set("phone", e.target.value)}
+                        className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
-                </div>
-                <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
-                    <div className="flex gap-2">
-                        <select
-                            value={form.countryCode}
-                            onChange={e => set("countryCode", e.target.value)}
-                            className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-slate-900 w-20 shrink-0 bg-white"
-                        >
-                            <option>+66</option>
-                            <option>+1</option>
-                            <option>+81</option>
-                        </select>
-                        <input
-                            placeholder="0xx-xxx-xxxx"
-                            value={form.phone}
-                            onChange={e => set("phone", e.target.value)}
-                            className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
-                        />
-                    </div>
                 </div>
             </div>
 
@@ -374,7 +344,6 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
 }
 
 function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shipping: any; onBack: () => void, quotes: any[] }) {
-    const [placed, setPlaced] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleCheckout = async () => {
@@ -461,23 +430,6 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
             setLoading(false);
         }
     };
-
-    if (placed) {
-        return (
-            <div className="bg-white rounded-2xl border shadow-sm p-12 text-center animate-in fade-in zoom-in-95 duration-300">
-                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-emerald-100">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-                </div>
-                <h2 className="text-xl font-black text-slate-900 mb-2">สร้างรายการสั่งซื้อสำเร็จ</h2>
-                <p className="text-sm text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">ข้อมูลของคุณได้รับการบันทึกแล้ว กรุณาไปที่หน้า Dashboard เพื่อเข้าชมและตรวจสอบสถานะการชำระเงินของคุณ</p>
-                <Link href="/profile">
-                    <Button className="rounded-full px-8 bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-lg shadow-slate-200">
-                        ไปที่แดชบอร์ด
-                    </Button>
-                </Link>
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-4">
