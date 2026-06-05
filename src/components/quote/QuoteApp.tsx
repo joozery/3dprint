@@ -577,7 +577,6 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                             <div onClick={() => patchQuote(activeQuote._id, { material: mat._id })} className={cn("w-full text-left p-5 rounded-[20px] border transition-all relative overflow-hidden group cursor-pointer", (activeQuote.material || '') === mat._id ? "bg-[#2563eb] text-white border-[#2563eb] shadow-md" : "bg-white border-slate-100 hover:border-slate-200 shadow-sm")}>
                                                 <div className="flex justify-between items-start mb-2.5">
                                                     <span className={cn("text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-[0.2em]", (activeQuote.material || '') === mat._id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400")}>{(activeQuote.technology || 'sla')}</span>
-                                                    <span className={cn("text-[13px] font-mono font-black", (activeQuote.material || '') === mat._id ? "text-white" : "text-slate-300")}>฿{(mat.pricing?.sellPerGram || 1).toFixed(2)}/g</span>
                                                 </div>
                                                 <div className="text-[16px] font-black tracking-tight">{mat.name}</div>
                                                 <div className={cn("text-[12px] mt-1.5 opacity-80 truncate font-medium leading-relaxed", (activeQuote.material || '') === mat._id ? "text-white" : "text-slate-400")}>{mat.description || 'คุณภาพระดับอุตสาหกรรม'}</div>
@@ -594,25 +593,6 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                                 )}
                                             </div>
                                             
-                                            {/* Property Bars */}
-                                            {(activeQuote.material || '') === mat._id && (
-                                                <div className="p-5 bg-white border border-slate-100 rounded-[20px] space-y-3.5 shadow-xl shadow-slate-100/50">
-                                                    {[
-                                                        { label: 'ความแข็ง', level: 4 },
-                                                        { label: 'ผิวงาน', level: 5 },
-                                                        { label: 'ทนร้อน', level: 3 },
-                                                    ].map(prop => (
-                                                        <div key={prop.label} className="flex items-center justify-between gap-6">
-                                                            <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest">{prop.label}</span>
-                                                            <div className="flex gap-1.5">
-                                                                {[1,2,3,4,5].map(v => (
-                                                                    <div key={v} className={cn("w-5 h-2 rounded-sm transition-all", v <= prop.level ? "bg-slate-900" : "bg-slate-100")}></div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
                                     ))}
                                 </div>
