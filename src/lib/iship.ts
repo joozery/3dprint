@@ -108,48 +108,51 @@ export async function checkAllRates(params: CheckPriceParams): Promise<ShippingR
 }
 
 export interface CreateOrderParams {
-    courier_code:      string;
-    receiver_name:     string;
-    receiver_phone:    string;
-    receiver_address:  string;
-    receiver_district: string;
-    receiver_amphure:  string;
-    receiver_province: string;
-    receiver_zipcode:  string;
-    weightKg:          number;
-    width:             number;
-    length:            number;
-    height:            number;
-    item_name:         string;
-    cod_amount?:       number;
-    remark?:           string;
+    courier_code:  string;
+    dst_name:      string;
+    dst_phone:     string;
+    dst_address:   string;
+    dst_district:  string;
+    dst_amphure:   string;
+    dst_province:  string;
+    dst_zipcode:   string;
+    weightKg:      number;
+    width:         number;
+    length:        number;
+    height:        number;
+    item_name:     string;
+    cod_amount?:   number;
+    category_id?:  number;
+    remark?:       string;
 }
 
 export async function createIShipOrder(params: CreateOrderParams) {
     return ishipPost("create_order", {
-        courier_code:      params.courier_code,
-        sender_name:       ISHIP_SRC.name,
-        sender_phone:      ISHIP_SRC.phone,
-        sender_address:    ISHIP_SRC.address,
-        sender_district:   ISHIP_SRC.district,
-        sender_amphure:    ISHIP_SRC.amphure,
-        sender_province:   ISHIP_SRC.province,
-        sender_zipcode:    ISHIP_SRC.zipcode,
-        receiver_name:     params.receiver_name,
-        receiver_phone:    params.receiver_phone,
-        receiver_address:  params.receiver_address,
-        receiver_district: params.receiver_district,
-        receiver_amphure:  params.receiver_amphure,
-        receiver_province: params.receiver_province,
-        receiver_zipcode:  params.receiver_zipcode,
-        weight:    String(params.weightKg),
-        width:     String(params.width),
-        length:    String(params.length),
-        height:    String(params.height),
-        cod_amount:    params.cod_amount ?? 0,
-        item_name:     params.item_name,
-        item_quantity: 1,
-        remark:        params.remark || "",
+        platform_name:  "3DPrintPro",
+        courier_code:   params.courier_code,
+        // ผู้ส่ง (src = source = ร้านเรา)
+        src_name:       ISHIP_SRC.name,
+        src_phone:      ISHIP_SRC.phone,
+        src_address:    ISHIP_SRC.address,
+        src_district:   ISHIP_SRC.district,
+        src_amphure:    ISHIP_SRC.amphure,
+        src_province:   ISHIP_SRC.province,
+        src_zipcode:    ISHIP_SRC.zipcode,
+        // ผู้รับ (dst = destination = ลูกค้า)
+        dst_name:       params.dst_name,
+        dst_phone:      params.dst_phone,
+        dst_address:    params.dst_address,
+        dst_district:   params.dst_district,
+        dst_amphure:    params.dst_amphure,
+        dst_province:   params.dst_province,
+        dst_zipcode:    params.dst_zipcode,
+        weight:         params.weightKg,
+        width:          params.width,
+        length:         params.length,
+        height:         params.height,
+        cod_amount:     params.cod_amount ?? 0,
+        category_id:    params.category_id ?? 3,
+        remark:         params.remark || "",
     });
 }
 
