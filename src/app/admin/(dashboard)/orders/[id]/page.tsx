@@ -8,6 +8,7 @@ import AdminSlipUploader from "@/components/admin/orders/AdminSlipUploader";
 import AdminOrderStatusSelect from "@/components/admin/orders/AdminOrderStatusSelect";
 import SlipViewerButton from "@/components/admin/orders/SlipViewerButton";
 import IShipPanel from "@/components/admin/orders/IShipPanel";
+import FedExPanel from "@/components/admin/orders/FedExPanel";
 
 // For typing purposes if needed
 const formatCur = (v: number) => Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -153,7 +154,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 </div>
             </div>
 
-            {/* iShip Shipping Panel */}
+            {/* Shipping Panels */}
             <IShipPanel
                 orderId={order._id.toString()}
                 shippingAddress={{
@@ -170,6 +171,24 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     trackingNumber:   (order as any).trackingNumber   || "",
                     ishipOrderId:     (order as any).ishipOrderId     || "",
                     ishipCourierCode: (order as any).ishipCourierCode || "",
+                }}
+            />
+
+            <FedExPanel
+                orderId={order._id.toString()}
+                shippingAddress={{
+                    zipCode:  order.shippingAddress?.zipCode  || "",
+                    province: order.shippingAddress?.province || "",
+                }}
+                quotesData={(quotes as any[]).map(q => ({
+                    weightGrams: q.weightGrams || 0,
+                    dimensions:  q.dimensions  || { x: 10, y: 10, z: 5 },
+                }))}
+                existing={{
+                    trackingNumber:   (order as any).shippingProvider === "fedex" ? (order as any).trackingNumber : "",
+                    shippingProvider: (order as any).shippingProvider || "",
+                    fedexServiceType: (order as any).fedexServiceType || "",
+                    fedexLabelUrl:    (order as any).fedexLabelUrl    || "",
                 }}
             />
 

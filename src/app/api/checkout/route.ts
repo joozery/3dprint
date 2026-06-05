@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { quoteIds, shippingAddress, paymentMethod, customerNotes, shippingFee: clientShippingFee, shippingCourierCode } = body;
+        const { quoteIds, shippingAddress, paymentMethod, customerNotes, shippingFee: clientShippingFee, shippingCourierCode, shippingProvider, shippingServiceType } = body;
 
         if (!quoteIds || quoteIds.length === 0) {
             return NextResponse.json({ error: "ไม่พบรายการชิ้นงานในตะกร้า" }, { status: 400 });
@@ -93,7 +93,9 @@ export async function POST(req: NextRequest) {
             },
             status: "pending_payment",
             customerNotes,
-            ishipCourierCode: shippingCourierCode || null,
+            ishipCourierCode: shippingProvider !== "fedex" ? (shippingCourierCode || null) : null,
+            shippingProvider:   shippingProvider   || "iship",
+            fedexServiceType:   shippingServiceType || null,
         });
 
         await Quote.updateMany(

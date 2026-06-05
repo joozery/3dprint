@@ -233,25 +233,48 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
         const maxW = Math.max(...quotes.map((q: any) => q.dimensions?.x || 10));
         const maxL = Math.max(...quotes.map((q: any) => q.dimensions?.y || 10));
         const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5), 0);
+        const weightKg = Math.max(totalWeightG / 1000, 0.1);
+        const dims = {
+            width:  Math.ceil(maxW),
+            length: Math.ceil(maxL),
+            height: Math.ceil(maxH),
+        };
 
-        fetch("/api/shipping/rates", {
+        const ishipReq = fetch("/api/shipping/rates", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 dst_zipcode:  address.postal,
-                dst_province: address.state        || "",
-                dst_amphure:  address.city         || "",
-                dst_district: address.subDistrict  || "",
-                weightKg:  Math.max(totalWeightG / 1000, 0.1),
-                width:     Math.ceil(maxW),
-                length:    Math.ceil(maxL),
-                height:    Math.ceil(maxH),
+                dst_province: address.state       || "",
+                dst_amphure:  address.city        || "",
+                dst_district: address.subDistrict || "",
+                weightKg, ...dims,
             }),
-        })
-            .then(r => r.json())
-            .then(d => { if (d.rates) setRates(d.rates); })
-            .catch(() => {})
-            .finally(() => setLoading(false));
+        }).then(r => r.json()).catch(() => ({ rates: [] }));
+
+        const fedexReq = fetch("/api/fedex/rates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                dst_zipcode:  address.postal,
+                dst_province: address.state || "",
+                weightKg, ...dims,
+            }),
+        }).then(r => r.json()).catch(() => ({ rates: [] }));
+
+        Promise.all([ishipReq, fedexReq]).then(([iship, fedex]) => {
+            const ishipRates = (iship.rates || []).map((r: any) => ({ ...r, provider: "iship" }));
+            const fedexRates = (fedex.rates || []).map((r: any) => ({
+                courier_code:  `fedex:${r.serviceType}`,
+                courier_name:  `FedEx ${r.serviceName}`,
+                logo:          "/shipping/fedex.png",
+                total_price:   r.totalPrice,
+                estimate_days: r.estimatedDays,
+                provider:      "fedex",
+                service_type:  r.serviceType,
+            }));
+            setRates([...ishipRates, ...fedexRates]);
+        }).finally(() => setLoading(false));
     }, [address, quotes]);
 
     const allMethods = [selfPickup, ...rates];
@@ -288,7 +311,12 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                                 <div className="w-12 h-10 flex items-center justify-center shrink-0">
                                     {m.logo ? (
                                         <div className="w-12 h-10 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1">
-                                            <img src={m.logo} alt={m.courier_name} className="max-w-full max-h-full object-contain" />
+                                            <img
+                                                src={m.logo}
+                                                alt={m.courier_name}
+                                                className="max-w-full max-h-full object-contain"
+                                                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                            />
                                         </div>
                                     ) : (
                                         <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
@@ -380,6 +408,8 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
                     },
                     shippingFee:         shipping?.price ?? 0,
                     shippingCourierCode: shipping?.courier_code || "",
+                    shippingProvider:    shipping?.provider || "iship",
+                    shippingServiceType: shipping?.service_type || "",
                     paymentMethod: "paysolutions",
                     customerNotes: ""
                 })
@@ -456,9 +486,7 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">ช่องทางการจัดส่ง</p>
                     <div className="flex items-center justify-between">
                         <p className="text-sm font-bold text-slate-900">
-                            {shipping.method === "kerry" ? "Kerry Express" : 
-                             shipping.method === "flash" ? "Flash Express" : 
-                             shipping.method === "ems" ? "ไปรษณีย์ไทย (EMS)" : "รับด้วยตนเอง"}
+                            {shipping.courier_name || shipping.method}
                         </p>
                         <p className="text-sm font-bold text-slate-900">{shipping.price === 0 ? <span className="text-emerald-600">ฟรี</span> : `฿${shipping.price}`}</p>
                     </div>

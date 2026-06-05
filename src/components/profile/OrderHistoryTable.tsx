@@ -10,16 +10,18 @@ interface OrderHistoryTableProps {
 
 const TRACKING_URL: Record<string, (n: string) => string> = {
     FlashExpressA: (n) => `https://www.flashexpress.co.th/tracking/?se=${n}`,
-    Kerry:         (n) => `https://th.kerryexpress.com/en/track/?track=${n}`,
-    ThaiPost:      (n) => `https://track.thailandpost.co.th/?trackNumber=${n}`,
-    DHL:           (n) => `https://www.dhl.com/th-th/home/tracking.html?tracking-id=${n}`,
+    KEX:           (n) => `https://th.kerryexpress.com/en/track/?track=${n}`,
+    JT:            (n) => `https://www.jtexpress.co.th/track?bill_codes=${n}`,
+    Best:          (n) => `https://www.best-inc.co.th/track/${n}`,
+    fedex:         (n) => `https://www.fedex.com/fedextrack/?trknbr=${n}`,
 };
 
 const COURIER_NAME: Record<string, string> = {
     FlashExpressA: "Flash Express",
-    Kerry:         "Kerry Express",
-    ThaiPost:      "ไปรษณีย์ไทย (EMS)",
-    DHL:           "DHL",
+    KEX:           "Kerry Express",
+    JT:            "J&T Express",
+    Best:          "Best Express",
+    fedex:         "FedEx",
 };
 
 const STATUS_STEPS = [
@@ -77,8 +79,11 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                     const isExpanded  = expandedId === order._id;
                     const badge       = getStatusBadge(order.status);
                     const quotes      = order.quotes as any[] || [];
-                    const trackingUrl = order.trackingNumber && order.ishipCourierCode
-                        ? TRACKING_URL[order.ishipCourierCode]?.(order.trackingNumber)
+                    const courierKey  = order.shippingProvider === "fedex"
+                        ? "fedex"
+                        : order.ishipCourierCode || "";
+                    const trackingUrl = order.trackingNumber && courierKey
+                        ? TRACKING_URL[courierKey]?.(order.trackingNumber)
                         : null;
 
                     return (
@@ -101,9 +106,9 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                                             <span className="text-[10px] font-bold text-slate-500 font-mono">
                                                 {order.trackingNumber}
                                             </span>
-                                            {order.ishipCourierCode && (
+                                            {courierKey && (
                                                 <span className="text-[9px] text-slate-400">
-                                                    · {COURIER_NAME[order.ishipCourierCode] || order.ishipCourierCode}
+                                                    · {COURIER_NAME[courierKey] || courierKey}
                                                 </span>
                                             )}
                                             {trackingUrl && (
@@ -194,7 +199,7 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                                         <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
                                             <Truck size={14} className="text-emerald-600 shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">จัดส่งโดย {COURIER_NAME[order.ishipCourierCode] || order.ishipCourierCode}</p>
+                                                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">จัดส่งโดย {COURIER_NAME[courierKey] || courierKey}</p>
                                                 <p className="text-sm font-black text-slate-800 font-mono select-all">{order.trackingNumber}</p>
                                             </div>
                                             {trackingUrl && (

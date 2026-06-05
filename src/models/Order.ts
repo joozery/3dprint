@@ -58,6 +58,17 @@ const OrderSchema = new mongoose.Schema(
         ishipCourierCode: {
             type: String,
         },
+        // FedEx
+        shippingProvider: {
+            type: String,
+            enum: ["iship", "fedex"],
+        },
+        fedexServiceType: {
+            type: String,
+        },
+        fedexLabelUrl: {
+            type: String,
+        },
     },
     { timestamps: true }
 );
