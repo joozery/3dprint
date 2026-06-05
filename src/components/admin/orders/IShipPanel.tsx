@@ -27,6 +27,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
     const [loadingRates, setLoadingRates] = useState(false);
     const [selectedCourier, setSelectedCourier] = useState(existing.ishipCourierCode || "");
     const [creating, setCreating]     = useState(false);
+    const [rawResponse, setRawResponse] = useState<any>(null);
     const [result, setResult]         = useState<{ trackingNumber: string; ishipOrderId: string } | null>(
         existing.trackingNumber && existing.ishipOrderId
             ? { trackingNumber: existing.trackingNumber, ishipOrderId: existing.ishipOrderId }
@@ -78,6 +79,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                 body: JSON.stringify({ orderId, courier_code: selectedCourier }),
             });
             const data = await res.json();
+            setRawResponse(data.raw || data);
             if (data.success) {
                 setResult({ trackingNumber: data.trackingNumber, ishipOrderId: data.ishipOrderId });
             } else {
@@ -153,6 +155,16 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                             className="flex items-center gap-1 text-xs text-blue-500 hover:underline justify-center">
                             <ExternalLink size={12} /> เปิด label URL อีกครั้ง
                         </a>
+                    )}
+
+                    {/* Debug: raw response จาก iShip */}
+                    {rawResponse && (
+                        <details className="mt-2">
+                            <summary className="text-[10px] text-slate-400 cursor-pointer hover:text-slate-600">iShip raw response (debug)</summary>
+                            <pre className="text-[10px] bg-slate-50 border border-slate-200 rounded-lg p-3 mt-1 overflow-auto max-h-40 text-slate-600">
+                                {JSON.stringify(rawResponse, null, 2)}
+                            </pre>
+                        </details>
                     )}
                 </div>
             ) : (

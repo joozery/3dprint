@@ -60,9 +60,25 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: result.message || "iShip error", raw: result }, { status: 400 });
         }
 
-        // บันทึก tracking number และ iShip order id
-        const trackingNumber = result.tracking_no || result.tracking_number || result.order_id || "";
-        const ishipOrderId   = result.order_id || result.id || "";
+        // Log raw response เพื่อ debug field names จริงของ iShip
+        console.log("[iShip create_order response]", JSON.stringify(result, null, 2));
+
+        // ลอง field names ที่เป็นไปได้ (จะรู้แน่ชัดเมื่อ account มีเครดิต)
+        const data = result.data || result;
+        const trackingNumber = data.tracking_no
+            || data.tracking_number
+            || data.trackingNo
+            || data.track_no
+            || data.barcode
+            || result.tracking_no
+            || result.tracking_number
+            || "";
+        const ishipOrderId = data.order_id
+            || data.id
+            || data.orderId
+            || result.order_id
+            || result.id
+            || "";
 
         await Order.findByIdAndUpdate(orderId, {
             $set: {
@@ -73,7 +89,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        return NextResponse.json({ success: true, trackingNumber, ishipOrderId, raw: result });
+        return NextResponse.json({ success: true, trackingNumber, ishipOrderId, raw: result, rawData: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
