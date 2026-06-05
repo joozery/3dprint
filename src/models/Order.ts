@@ -18,11 +18,13 @@ const OrderSchema = new mongoose.Schema(
             required: true,
         }],
         shippingAddress: {
-            fullName: { type: String, required: true },
-            phone: { type: String, required: true },
-            address: { type: String, required: true },
-            province: { type: String, required: true },
-            zipCode: { type: String, required: true },
+            fullName:    { type: String, required: true },
+            phone:       { type: String, required: true },
+            address:     { type: String, required: true },
+            district:    { type: String },
+            subDistrict: { type: String },
+            province:    { type: String, required: true },
+            zipCode:     { type: String, required: true },
         },
         paymentDetails: {
             method: { type: String, enum: ["bank_transfer", "promptpay", "credit_card", "paysolutions"], required: true },
@@ -46,7 +48,13 @@ const OrderSchema = new mongoose.Schema(
         },
         trackingNumber: {
             type: String,
-        }
+        },
+        ishipOrderId: {
+            type: String,
+        },
+        ishipCourierCode: {
+            type: String,
+        },
     },
     { timestamps: true }
 );

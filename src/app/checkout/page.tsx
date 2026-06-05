@@ -56,7 +56,7 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
     const [type, setType] = useState<"individual" | "company">("individual");
     const [form, setForm] = useState({
         firstName: "", lastName: "", company: "",
-        country: "Thailand", state: "", city: "",
+        country: "Thailand", state: "", city: "", subDistrict: "",
         address: "", building: "", postal: "",
         phone: "", countryCode: "+66"
     });
@@ -143,23 +143,7 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">ประเทศ <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                        <select
-                            value={form.country}
-                            onChange={e => set("country", e.target.value)}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 appearance-none bg-white"
-                        >
-                            <option>Thailand</option>
-                            <option>Singapore</option>
-                            <option>Japan</option>
-                            <option>USA</option>
-                        </select>
-                        <Globe className="absolute right-3 top-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
-                    </div>
-                </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">จังหวัด <span className="text-red-500">*</span></label>
                     <input
@@ -178,6 +162,15 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
                         className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                     />
                 </div>
+            </div>
+            <div className="mb-4">
+                <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">แขวง/ตำบล</label>
+                <input
+                    placeholder="แขวง / ตำบล"
+                    value={form.subDistrict}
+                    onChange={e => set("subDistrict", e.target.value)}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
+                />
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -244,46 +237,55 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
 }
 
 // ─── Step 2: Shipping Method ─────────────────────────────────────────────────
-function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBack: () => void }) {
-    const [selected, setSelected] = useState("kerry");
-    const methods = [
-        {
-            id: "self",
-            label: "รับด้วยตัวเองที่โรงงาน",
-            desc: "ถนนลาดพร้าว กรุงเทพฯ (จันทร์–ศุกร์ 09:00–18:00)",
-            price: 0,
-            days: "–",
-            logo: null,
-            useIcon: true,
-        },
-        {
-            id: "kerry",
-            label: "Kerry Express",
-            desc: "จัดส่งด่วนภายใน 1–3 วันทำการ",
-            price: 50,
-            days: "1–3",
-            logo: "/shipping/kerryexpress.png",
-            useIcon: false,
-        },
-        {
-            id: "flash",
-            label: "Flash Express",
-            desc: "จัดส่งรวดเร็วภายใน 1–2 วัน",
-            price: 45,
-            days: "1–2",
-            logo: "/shipping/fashexpress.png",
-            useIcon: false,
-        },
-        {
-            id: "ems",
-            label: "ไปรษณีย์ไทย (EMS)",
-            desc: "จัดส่งมาตรฐาน 2–5 วันทำการ",
-            price: 60,
-            days: "2–5",
-            logo: "/shipping/ems.jpeg",
-            useIcon: false,
-        },
-    ];
+function ShippingMethod({ onNext, onBack, address, quotes }: {
+    onNext: (data: any) => void;
+    onBack: () => void;
+    address: any;
+    quotes: any[];
+}) {
+    const [selected, setSelected] = useState<string>("");
+    const [rates, setRates] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const selfPickup = {
+        courier_code: "self",
+        courier_name: "รับด้วยตัวเองที่โรงงาน",
+        logo: null,
+        total_price: 0,
+        estimate_days: "–",
+        desc: "ถ.ราชพฤกษ์ บางแวก ภาษีเจริญ กทม. (จันทร์–ศุกร์ 09:00–18:00)",
+    };
+
+    useEffect(() => {
+        if (!address?.postal) { setLoading(false); return; }
+
+        const totalWeightG = quotes.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0);
+        const maxW = Math.max(...quotes.map((q: any) => q.dimensions?.x || 10));
+        const maxL = Math.max(...quotes.map((q: any) => q.dimensions?.y || 10));
+        const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5), 0);
+
+        fetch("/api/shipping/rates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                dst_zipcode:  address.postal,
+                dst_province: address.state        || "",
+                dst_amphure:  address.city         || "",
+                dst_district: address.subDistrict  || "",
+                weightKg:  Math.max(totalWeightG / 1000, 0.1),
+                width:     Math.ceil(maxW),
+                length:    Math.ceil(maxL),
+                height:    Math.ceil(maxH),
+            }),
+        })
+            .then(r => r.json())
+            .then(d => { if (d.rates) setRates(d.rates); })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, [address, quotes]);
+
+    const allMethods = [selfPickup, ...rates];
+    const selectedMethod = allMethods.find(m => m.courier_code === selected);
 
     return (
         <div className="space-y-4">
@@ -293,54 +295,61 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
                     <h2 className="text-lg font-bold text-slate-900 tracking-wide">ช่องทางการจัดส่ง</h2>
                 </div>
 
-                <div className="space-y-3">
-                    {methods.map(m => (
-                        <button
-                            key={m.id}
-                            onClick={() => setSelected(m.id)}
-                            className={cn(
-                                "w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all",
-                                selected === m.id ? "border-slate-900 bg-slate-50" : "border-slate-100 hover:border-slate-200 bg-white"
-                            )}
-                        >
-                            {/* Radio */}
-                            <div className={cn("w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center", selected === m.id ? "border-slate-900" : "border-slate-300")}>
-                                {selected === m.id && <div className="w-2.5 h-2.5 rounded-full bg-slate-900" />}
-                            </div>
-
-                            {/* Logo / Icon */}
-                            <div className="w-12 h-10 flex items-center justify-center shrink-0">
-                                {m.useIcon ? (
-                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
-                                        <Warehouse className="w-5 h-5 text-slate-600" />
-                                    </div>
-                                ) : (
-                                    <div className="w-12 h-10 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1">
-                                        <img
-                                            src={m.logo!}
-                                            alt={m.label}
-                                            className="max-w-full max-h-full object-contain"
-                                        />
-                                    </div>
+                {loading ? (
+                    <div className="flex items-center gap-3 py-8 justify-center text-slate-400">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-400" />
+                        <span className="text-sm">กำลังโหลดราคาค่าส่ง...</span>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {allMethods.map(m => (
+                            <button
+                                key={m.courier_code}
+                                onClick={() => setSelected(m.courier_code)}
+                                className={cn(
+                                    "w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all",
+                                    selected === m.courier_code ? "border-slate-900 bg-slate-50" : "border-slate-100 hover:border-slate-200 bg-white"
                                 )}
-                            </div>
+                            >
+                                <div className={cn("w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center", selected === m.courier_code ? "border-slate-900" : "border-slate-300")}>
+                                    {selected === m.courier_code && <div className="w-2.5 h-2.5 rounded-full bg-slate-900" />}
+                                </div>
 
-                            {/* Label */}
-                            <div className="flex-1">
-                                <p className="text-sm font-bold text-slate-900">{m.label}</p>
-                                <p className="text-xs text-slate-400 mt-0.5">{m.desc}</p>
-                            </div>
+                                <div className="w-12 h-10 flex items-center justify-center shrink-0">
+                                    {m.logo ? (
+                                        <div className="w-12 h-10 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1">
+                                            <img src={m.logo} alt={m.courier_name} className="max-w-full max-h-full object-contain" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
+                                            <Warehouse className="w-5 h-5 text-slate-600" />
+                                        </div>
+                                    )}
+                                </div>
 
-                            {/* Price */}
-                            <div className="text-right shrink-0">
-                                <p className="text-sm font-black text-slate-900">
-                                    {m.price === 0 ? <span className="text-emerald-600">ฟรี</span> : `฿${m.price}`}
-                                </p>
-                                {m.days !== "–" && <p className="text-[10px] text-slate-400 mt-0.5">{m.days} วัน</p>}
-                            </div>
-                        </button>
-                    ))}
-                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-bold text-slate-900">{m.courier_name}</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">{m.desc || `ประมาณ ${m.estimate_days} วัน`}</p>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                    <p className="text-sm font-black text-slate-900">
+                                        {m.total_price === 0
+                                            ? <span className="text-emerald-600">ฟรี</span>
+                                            : `฿${m.total_price.toLocaleString()}`}
+                                    </p>
+                                    {m.estimate_days !== "–" && (
+                                        <p className="text-[10px] text-slate-400 mt-0.5">{m.estimate_days} วัน</p>
+                                    )}
+                                </div>
+                            </button>
+                        ))}
+
+                        {!loading && rates.length === 0 && (
+                            <p className="text-sm text-slate-400 text-center py-4">ไม่พบข้อมูลราคาจาก iShip — กรุณากรอกที่อยู่ให้ครบถ้วน</p>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="flex gap-3">
@@ -348,8 +357,14 @@ function ShippingMethod({ onNext, onBack }: { onNext: (data: any) => void; onBac
                     <ArrowLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
                 </Button>
                 <Button
-                    onClick={() => onNext({ method: selected, price: methods.find(m => m.id === selected)?.price || 0 })}
-                    className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 font-bold shadow-md shadow-slate-200 flex-1 h-11"
+                    disabled={!selected}
+                    onClick={() => onNext({
+                        method: selected,
+                        courier_code: selectedMethod?.courier_code || "",
+                        courier_name: selectedMethod?.courier_name || "",
+                        price: selectedMethod?.total_price ?? 0,
+                    })}
+                    className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 font-bold shadow-md shadow-slate-200 flex-1 h-11 disabled:opacity-50"
                 >
                     ดำเนินการต่อ <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -386,12 +401,16 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
                 body: JSON.stringify({
                     quoteIds,
                     shippingAddress: {
-                        fullName: `${address.firstName} ${address.lastName}`,
-                        phone: `${address.countryCode} ${address.phone}`,
-                        address: `${address.address} ${address.building || ""}`,
-                        province: address.state,
-                        zipCode: address.postal
+                        fullName:    `${address.firstName} ${address.lastName}`,
+                        phone:       `${address.countryCode} ${address.phone}`,
+                        address:     `${address.address} ${address.building || ""}`.trim(),
+                        district:    address.city        || "",
+                        subDistrict: address.subDistrict || "",
+                        province:    address.state       || "",
+                        zipCode:     address.postal      || "",
                     },
+                    shippingFee:         shipping?.price ?? 0,
+                    shippingCourierCode: shipping?.courier_code || "",
                     paymentMethod: "paysolutions",
                     customerNotes: ""
                 })
@@ -591,27 +610,21 @@ export default function CheckoutPage() {
 
                     if (targetAddress) {
                         setAddress({
-                            firstName: targetAddress.receiverName || targetAddress.fullName || targetAddress.label || "Customer",
-                            lastName: "",
-                            company: "",
-                            country: "Thailand",
-                            state: targetAddress.province || "",
-                            city: targetAddress.district || targetAddress.subDistrict || "",
-                            address: targetAddress.address || "",
-                            building: "",
-                            postal: targetAddress.zipCode || targetAddress.postalCode || "",
-                            phone: targetAddress.phone || "0000000000",
-                            countryCode: "+66"
+                            firstName:   targetAddress.receiverName || targetAddress.fullName || targetAddress.label || "Customer",
+                            lastName:    "",
+                            company:     "",
+                            country:     "Thailand",
+                            state:       targetAddress.province    || "",
+                            city:        targetAddress.district    || "",
+                            subDistrict: targetAddress.subDistrict || "",
+                            address:     targetAddress.address     || "",
+                            building:    "",
+                            postal:      targetAddress.zipCode || targetAddress.postalCode || "",
+                            phone:       targetAddress.phone   || "0000000000",
+                            countryCode: "+66",
                         });
-                        
-                        // สมมติฐานราคา Kerry ตามรูป
-                        setShipping({
-                            method: "kerry",
-                            price: 85
-                        });
-                        
-                        // ข้ามไปหน้า Confirm Order เลย
-                        setStep(3);
+                        // ไปที่ step 2 เพื่อเลือกขนส่ง
+                        setStep(2);
                     }
                 }
             } catch (error) {
@@ -680,6 +693,8 @@ export default function CheckoutPage() {
                             <ShippingMethod
                                 onNext={(data) => { setShipping(data); setStep(3); }}
                                 onBack={() => setStep(1)}
+                                address={address}
+                                quotes={quotes}
                             />
                         )}
                         {step === 3 && (

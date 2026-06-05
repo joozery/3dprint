@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { quoteIds, shippingAddress, paymentMethod, customerNotes } = body;
+        const { quoteIds, shippingAddress, paymentMethod, customerNotes, shippingFee: clientShippingFee, shippingCourierCode } = body;
 
         if (!quoteIds || quoteIds.length === 0) {
             return NextResponse.json({ error: "ไม่พบรายการชิ้นงานในตะกร้า" }, { status: 400 });
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         }
 
         const subtotal = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
-        const shippingFee = subtotal > 1500 ? 0 : 50;
+        const shippingFee = clientShippingFee ?? (subtotal > 1500 ? 0 : 50);
         const totalAmount = subtotal + shippingFee;
 
         const newOrder = await Order.create({
@@ -92,7 +92,8 @@ export async function POST(req: NextRequest) {
                 totalAmount
             },
             status: "pending_payment",
-            customerNotes
+            customerNotes,
+            ishipCourierCode: shippingCourierCode || null,
         });
 
         await Quote.updateMany(
