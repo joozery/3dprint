@@ -27,10 +27,9 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
     const [loadingRates, setLoadingRates] = useState(false);
     const [selectedCourier, setSelectedCourier] = useState(existing.ishipCourierCode || "");
     const [creating, setCreating]     = useState(false);
-    const [rawResponse, setRawResponse] = useState<any>(null);
-    const [result, setResult]         = useState<{ trackingNumber: string; ishipOrderId: string } | null>(
+    const [result, setResult]         = useState<{ trackingNumber: string; ishipOrderId: string; ishipRef?: string } | null>(
         existing.trackingNumber && existing.ishipOrderId
-            ? { trackingNumber: existing.trackingNumber, ishipOrderId: existing.ishipOrderId }
+            ? { trackingNumber: existing.trackingNumber, ishipOrderId: existing.ishipOrderId, ishipRef: (existing as any).ishipRef || "" }
             : null
     );
     const [error, setError]           = useState("");
@@ -79,9 +78,8 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                 body: JSON.stringify({ orderId, courier_code: selectedCourier }),
             });
             const data = await res.json();
-            setRawResponse(data.raw || data);
             if (data.success) {
-                setResult({ trackingNumber: data.trackingNumber, ishipOrderId: data.ishipOrderId });
+                setResult({ trackingNumber: data.trackingNumber, ishipOrderId: data.ishipOrderId, ishipRef: data.ishipRef || "" });
             } else {
                 setError(data.error || "สร้างพัสดุไม่สำเร็จ");
             }
@@ -132,7 +130,8 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                         <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
                         <div>
                             <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-1">สร้างพัสดุสำเร็จ</p>
-                            <p className="text-sm font-bold text-slate-800">Tracking: <span className="font-black">{result!.trackingNumber || "-"}</span></p>
+                            <p className="text-sm font-bold text-slate-800">Tracking: <span className="font-black text-blue-700 select-all">{result!.trackingNumber || "-"}</span></p>
+                            {result!.ishipRef && <p className="text-xs text-slate-500 mt-0.5">Ref: {result!.ishipRef}</p>}
                             <p className="text-xs text-slate-500 mt-0.5">iShip ID: {result!.ishipOrderId}</p>
                             {existing.ishipCourierCode && (
                                 <p className="text-xs text-slate-500">Courier: {existing.ishipCourierCode}</p>
@@ -157,15 +156,6 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                         </a>
                     )}
 
-                    {/* Debug: raw response จาก iShip */}
-                    {rawResponse && (
-                        <details className="mt-2">
-                            <summary className="text-[10px] text-slate-400 cursor-pointer hover:text-slate-600">iShip raw response (debug)</summary>
-                            <pre className="text-[10px] bg-slate-50 border border-slate-200 rounded-lg p-3 mt-1 overflow-auto max-h-40 text-slate-600">
-                                {JSON.stringify(rawResponse, null, 2)}
-                            </pre>
-                        </details>
-                    )}
                 </div>
             ) : (
                 /* Create form */

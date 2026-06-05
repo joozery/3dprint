@@ -52,6 +52,9 @@ const OrderSchema = new mongoose.Schema(
         ishipOrderId: {
             type: String,
         },
+        ishipRef: {
+            type: String,
+        },
         ishipCourierCode: {
             type: String,
         },
