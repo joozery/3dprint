@@ -5,10 +5,17 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, RefreshCw, ExternalLink, FileText, SlidersHorizontal, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+interface QuoteFile {
+  _id: string;
+  originalName: string;
+  volumeCm3: number;
+  priceDetail: { pricePerUnit: number; totalPrice: number };
+}
+
 interface Quote {
   _id: string;
   quoteNumber?: string;
-  originalName: string;
+  originalName?: string;
   technology: string;
   material: string;
   color: string;
@@ -16,6 +23,9 @@ interface Quote {
   volumeCm3: number;
   weightGrams: number;
   priceDetail: { pricePerUnit: number; totalPrice: number };
+  totalPrice?: number;
+  fileCount?: number;
+  files?: QuoteFile[];
   status: string;
   internalStatus?: string;
   internalComments?: string;
@@ -147,15 +157,34 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                   return (
                     <tr key={q._id} className="hover:bg-slate-50/60 transition-colors group">
                       <td className="px-6 py-4">
-                         <a href={`/admin/quotes/${q._id}`} className="inline-block text-blue-600 font-black text-[12px] tracking-tight hover:underline mb-0.5">
-                           {q.quoteNumber || `QT-${q._id.toString().slice(-6).toUpperCase()}`}
-                         </a>
-                        <p className={`text-slate-800 ${q.quoteNumber ? 'font-medium text-xs' : 'font-semibold text-sm'} truncate max-w-[200px] group-hover:text-blue-600 transition-colors`}>
-                          {q.originalName || "ไม่มีชื่อไฟล์"}
-                        </p>
-                        <p className="text-slate-400 text-[11px] mt-0.5">
-                          {new Date(q.createdAt).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })}
-                        </p>
+                        <a href={`/admin/quotes/${q._id}`} className="inline-block text-blue-600 font-black text-[12px] tracking-tight hover:underline mb-0.5">
+                          {q.quoteNumber || `QT-${q._id.toString().slice(-6).toUpperCase()}`}
+                        </a>
+                        {/* File list for batch */}
+                        {q.files && q.files.length > 0 ? (
+                          <div className="mt-1 space-y-0.5">
+                            {q.files.slice(0, 3).map((f, i) => (
+                              <p key={i} className="text-slate-700 text-xs font-medium truncate max-w-[220px] group-hover:text-blue-600 transition-colors">
+                                {f.originalName}
+                              </p>
+                            ))}
+                            {q.files.length > 3 && (
+                              <p className="text-slate-400 text-[10px]">+{q.files.length - 3} ไฟล์อื่น</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-slate-700 text-xs font-medium truncate max-w-[220px]">{q.originalName || "—"}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {(q.fileCount || 0) > 1 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-bold rounded border border-blue-100">
+                              {q.fileCount} ไฟล์
+                            </span>
+                          )}
+                          <p className="text-slate-400 text-[11px]">
+                            {new Date(q.createdAt).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })}
+                          </p>
+                        </div>
                       </td>
 
                       {/* Customer */}
@@ -169,19 +198,22 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                         <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md border border-blue-100 uppercase tracking-wide">
                           {q.technology}
                         </span>
-                        <p className="text-slate-400 text-[10px] mt-1">{q.material} / {q.color}</p>
                       </td>
 
-                      {/* Qty / weight */}
+                      {/* File count / weight */}
                       <td className="px-6 py-4 text-center">
-                        <p className="text-slate-700 font-bold text-sm">{q.quantity} ชิ้น</p>
-                        <p className="text-slate-400 text-[11px] mt-0.5">{q.weightGrams} g</p>
+                        <p className="text-slate-700 font-bold text-sm">{q.fileCount || 1} ไฟล์</p>
+                        <p className="text-slate-400 text-[11px] mt-0.5">{q.weightGrams ? `${q.weightGrams} g` : "—"}</p>
                       </td>
 
                       {/* Price */}
                       <td className="px-6 py-4 text-right">
-                        <p className="text-slate-800 font-bold text-sm">฿{q.priceDetail.totalPrice.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</p>
-                        <p className="text-slate-400 text-[10px] mt-0.5">฿{q.priceDetail.pricePerUnit.toLocaleString("th-TH")} / ชิ้น</p>
+                        <p className="text-slate-800 font-bold text-sm">
+                          ฿{(q.totalPrice ?? q.priceDetail?.totalPrice ?? 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                        </p>
+                        {(q.fileCount || 0) > 1 && (
+                          <p className="text-slate-400 text-[10px] mt-0.5">รวม {q.fileCount} ไฟล์</p>
+                        )}
                       </td>
 
                       {/* Status */}

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
       await Quote.updateMany(
         { _id: { $in: ids } },
-        { $set: { quoteNumber: sharedQuoteNumber } }
+        { $set: { quoteNumber: sharedQuoteNumber, status: "pending" } }
       );
 
       return NextResponse.json({

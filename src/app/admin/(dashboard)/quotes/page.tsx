@@ -7,22 +7,54 @@ async function getQuotes(page: number, status: string, userId?: string) {
   await dbConnect();
   const limit = 20;
   const skip = (page - 1) * limit;
-  const filter: Record<string, any> = {};
-  if (status && status !== "all") filter.status = status;
-  if (userId) filter.userId = userId;
 
-  const [quotes, total, pendingCount, orderedCount, cancelledCount] = await Promise.all([
-    Quote.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate("userId", "name email")
-      .lean(),
-    Quote.countDocuments(filter),
+  const matchStage: Record<string, any> = {};
+  if (status && status !== "all") matchStage.status = status;
+  if (userId) matchStage.userId = userId;
+
+  // Group by quoteNumber — each "row" = 1 quote batch (may contain multiple files)
+  const pipeline: any[] = [
+    { $match: matchStage },
+    { $sort: { createdAt: -1 } },
+    {
+      $group: {
+        _id: "$quoteNumber",
+        quoteNumber: { $first: "$quoteNumber" },
+        representativeId: { $first: "$_id" },
+        fileCount: { $sum: 1 },
+        totalPrice: { $sum: "$priceDetail.totalPrice" },
+        status: { $first: "$status" },
+        technology: { $first: "$technology" },
+        userId: { $first: "$userId" },
+        createdAt: { $max: "$createdAt" },
+        files: { $push: { _id: "$_id", originalName: "$originalName", volumeCm3: "$volumeCm3", priceDetail: "$priceDetail" } },
+      },
+    },
+    { $sort: { createdAt: -1 } },
+  ];
+
+  const [groups, countResult, pendingCount, orderedCount, cancelledCount] = await Promise.all([
+    Quote.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]),
+    Quote.aggregate([...pipeline, { $count: "total" }]),
     Quote.countDocuments({ status: "pending" }),
     Quote.countDocuments({ status: "ordered" }),
     Quote.countDocuments({ status: "cancelled" }),
   ]);
+
+  // Populate userId for each group
+  const User = (await import("@/models/User")).default;
+  const userIds = groups.map(g => g.userId).filter(Boolean);
+  const users = await User.find({ _id: { $in: userIds } }, "name email").lean();
+  const userMap: Record<string, any> = {};
+  users.forEach((u: any) => { userMap[u._id.toString()] = u; });
+
+  const quotes = groups.map(g => ({
+    ...g,
+    _id: g.representativeId,
+    userId: g.userId ? userMap[g.userId.toString()] || null : null,
+  }));
+
+  const total = countResult[0]?.total || 0;
 
   return {
     quotes: JSON.parse(JSON.stringify(quotes)),
