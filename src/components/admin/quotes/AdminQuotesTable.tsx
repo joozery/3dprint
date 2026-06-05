@@ -45,16 +45,18 @@ interface Props {
 }
 
 const statusOptions = [
-  { value: "all", label: "ทั้งหมด" },
-  { value: "pending", label: "รอดำเนินการ" },
-  { value: "ordered", label: "สั่งซื้อแล้ว" },
+  { value: "all",       label: "ทั้งหมด" },
+  { value: "pending",   label: "รอดำเนินการ" },
+  { value: "ordered",   label: "สั่งซื้อแล้ว" },
   { value: "cancelled", label: "ยกเลิก" },
+  { value: "draft",     label: "ยังไม่ส่งคำขอ" },
 ];
 
 const statusDisplay: Record<string, { label: string; color: string; dot: string }> = {
-  pending: { label: "รอดำเนินการ", color: "text-amber-600 bg-amber-50 border-amber-200", dot: "bg-amber-400" },
-  ordered: { label: "สั่งซื้อแล้ว", color: "text-emerald-600 bg-emerald-50 border-emerald-200", dot: "bg-emerald-400" },
-  cancelled: { label: "ยกเลิก", color: "text-red-500 bg-red-50 border-red-200", dot: "bg-red-400" },
+  draft:     { label: "ยังไม่ส่งคำขอ", color: "text-slate-500 bg-slate-50 border-slate-200",    dot: "bg-slate-300"   },
+  pending:   { label: "รอดำเนินการ",   color: "text-amber-600 bg-amber-50 border-amber-200",    dot: "bg-amber-400"   },
+  ordered:   { label: "สั่งซื้อแล้ว",  color: "text-emerald-600 bg-emerald-50 border-emerald-200", dot: "bg-emerald-400" },
+  cancelled: { label: "ยกเลิก",        color: "text-red-500 bg-red-50 border-red-200",           dot: "bg-red-400"     },
 };
 
 export default function AdminQuotesTable({ quotes, total, page, totalPages, currentStatus }: Props) {

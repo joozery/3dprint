@@ -1,7 +1,7 @@
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
 import AdminQuotesTable from "@/components/admin/quotes/AdminQuotesTable";
-import { FileText, Clock, CheckCircle, XCircle } from "lucide-react";
+import { FileText, Clock, CheckCircle, XCircle, FileClock } from "lucide-react";
 
 async function getQuotes(page: number, status: string, userId?: string) {
   await dbConnect();
@@ -9,7 +9,12 @@ async function getQuotes(page: number, status: string, userId?: string) {
   const skip = (page - 1) * limit;
 
   const matchStage: Record<string, any> = {};
-  if (status && status !== "all") matchStage.status = status;
+  if (status && status !== "all") {
+    matchStage.status = status;
+  } else {
+    // "all" excludes draft — admin only sees quotes users have actually submitted
+    matchStage.status = { $ne: "draft" };
+  }
   if (userId) matchStage.userId = userId;
 
   // Group by quoteNumber — each "row" = 1 quote batch (may contain multiple files)
@@ -33,12 +38,13 @@ async function getQuotes(page: number, status: string, userId?: string) {
     { $sort: { createdAt: -1 } },
   ];
 
-  const [groups, countResult, pendingCount, orderedCount, cancelledCount] = await Promise.all([
+  const [groups, countResult, pendingCount, orderedCount, cancelledCount, draftCount] = await Promise.all([
     Quote.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]),
     Quote.aggregate([...pipeline, { $count: "total" }]),
     Quote.countDocuments({ status: "pending" }),
     Quote.countDocuments({ status: "ordered" }),
     Quote.countDocuments({ status: "cancelled" }),
+    Quote.countDocuments({ status: "draft" }),
   ]);
 
   // Populate userId for each group
@@ -64,6 +70,7 @@ async function getQuotes(page: number, status: string, userId?: string) {
     pendingCount,
     orderedCount,
     cancelledCount,
+    draftCount,
   };
 }
 
@@ -81,6 +88,7 @@ export default async function AdminQuotesPage({
     { label: "รอดำเนินการ",        sublabel: "Pending",      value: data.pendingCount,   icon: Clock       },
     { label: "สั่งซื้อแล้ว",       sublabel: "Ordered",      value: data.orderedCount,   icon: CheckCircle },
     { label: "ยกเลิก",             sublabel: "Cancelled",    value: data.cancelledCount, icon: XCircle     },
+    { label: "ยังไม่ส่งคำขอ",      sublabel: "Draft",        value: data.draftCount,     icon: FileClock   },
   ];
 
   return (
