@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     UploadCloud,
@@ -10,15 +11,11 @@ import {
     Cpu,
     Zap,
     CheckCircle2,
-    Facebook,
-    Instagram,
-    Twitter,
-    Linkedin,
-    Youtube,
     Globe,
     Mail,
     Phone,
-    ArrowRight
+    ArrowRight,
+    Loader2
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -190,6 +187,85 @@ export function HowItWorks() {
     );
 }
 
+// --- Newsletter Form Component ---
+type NewsletterStatus = "idle" | "success" | "error" | "duplicate";
+
+function NewsletterForm({ t }: { t: { footer: { newsletterTitle: string; newsletterDesc: string; newsletterPlaceholder: string; newsletterBtn: string } } }) {
+    const [email, setEmail] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState<NewsletterStatus>("idle");
+
+    const handleSubmit = async () => {
+        if (!email.trim()) return;
+        try {
+            setLoading(true);
+            const res = await fetch("/api/newsletter/subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (res.status === 409) {
+                setStatus("duplicate");
+            } else if (data.success) {
+                setStatus("success");
+                setEmail("");
+            } else {
+                setStatus("error");
+            }
+        } catch {
+            setStatus("error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-800/60 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
+            <div>
+                <h3 className="text-white text-lg font-bold mb-2">{t.footer.newsletterTitle}</h3>
+                <p className="text-sm text-slate-400">{t.footer.newsletterDesc}</p>
+            </div>
+            {status === "success" ? (
+                <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    สมัครสำเร็จแล้ว ขอบคุณ!
+                </div>
+            ) : (
+                <div className="flex flex-col w-full xl:w-auto gap-2">
+                    <div className="flex w-full xl:w-auto">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => { setEmail(e.target.value); setStatus("idle"); }}
+                            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                            placeholder={t.footer.newsletterPlaceholder}
+                            className="px-4 py-3 bg-slate-900 border border-slate-700 rounded-l-lg focus:outline-none focus:border-blue-500 text-sm w-full xl:w-64"
+                        />
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white px-6 py-3 rounded-r-lg font-medium transition-colors flex items-center shrink-0"
+                        >
+                            {loading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <>{t.footer.newsletterBtn} <ArrowRight className="w-4 h-4 ml-2" /></>
+                            )}
+                        </button>
+                    </div>
+                    {status === "duplicate" && (
+                        <p className="text-xs text-amber-400 font-medium">อีเมลนี้สมัครไว้แล้ว</p>
+                    )}
+                    {status === "error" && (
+                        <p className="text-xs text-red-400 font-medium">เกิดข้อผิดพลาด กรุณาลองใหม่</p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // --- Section 3: Footer ---
 export function Footer() {
     const { t } = useLanguage();
@@ -216,42 +292,10 @@ export function Footer() {
                         <p className="text-slate-400 text-sm leading-relaxed max-w-md mb-8">
                             {t.footer.tagline}
                         </p>
-                        <div className="flex gap-4">
-                            <Link href="#" className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
-                                <Facebook className="w-5 h-5" />
-                            </Link>
-                            <Link href="#" className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
-                                <Instagram className="w-5 h-5" />
-                            </Link>
-                            <Link href="#" className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
-                                <Twitter className="w-5 h-5" />
-                            </Link>
-                            <Link href="#" className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
-                                <Linkedin className="w-5 h-5" />
-                            </Link>
-                            <Link href="#" className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
-                                <Youtube className="w-5 h-5" />
-                            </Link>
-                        </div>
                     </div>
 
                     <div className="lg:col-span-7">
-                        <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-800/60 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
-                            <div>
-                                <h3 className="text-white text-lg font-bold mb-2">{t.footer.newsletterTitle}</h3>
-                                <p className="text-sm text-slate-400">{t.footer.newsletterDesc}</p>
-                            </div>
-                            <div className="flex w-full xl:w-auto">
-                                <input
-                                    type="email"
-                                    placeholder={t.footer.newsletterPlaceholder}
-                                    className="px-4 py-3 bg-slate-900 border border-slate-700 rounded-l-lg focus:outline-none focus:border-blue-500 text-sm w-full xl:w-64"
-                                />
-                                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-r-lg font-medium transition-colors flex items-center shrink-0">
-                                    {t.footer.newsletterBtn} <ArrowRight className="w-4 h-4 ml-2" />
-                                </button>
-                            </div>
-                        </div>
+                        <NewsletterForm t={t} />
                     </div>
                 </div>
 
@@ -317,7 +361,7 @@ export function Footer() {
                 {/* Bottom Section */}
                 <div className="pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-6">
                     <p className="text-sm text-slate-500">
-                        © {currentYear} PDM 3D Print Thailand. {t.footer.copyright}
+                        © {currentYear} PrintMyDesign by Septillion Co., Ltd. {t.footer.copyright}
                     </p>
                     <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500 font-bold">
                         <Link href="/privacy" className="hover:text-blue-400 transition-colors">{t.footer.privacy}</Link>

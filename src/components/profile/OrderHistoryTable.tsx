@@ -10,17 +10,17 @@ interface OrderHistoryTableProps {
 
 const TRACKING_URL: Record<string, (n: string) => string> = {
     FlashExpressA: (n) => `https://www.flashexpress.co.th/tracking/?se=${n}`,
-    KEX:           (n) => `https://th.kerryexpress.com/en/track/?track=${n}`,
-    JT:            (n) => `https://www.jtexpress.co.th/track?bill_codes=${n}`,
-    Best:          (n) => `https://www.best-inc.co.th/track/${n}`,
+    KerryExpress:  (n) => `https://th.kerryexpress.com/en/track/?track=${n}`,
+    BestExpress:   (n) => `https://www.best-inc.co.th/track/${n}`,
+    ShopeeExpress: (n) => `https://spx.co.th/track?trackingNo=${n}`,
     fedex:         (n) => `https://www.fedex.com/fedextrack/?trknbr=${n}`,
 };
 
 const COURIER_NAME: Record<string, string> = {
     FlashExpressA: "Flash Express",
-    KEX:           "Kerry Express",
-    JT:            "J&T Express",
-    Best:          "Best Express",
+    KerryExpress:  "Kerry Express",
+    BestExpress:   "Best Express",
+    ShopeeExpress: "Shopee Express",
     fedex:         "FedEx",
 };
 

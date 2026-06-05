@@ -108,9 +108,10 @@ interface RecentOrdersTableProps {
 }
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
-  pending:   { label: "รอดำเนินการ", color: "text-amber-600 bg-amber-50 border-amber-200",   icon: Clock },
+  draft:     { label: "รอประเมินราคา", color: "text-slate-500 bg-slate-50 border-slate-200",    icon: Clock },
+  pending:   { label: "รอดำเนินการ",  color: "text-amber-600 bg-amber-50 border-amber-200",    icon: Clock },
   ordered:   { label: "สั่งซื้อแล้ว", color: "text-emerald-600 bg-emerald-50 border-emerald-200", icon: CheckCircle2 },
-  cancelled: { label: "ยกเลิกแล้ว",  color: "text-red-500 bg-red-50 border-red-200",          icon: XCircle },
+  cancelled: { label: "ยกเลิกแล้ว",   color: "text-red-500 bg-red-50 border-red-200",           icon: XCircle },
 };
 
 export function RecentOrdersTable({ quotes }: RecentOrdersTableProps) {

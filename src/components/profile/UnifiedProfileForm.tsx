@@ -65,6 +65,8 @@ export default function UnifiedProfileForm() {
   const [addressForm, setAddressForm] = useState<Address>({
     label: "", fullName: "", phone: "", address: "", district: "", subDistrict: "", province: "", zipCode: "", isDefault: false
   });
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [addressFeedback, setAddressFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const set = (key: keyof UnifiedForm, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -148,29 +150,62 @@ export default function UnifiedProfileForm() {
     }
   };
 
-  const handleSetDefaultAddress = (index: number) => {
+  const saveAddressesToAPI = async (addresses: Address[]) => {
+    const sanitized = addresses.map(addr => {
+      if (addr._id && addr._id.length !== 24) {
+        const { _id, ...rest } = addr;
+        return rest;
+      }
+      return addr;
+    });
+    const res = await fetch("/api/profile/billing", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ shippingAddresses: sanitized }),
+    });
+    if (!res.ok) throw new Error("บันทึกไม่สำเร็จ");
+    const data = await res.json();
+    return data;
+  };
+
+  const handleSetDefaultAddress = async (index: number) => {
     const updated = form.shippingAddresses.map((addr, i) => ({
       ...addr,
       isDefault: i === index
     }));
     set("shippingAddresses", updated);
+    try {
+      await saveAddressesToAPI(updated);
+    } catch {}
   };
 
-  const handleDeleteAddress = (index: number) => {
+  const handleDeleteAddress = async (index: number) => {
     const updated = form.shippingAddresses.filter((_, i) => i !== index);
     set("shippingAddresses", updated);
+    try {
+      await saveAddressesToAPI(updated);
+    } catch {}
   };
 
-  const handleSaveAddress = () => {
-    let updated = [...form.shippingAddresses];
-    if (editingAddress?._id) {
+  const handleSaveAddress = async () => {
+    setSavingAddress(true);
+    setAddressFeedback(null);
+    try {
+      let updated = [...form.shippingAddresses];
+      if (editingAddress?._id) {
         updated = updated.map(a => a._id === editingAddress._id ? addressForm : a);
-    } else {
+      } else {
         updated.push({ ...addressForm, _id: Date.now().toString(), isDefault: form.shippingAddresses.length === 0 });
+      }
+      await saveAddressesToAPI(updated);
+      set("shippingAddresses", updated);
+      setShowAddressModal(false);
+      setEditingAddress(null);
+    } catch (err: any) {
+      setAddressFeedback({ text: err.message || "บันทึกไม่สำเร็จ", type: "error" });
+    } finally {
+      setSavingAddress(false);
     }
-    set("shippingAddresses", updated);
-    setShowAddressModal(false);
-    setEditingAddress(null);
   };
 
   if (fetching || !isMounted) {
@@ -441,15 +476,33 @@ export default function UnifiedProfileForm() {
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex gap-3 px-7 pt-4 pb-7 shrink-0 border-t border-slate-50">
-                    <button type="button" onClick={() => setShowAddressModal(false)} className="flex-1 h-11 rounded-xl border border-slate-200 font-black text-xs text-slate-500 hover:bg-slate-50 transition-all">ยกเลิก</button>
-                    <button 
-                        type="button" 
+                <div className="px-7 pt-4 pb-7 shrink-0 border-t border-slate-100 space-y-3">
+                    {addressFeedback && (
+                      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold bg-red-50 text-red-600 border border-red-100">
+                        <AlertCircle size={14} className="shrink-0" />
+                        {addressFeedback.text}
+                      </div>
+                    )}
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => { setShowAddressModal(false); setAddressFeedback(null); }}
+                        disabled={savingAddress}
+                        className="flex-1 h-11 rounded-xl border border-slate-200 font-black text-xs text-slate-500 hover:bg-slate-50 transition-all disabled:opacity-50"
+                      >
+                        ยกเลิก
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleSaveAddress}
-                        className="flex-[2] h-11 px-8 bg-blue-600 text-white rounded-xl font-black text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-                    >
-                        ยืนยัน
-                    </button>
+                        disabled={savingAddress}
+                        className="flex-[2] h-11 px-8 bg-blue-600 text-white rounded-xl font-black text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2 disabled:opacity-70"
+                      >
+                        {savingAddress
+                          ? <><Loader2 size={14} className="animate-spin" /> กำลังบันทึก...</>
+                          : <><Save size={14} /> บันทึกที่อยู่</>}
+                      </button>
+                    </div>
                 </div>
             </div>
         </div>

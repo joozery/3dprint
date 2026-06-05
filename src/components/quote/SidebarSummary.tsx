@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Info, Loader2, FileText, ShoppingCart, ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { Info, Loader2, FileText, ShoppingCart, ShoppingBag, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -21,8 +21,44 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
     const { t } = useLanguage();
 
     const totalPrice = quotes.reduce((sum, q) => sum + (q?.priceDetail?.totalPrice || 0), 0);
-    const weight = quotes.reduce((sum, q) => sum + (q?.weightGrams || 0), 0);
-    const hasQuotes = quotes.length > 0;
+    const weight     = quotes.reduce((sum, q) => sum + (q?.weightGrams || 0), 0);
+    const hasQuotes  = quotes.length > 0;
+
+    // ── Shipping estimate ──────────────────────────────────────────
+    const [zipcode, setZipcode]         = useState("");
+    const [shippingRates, setShippingRates] = useState<any[]>([]);
+    const [loadingRates, setLoadingRates]   = useState(false);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (zipcode.length !== 5 || !hasQuotes) return;
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            const maxW = Math.max(...quotes.map((q: any) => q.dimensions?.x || 10));
+            const maxL = Math.max(...quotes.map((q: any) => q.dimensions?.y || 10));
+            const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5), 0);
+            setLoadingRates(true);
+            setShippingRates([]);
+            fetch("/api/shipping/rates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    dst_zipcode:  zipcode,
+                    dst_province: "",
+                    dst_amphure:  "",
+                    dst_district: "",
+                    weightKg:  Math.max(weight / 1000, 0.1),
+                    width:     Math.ceil(maxW),
+                    length:    Math.ceil(maxL),
+                    height:    Math.ceil(maxH),
+                }),
+            })
+                .then(r => r.json())
+                .then(d => { if (d.rates) setShippingRates(d.rates); })
+                .catch(() => {})
+                .finally(() => setLoadingRates(false));
+        }, 600);
+    }, [zipcode, weight]);
 
     // ── ขอใบเสนอราคา ──────────────────────────────────────────────
     const handleRequestQuote = async () => {
@@ -149,15 +185,62 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
 
             {/* Shipping Estimate */}
             <div className="bg-white border rounded-xl p-5 shadow-sm">
-                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1 mb-1">
+                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1 mb-3">
                     {t.quote.shippingEstimate} <Info className="w-3 h-3 text-slate-400" />
                 </h3>
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">{t.quote.weightLabel} <Info className="w-3 h-3 inline text-slate-300" /></span>
+
+                {/* Weight row */}
+                <div className="flex items-center justify-between text-sm mb-3">
+                    <span className="text-slate-500">{t.quote.weightLabel}</span>
                     <span className="font-bold text-slate-900">
                         {weight > 0 ? `${weight.toFixed(2)} g` : "--"}
                     </span>
                 </div>
+
+                {/* Zipcode input */}
+                <div className="mb-2">
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={5}
+                        placeholder="กรอกรหัสไปรษณีย์ปลายทาง"
+                        value={zipcode}
+                        onChange={e => setZipcode(e.target.value.replace(/\D/g, ""))}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors"
+                    />
+                </div>
+
+                {/* Rates result */}
+                {loadingRates && (
+                    <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                        <RefreshCw size={12} className="animate-spin" /> กำลังโหลดราคาขนส่ง...
+                    </div>
+                )}
+
+                {!loadingRates && shippingRates.length > 0 && (
+                    <div className="space-y-1.5 mt-1">
+                        {shippingRates.map(r => (
+                            <div key={r.courier_code} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                    {r.logo && (
+                                        <img src={r.logo} alt={r.courier_name}
+                                            className="w-8 h-6 object-contain rounded border border-slate-100 bg-white p-0.5"
+                                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                    )}
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-800">{r.courier_name}</p>
+                                        <p className="text-[10px] text-slate-400">~{r.estimate_days} วัน</p>
+                                    </div>
+                                </div>
+                                <p className="text-sm font-black text-slate-800">฿{r.total_price}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {!loadingRates && zipcode.length === 5 && shippingRates.length === 0 && (
+                    <p className="text-[10px] text-slate-400 mt-1">ไม่พบราคาขนส่งสำหรับรหัสไปรษณีย์นี้</p>
+                )}
             </div>
 
             {/* Coupons */}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { 
+import {
   LayoutDashboard,
   ShoppingBag,
   Users,
@@ -21,7 +21,8 @@ import {
   Image as ImageIcon,
   Ticket,
   Activity,
-  X
+  X,
+  Mail
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -35,6 +36,7 @@ const menuItems = [
   { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
   { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
   { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
+  { label: "Newsletter", icon: Mail, href: "/admin/subscribers", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },
   { label: "Monitor คิว Slicer", icon: Activity, href: "/admin/slicer-queue", badge: null },

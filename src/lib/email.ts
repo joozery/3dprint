@@ -33,7 +33,7 @@ export const sendOTP = async (email: string, otp: string) => {
         </div>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 10px;">
-          &copy; ${new Date().getFullYear()} PDM 3D Print Thailand. All rights reserved.
+          &copy; ${new Date().getFullYear()} PrintMyDesign by Septillion Co., Ltd. All rights reserved.
         </div>
       </div>
     `,
@@ -72,7 +72,7 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
         </div>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 10px;">
-          &copy; ${new Date().getFullYear()} PDM 3D Print Thailand. All rights reserved.
+          &copy; ${new Date().getFullYear()} PrintMyDesign by Septillion Co., Ltd. All rights reserved.
         </div>
       </div>
     `,
@@ -106,7 +106,7 @@ export const sendPasswordResetOTP = async (email: string, otp: string) => {
         </div>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 10px;">
-          &copy; ${new Date().getFullYear()} PDM 3D Print Thailand. All rights reserved.
+          &copy; ${new Date().getFullYear()} PrintMyDesign by Septillion Co., Ltd. All rights reserved.
         </div>
       </div>
     `,
@@ -145,7 +145,7 @@ export const sendAdminPromotionEmail = async (email: string, name: string) => {
           <p style="color:#ef4444;font-size:12px;margin-top:20px;">* การเข้าสู่ระบบ Admin ต้องยืนยันผ่าน OTP ทางอีเมลทุกครั้ง</p>
         </div>
         <div style="margin-top:40px;padding-top:20px;border-top:1px solid #e2e8f0;text-align:center;color:#94a3b8;font-size:10px;">
-          &copy; ${new Date().getFullYear()} PDM 3D Print Thailand. All rights reserved.
+          &copy; ${new Date().getFullYear()} PrintMyDesign by Septillion Co., Ltd. All rights reserved.
         </div>
       </div>
     `,

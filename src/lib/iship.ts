@@ -12,10 +12,10 @@ export const ISHIP_SRC = {
 };
 
 export const COURIERS = [
-    { code: "FlashExpressA", name: "Flash Express",  logo: "/shipping/flashexpress.png" },
-    { code: "KEX",           name: "Kerry Express",  logo: "/shipping/kerryexpress.png" },
-    { code: "JT",            name: "J&T Express",    logo: "/shipping/jt.png" },
-    { code: "Best",          name: "Best Express",   logo: "/shipping/best.png" },
+    { code: "FlashExpressA", name: "Flash Express",   logo: "/shipping/flashexpress.png" },
+    { code: "KerryExpress",  name: "Kerry Express",   logo: "/shipping/kerryexpress.png" },
+    { code: "BestExpress",   name: "Best Express",    logo: "/shipping/best.png" },
+    { code: "ShopeeExpress", name: "Shopee Express",  logo: "/shipping/shopee.png" },
 ];
 
 async function ishipPost(path: string, body: object) {

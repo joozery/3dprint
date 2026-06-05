@@ -115,7 +115,7 @@ export default function AdminLoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="text-slate-700 text-xs">© 2026 PDM Thailand. All rights reserved.</p>
+          <p className="text-slate-700 text-xs">© 2026 PrintMyDesign by Septillion Co., Ltd. All rights reserved.</p>
         </div>
       </div>
 

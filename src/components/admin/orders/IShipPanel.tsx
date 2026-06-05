@@ -209,9 +209,9 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                                     >
                                         <option value="">-- เลือกขนส่ง --</option>
                                         <option value="FlashExpressA">Flash Express</option>
-                                        <option value="KEX">Kerry Express</option>
-                                        <option value="JT">J&T Express</option>
-                                        <option value="Best">Best Express</option>
+                                        <option value="KerryExpress">Kerry Express</option>
+                                        <option value="BestExpress">Best Express</option>
+                                        <option value="ShopeeExpress">Shopee Express</option>
                                     </select>
                                     <p className="text-[10px] text-slate-400 mt-1">* ราคาค่าส่งไม่พบ — อาจเนื่องจากที่อยู่ไม่ครบ</p>
                                 </div>
