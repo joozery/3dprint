@@ -22,6 +22,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const router = useRouter();
     const { t } = useLanguage();
     const [activeId, setActiveId] = useState<string | null>(quotes.length > 0 ? quotes[0]._id : null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(quotes.map(q => q._id)));
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentFile, setCurrentFile] = useState("");
@@ -53,6 +54,20 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             setActiveId(quotes[0]._id);
         }
     }, [quotes, activeId]);
+
+    const prevQuoteIdsRef = useRef<Set<string>>(new Set(quotes.map(q => q._id)));
+
+    // Auto-select newly added quotes; remove deleted ones
+    useEffect(() => {
+        const currentIds = new Set(quotes.map(q => q._id));
+        setSelectedIds(prev => {
+            const next = new Set<string>(prev);
+            prev.forEach(id => { if (!currentIds.has(id)) next.delete(id); });
+            currentIds.forEach(id => { if (!prevQuoteIdsRef.current.has(id)) next.add(id); });
+            return next;
+        });
+        prevQuoteIdsRef.current = currentIds;
+    }, [quotes]);
 
     // Load materials and user addresses
     useEffect(() => {
@@ -205,13 +220,29 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         }
     };
 
+    const toggleSelect = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    const allSelected = quotes.length > 0 && quotes.every(q => selectedIds.has(q._id));
+    const toggleSelectAll = () => {
+        if (allSelected) setSelectedIds(new Set());
+        else setSelectedIds(new Set(quotes.map(q => q._id)));
+    };
+
     const handlePlaceOrder = async () => {
         if (!isTermsAccepted) return;
-        if (quotes.length === 0) {
-            alert(t.quote.dropOrSelect);
+        const selected = quotes.filter(q => selectedIds.has(q._id));
+        if (selected.length === 0) {
+            import("sonner").then(m => m.toast.error("กรุณาเลือกอย่างน้อย 1 ไฟล์"));
             return;
         }
-        const ids = quotes.map(q => q._id).join(',');
+        const ids = selected.map(q => q._id).join(',');
         const url = `/checkout?addressId=${selectedAddressId || ""}&ids=${ids}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`;
         router.push(url);
     };
@@ -222,7 +253,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         setCouponError("");
 
         try {
-            const totalPrice = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
+            const totalPrice = quotes.filter(q => selectedIds.has(q._id)).reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
             const res = await fetch("/api/coupons/validate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -255,11 +286,11 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             router.push('/login?callbackUrl=/quote');
             return;
         }
-        if (quotes.length === 0) {
-            alert(t.quote.dropOrSelect);
+        const ids = quotes.filter(q => selectedIds.has(q._id)).map(q => q._id).filter(Boolean);
+        if (ids.length === 0) {
+            import("sonner").then(m => m.toast.error("กรุณาเลือกอย่างน้อย 1 ไฟล์"));
             return;
         }
-        const ids = quotes.map(q => q._id).filter(Boolean);
         try {
             const res = await fetch("/api/quote/request", {
                 method: "POST",
@@ -330,7 +361,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         new Set(dbMaterials.map((m: any) => m.technology?.toLowerCase()).filter(Boolean))
     ).map((tech: any) => ({ id: tech, name: tech.toUpperCase() }));
 
-    const totalPrice = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
+    const selectedQuotes = quotes.filter(q => selectedIds.has(q._id));
+    const totalPrice = selectedQuotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
     const vat = totalPrice * 0.07;
 
     const deliveryConfig: Record<string, { label: string; days: string; price: number }> = {
@@ -359,11 +391,23 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                 {/* 3.1 SIDEBAR: Files */}
                 <aside className="flex flex-col overflow-hidden" style={{ backgroundColor: bgSidebar, borderRight: `1px solid ${lineBorder}` }}>
                     <div className="p-4 bg-white" style={{ borderBottom: `1px solid ${lineBorder}` }}>
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="text-[11px] font-black text-slate-300 uppercase tracking-widest">{t.quote.filesLabel} · {quotes.length}</div>
-                            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 px-2 py-1 text-[10px] bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold transition-all">
-                                <Plus className="w-3 h-3" /> {t.quote.addFile}
-                            </button>
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="text-[11px] font-black text-slate-300 uppercase tracking-widest">
+                                {t.quote.filesLabel} · <span className="text-blue-500">{selectedIds.size}</span>/{quotes.length}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                {quotes.length > 0 && (
+                                    <button
+                                        onClick={toggleSelectAll}
+                                        className="text-[9px] font-black px-2 py-1 border border-slate-200 rounded text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all uppercase tracking-wider"
+                                    >
+                                        {allSelected ? "ยกเลิก" : "เลือกทั้งหมด"}
+                                    </button>
+                                )}
+                                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 px-2 py-1 text-[10px] bg-white border border-slate-200 rounded hover:bg-slate-50 text-slate-700 font-bold transition-all">
+                                    <Plus className="w-3 h-3" /> {t.quote.addFile}
+                                </button>
+                            </div>
                             <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} accept=".stl,.3mf,.obj,.step,.stp" />
                         </div>
                         <button onClick={() => fileInputRef.current?.click()} className="w-full py-8 px-3 border-[1.5px] border-dashed border-slate-200 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-50 text-slate-400 transition-all hover:border-slate-300">
@@ -373,21 +417,36 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-2">
-                        {quotes.map(q => (
-                            <div key={q._id} onClick={() => setActiveId(q._id)} className={cn("flex items-center gap-3 p-3 cursor-pointer rounded-xl border transition-all group relative", activeId === q._id ? "bg-white border-slate-200 shadow-lg shadow-slate-100 ring-1 ring-slate-100" : "border-transparent hover:bg-slate-50")}>
-                                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border transition-all", activeId === q._id ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-300")}>
-                                    <Layers className="w-5 h-5" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className={cn("text-[13px] font-black truncate", activeId === q._id ? "text-slate-900" : "text-slate-500")}>{q.originalName}</div>
-                                    <div className="text-[10px] font-mono text-slate-400 mt-1 flex items-center gap-1.5 font-bold uppercase">
-                                        <span className={cn("w-1.5 h-1.5 rounded-full", activeId === q._id ? "bg-green-500" : "bg-slate-200")}></span>
-                                        {q.volumeCm3?.toFixed(1) || "-"} cm³ · ×{q.quantity || 1}
+                        {quotes.map(q => {
+                            const isSelected = selectedIds.has(q._id);
+                            return (
+                                <div key={q._id} onClick={() => setActiveId(q._id)} className={cn("flex items-center gap-2.5 p-3 cursor-pointer rounded-xl border transition-all group relative", activeId === q._id ? "bg-white border-slate-200 shadow-lg shadow-slate-100 ring-1 ring-slate-100" : "border-transparent hover:bg-slate-50")}>
+                                    {/* Checkbox */}
+                                    <button
+                                        onClick={(e) => toggleSelect(q._id, e)}
+                                        className={cn(
+                                            "w-5 h-5 rounded-[5px] border-2 shrink-0 flex items-center justify-center transition-all",
+                                            isSelected
+                                                ? "bg-blue-600 border-blue-600"
+                                                : "border-slate-300 bg-white hover:border-blue-400"
+                                        )}
+                                    >
+                                        {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                    </button>
+                                    <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border transition-all", activeId === q._id ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-300")}>
+                                        <Layers className="w-4 h-4" />
                                     </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className={cn("text-[12px] font-black truncate", activeId === q._id ? "text-slate-900" : isSelected ? "text-slate-700" : "text-slate-400")}>{q.originalName}</div>
+                                        <div className="text-[10px] font-mono text-slate-400 mt-0.5 flex items-center gap-1.5 font-bold uppercase">
+                                            <span className={cn("w-1.5 h-1.5 rounded-full", isSelected ? "bg-blue-500" : "bg-slate-200")}></span>
+                                            {q.volumeCm3?.toFixed(1) || "-"} cm³ · ×{q.quantity || 1}
+                                        </div>
+                                    </div>
+                                    <button onClick={(e) => { e.stopPropagation(); deleteQuote(q._id); }} className="p-1.5 text-slate-200 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-3.5 h-3.5" /></button>
                                 </div>
-                                <button onClick={(e) => { e.stopPropagation(); deleteQuote(q._id); }} className="p-1.5 text-slate-200 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-3.5 h-3.5" /></button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="p-4 bg-white flex items-center gap-2 text-[10px] text-slate-300 font-bold uppercase tracking-tighter" style={{ borderTop: `1px solid ${lineBorder}` }}>
                         <Lock className="w-3.5 h-3.5" /> {t.quote.sslNote}
@@ -741,7 +800,10 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                     
                     <div className="flex-1 overflow-y-auto no-scrollbar">
                         <div className="p-3 space-y-3">
-                            {quotes.map(q => (
+                            {selectedQuotes.length === 0 && (
+                                <div className="text-center py-6 text-[11px] text-slate-300 font-bold uppercase tracking-widest">ยังไม่ได้เลือกไฟล์</div>
+                            )}
+                            {selectedQuotes.map(q => (
                                 <div key={q._id} className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                                     <div className="flex justify-between items-start">
                                         <div className="min-w-0 pr-2">
