@@ -50,13 +50,19 @@ export async function POST(req: NextRequest) {
         const filePath = path.join(uploadDir, fileName);
         await fs.writeFile(filePath, buffer);
 
+        // โหลด MaterialConfig สำหรับ supportSettings และ pricing
+        const MaterialConfig = require("@/models/MaterialConfig").default;
+        const defaultMat = await MaterialConfig.findOne({ isActive: true }).sort({ createdAt: 1 });
+        const supportDensity = defaultMat?.supportSettings?.density ?? 15;
+        const supportAngle   = defaultMat?.supportSettings?.angle   ?? 45;
+
         console.log("3. Analyzing file...");
         const jobId = fileName.replace(/\.[^.]+$/, ""); // use uuid part as jobId
         const userIdForJob = (session?.user as any)?.id || session?.user?.email || "unknown";
         createJob(jobId, fileName, file.name, userIdForJob);
         let analysis;
         try {
-            analysis = await analyzeFile(filePath, 1.15, jobId);
+            analysis = await analyzeFile(filePath, 1.15, jobId, supportDensity, supportAngle);
             finishJob(jobId, true);
         } catch (slicerErr: any) {
             finishJob(jobId, false, slicerErr.message);
@@ -66,13 +72,13 @@ export async function POST(req: NextRequest) {
         console.log("4. Uploading to Cloudflare R2...");
         let r2FileUrl = null;
         let r2Key = null;
-        
+
         try {
             r2Key = `3d-prints/${fileName}`;
 
             // Read file buffer again for upload
             const fileData = await fs.readFile(filePath);
-            
+
             await r2Client.send(
                 new PutObjectCommand({
                     Bucket: R2_BUCKET_NAME,
@@ -81,10 +87,10 @@ export async function POST(req: NextRequest) {
                     ContentType: "application/octet-stream",
                 })
             );
-            
+
             // If custom domain exists, use it. Otherwise use generic public bucket URL template
             r2FileUrl = R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${r2Key}` : `https://pub-xxxxxx.r2.dev/${r2Key}`;
-            
+
         } catch (r2Error: any) {
             console.error("R2 Upload Failed:", r2Error.message || r2Error);
         }
@@ -110,9 +116,7 @@ export async function POST(req: NextRequest) {
             console.warn("Failed to delete local temp file:", err);
         }
 
-        // Dynamic price calculation using MaterialConfig (สูตรที่ 3: วัสดุ + เวลา + setup)
-        const MaterialConfig = require("@/models/MaterialConfig").default;
-        const defaultMat = await MaterialConfig.findOne({ isActive: true }).sort({ createdAt: 1 });
+        // Dynamic price calculation using defaultMat (already loaded above)
         let selTech = "sla";
         let selMat = "";
         let selColor = "ขาวด้าน (Matte White)";

@@ -21,6 +21,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
     sdsLink: "",
     maxPrintSize: { width: 0, length: 0, height: 0 },
     pricing: { costPerGram: 0, sellPerGram: 0, costPerMinute: 0, sellPerMinute: 0 },
+    supportSettings: { density: 15, angle: 45 },
     colors: "",
     colorOptions: [] as { name: string, hex: string }[],
     postProcessing: [] as { name: string, costPrice: number, sellPrice: number }[]
@@ -33,6 +34,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       technology: "SLA", name: "", description: "", tdsLink: "", sdsLink: "",
       maxPrintSize: { width: 0, length: 0, height: 0 },
       pricing: { costPerGram: 0, sellPerGram: 0, costPerMinute: 0, sellPerMinute: 0 },
+      supportSettings: { density: 15, angle: 45 },
       colors: "", colorOptions: [], postProcessing: []
     });
     setEditingId(null);
@@ -48,6 +50,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       sdsLink: m.sdsLink || "",
       maxPrintSize: m.maxPrintSize || { width: 0, length: 0, height: 0 },
       pricing: m.pricing || { costPerGram: 0, sellPerGram: 0, costPerMinute: 0, sellPerMinute: 0 },
+      supportSettings: m.supportSettings || { density: 15, angle: 45 },
       colors: m.colors ? m.colors.join(", ") : "",
       colorOptions: m.colorOptions && m.colorOptions.length > 0 ? m.colorOptions : (m.colors || []).map((c: string) => ({ name: c, hex: "#ffffff" })),
       postProcessing: m.postProcessing || []
@@ -365,6 +368,45 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
                               <span className="text-[10px] font-bold text-slate-500">ขาย (Sell)</span>
                               <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">฿</span><input type="number" value={formData.pricing.sellPerMinute} onChange={e => setFormData({...formData, pricing: {...formData.pricing, sellPerMinute: Number(e.target.value)}})} className="w-full pl-8 pr-3 py-1.5 text-sm font-black text-emerald-600 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none" /></div>
                            </div>
+                       </div>
+                    </div>
+                 </section>
+
+                 {/* Support Settings */}
+                 <section className="space-y-4">
+                    <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 flex items-center gap-2">
+                       <span className="text-slate-400">⚙</span> ตั้งค่า Support (PrusaSlicer)
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                             Support Density (%)
+                          </label>
+                          <div className="flex items-center gap-2">
+                             <input
+                                type="range" min="5" max="100" step="5"
+                                value={formData.supportSettings.density}
+                                onChange={e => setFormData({...formData, supportSettings: {...formData.supportSettings, density: Number(e.target.value)}})}
+                                className="flex-1 accent-blue-600"
+                             />
+                             <span className="text-sm font-black text-blue-600 w-10 text-right">{formData.supportSettings.density}%</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400">ความหนาแน่นของ support (ค่ามาก = แน่น = ใช้วัสดุมากขึ้น)</p>
+                       </div>
+                       <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                             Support Angle (°)
+                          </label>
+                          <div className="flex items-center gap-2">
+                             <input
+                                type="range" min="0" max="90" step="5"
+                                value={formData.supportSettings.angle}
+                                onChange={e => setFormData({...formData, supportSettings: {...formData.supportSettings, angle: Number(e.target.value)}})}
+                                className="flex-1 accent-blue-600"
+                             />
+                             <span className="text-sm font-black text-blue-600 w-10 text-right">{formData.supportSettings.angle}°</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400">มุมชิ้นงานที่ต้องการ support (น้อย = support เยอะ)</p>
                        </div>
                     </div>
                  </section>

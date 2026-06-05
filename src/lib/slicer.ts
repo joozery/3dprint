@@ -47,17 +47,21 @@ async function runInfo(filePath: string): Promise<{
     };
 }
 
-async function runSlice(filePath: string, withSupport: boolean): Promise<{
-    printTime: string;
-    filamentCm3: number;
-}> {
+async function runSlice(
+    filePath: string,
+    withSupport: boolean,
+    supportDensity = 15,
+    supportAngle = 45
+): Promise<{ printTime: string; filamentCm3: number }> {
     const tempGcode = path.join(process.cwd(), "tmp", `slice_${Date.now()}.gcode`);
     const tmpDir = path.dirname(tempGcode);
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
-    const supportFlag = withSupport ? "--support-material" : "";
+    const supportFlags = withSupport
+        ? `--support-material --support-material-buildplate-only 0 --support-material-threshold ${supportAngle} --support-material-density ${supportDensity}`
+        : "";
     await execPromise(
-        `"${PRUSA_SLICER_PATH}" --export-gcode ${supportFlag} --output "${tempGcode}" "${filePath}" 2>&1`
+        `"${PRUSA_SLICER_PATH}" --export-gcode ${supportFlags} --output "${tempGcode}" "${filePath}" 2>&1`
     );
 
     const gcode = await fs.promises.readFile(tempGcode, "utf-8");
@@ -75,7 +79,9 @@ async function runSlice(filePath: string, withSupport: boolean): Promise<{
 export async function analyzeFile(
     filePath: string,
     densityGPerCm3 = 1.15,
-    jobId?: string
+    jobId?: string,
+    supportDensity = 15,
+    supportAngle = 45
 ): Promise<SlicerResult> {
     console.log(`[SLICER] Analyzing: ${filePath}`);
 
@@ -94,16 +100,16 @@ export async function analyzeFile(
 
         // Step 2: Slice ไม่มี support → เวลาพิมพ์
         if (jobId) updateJob(jobId, { status: "processing", step: "Slice ไม่มี support" });
-        const sliceNoSupport = await runSlice(filePath, false);
+        const sliceNoSupport = await runSlice(filePath, false, supportDensity, supportAngle);
 
         // Step 3: Slice มี support → filament รวม support
-        if (jobId) updateJob(jobId, { status: "processing", step: "Slice พร้อม support" });
+        if (jobId) updateJob(jobId, { status: "processing", step: `Slice พร้อม support (${supportDensity}% / ${supportAngle}°)` });
         let sliceWithSupport = sliceNoSupport;
         let needsSupport = false;
         let supportVolumeCm3 = 0;
 
         try {
-            sliceWithSupport = await runSlice(filePath, true);
+            sliceWithSupport = await runSlice(filePath, true, supportDensity, supportAngle);
             const diff = sliceWithSupport.filamentCm3 - sliceNoSupport.filamentCm3;
             supportVolumeCm3 = Math.max(0, diff);
             needsSupport = supportVolumeCm3 > 0.01;

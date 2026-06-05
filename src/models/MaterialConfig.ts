@@ -29,6 +29,10 @@ const MaterialConfigSchema = new mongoose.Schema({
     hex: { type: String, required: true }
   }],
   postProcessing: [PostProcessingSchema],
+  supportSettings: {
+    density: { type: Number, default: 15 },  // % เช่น 15
+    angle:   { type: Number, default: 45 },  // องศา เช่น 45
+  },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
