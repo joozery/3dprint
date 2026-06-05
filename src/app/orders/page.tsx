@@ -1,9 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
-import Quote from "@/models/Quote";
+import Order from "@/models/Order";
 import { redirect } from "next/navigation";
-import { History, ListFilter, Download, Search } from "lucide-react";
 import Link from "next/link";
 
 // Sub Components
@@ -23,9 +22,11 @@ export default async function OrdersPage() {
     redirect("/login");
   }
 
-  // Fetch true data - All orders instead of limited
-  const rawQuotes = await Quote.find({ userId: (session.user as any)?.id }).sort({ createdAt: -1 });
-  const allQuotes = JSON.parse(JSON.stringify(rawQuotes));
+  const rawOrders = await Order.find({ userId: (session.user as any)?.id })
+    .populate("quotes")
+    .sort({ createdAt: -1 })
+    .lean();
+  const allOrders = JSON.parse(JSON.stringify(rawOrders));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans relative overflow-hidden">
@@ -59,14 +60,14 @@ export default async function OrdersPage() {
 
             {/* ── All Orders Table ── */}
             <div className="mb-6">
-                <OrderHistoryTable quotes={allQuotes} />
+                <OrderHistoryTable orders={allOrders} />
             </div>
 
             {/* Pagination Mockup */}
-            {allQuotes.length > 0 && (
+            {allOrders.length > 0 && (
                 <div className="flex justify-between items-center bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm">
                     <div className="text-sm font-medium text-slate-500">
-                        Showing <span className="font-bold text-slate-800">1</span> to <span className="font-bold text-slate-800">{allQuotes.length}</span> of <span className="font-bold text-slate-800">{allQuotes.length}</span> results
+                        Showing <span className="font-bold text-slate-800">1</span> to <span className="font-bold text-slate-800">{allOrders.length}</span> of <span className="font-bold text-slate-800">{allOrders.length}</span> results
                     </div>
                     <div className="flex gap-2">
                         <button className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-400 bg-slate-50 opacity-50 cursor-not-allowed">Previous</button>

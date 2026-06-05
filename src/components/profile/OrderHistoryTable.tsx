@@ -1,46 +1,56 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Package, Truck, CheckCircle2, Circle } from "lucide-react";
+import { ChevronDown, ChevronUp, Package, CheckCircle2, ExternalLink, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface OrderHistoryTableProps {
-    quotes: any[];
+    orders: any[];
 }
 
-export function OrderHistoryTable({ quotes }: OrderHistoryTableProps) {
+const TRACKING_URL: Record<string, (n: string) => string> = {
+    FlashExpressA: (n) => `https://www.flashexpress.co.th/tracking/?se=${n}`,
+    Kerry:         (n) => `https://th.kerryexpress.com/en/track/?track=${n}`,
+    ThaiPost:      (n) => `https://track.thailandpost.co.th/?trackNumber=${n}`,
+    DHL:           (n) => `https://www.dhl.com/th-th/home/tracking.html?tracking-id=${n}`,
+};
+
+const COURIER_NAME: Record<string, string> = {
+    FlashExpressA: "Flash Express",
+    Kerry:         "Kerry Express",
+    ThaiPost:      "ไปรษณีย์ไทย (EMS)",
+    DHL:           "DHL",
+};
+
+const STATUS_STEPS = [
+    { key: "pending_payment", label: "รอชำระเงิน" },
+    { key: "processing",      label: "ดำเนินการ" },
+    { key: "printing",        label: "กำลังพิมพ์" },
+    { key: "shipped",         label: "จัดส่งแล้ว" },
+    { key: "delivered",       label: "ส่งถึงแล้ว" },
+];
+
+function getStep(status: string): number {
+    const idx = STATUS_STEPS.findIndex(s => s.key === status);
+    return idx >= 0 ? idx + 1 : 1;
+}
+
+function getStatusBadge(status: string) {
+    switch (status) {
+        case "pending_payment": return { label: "รอชำระเงิน",  cls: "bg-amber-50 text-amber-600 border-amber-200" };
+        case "processing":      return { label: "ดำเนินการ",   cls: "bg-blue-50 text-blue-600 border-blue-200" };
+        case "printing":        return { label: "กำลังพิมพ์",  cls: "bg-indigo-50 text-indigo-600 border-indigo-200" };
+        case "shipped":         return { label: "จัดส่งแล้ว",  cls: "bg-emerald-50 text-emerald-600 border-emerald-200" };
+        case "delivered":       return { label: "ส่งถึงแล้ว",  cls: "bg-green-50 text-green-700 border-green-200" };
+        case "cancelled":       return { label: "ยกเลิก",       cls: "bg-red-50 text-red-600 border-red-200" };
+        default:                return { label: status,          cls: "bg-slate-50 text-slate-500 border-slate-200" };
+    }
+}
+
+export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    const stepLabels = [
-        "รับออเดอร์",
-        "เตรียมไฟล์",
-        "กำลังพิมพ์",
-        "ตรวจสอบคุณภาพ",
-        "บรรจุหีบห่อ",
-        "จัดส่งแล้ว"
-    ];
-
-    const steps = [1, 2, 3, 4, 5, 6];
-    
-    const getStatusStep = (status: string) => {
-        switch (status) {
-            case 'pending': return 2;
-            case 'printing': return 3;
-            case 'quality_check': return 4;
-            case 'packing': return 5;
-            case 'shipped': return 6;
-            case 'ordered': return 2;
-            default: return 3;
-        }
-    };
-
-    const getStatusLabel = (step: number) => {
-        if (step >= 6) return "จัดส่ง";
-        if (step >= 3) return "พิมพ์";
-        return "รอดำเนินการ";
-    };
-
-    if (quotes.length === 0) {
+    if (orders.length === 0) {
         return (
             <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
                 <Package className="w-12 h-12 text-slate-200 mx-auto mb-4" />
@@ -54,124 +64,179 @@ export function OrderHistoryTable({ quotes }: OrderHistoryTableProps) {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             {/* Desktop Header */}
             <div className="hidden md:flex items-center px-6 py-4 bg-white border-b border-slate-100 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                <div className="w-[30%]">ใบสั่งซื้อ</div>
-                <div className="w-[15%]">วันที่</div>
+                <div className="w-[28%]">คำสั่งซื้อ</div>
+                <div className="w-[14%]">วันที่</div>
                 <div className="w-[10%] text-center">รายการ</div>
-                <div className="w-[30%] text-center">สถานะ</div>
-                <div className="w-[15%] text-right pr-4">รวม</div>
+                <div className="w-[28%] text-center">สถานะ</div>
+                <div className="w-[20%] text-right pr-4">รวม</div>
             </div>
 
             <div className="divide-y divide-slate-100">
-                {quotes.map((q) => {
-                    const currentStep = getStatusStep(q.status);
-                    const isExpanded = expandedId === q._id;
-                    const orderId = q.quoteNumber || `PMD-${new Date(q.createdAt).getFullYear()}-${q._id.toString().slice(-4).toUpperCase()}`;
+                {orders.map((order) => {
+                    const currentStep = getStep(order.status);
+                    const isExpanded  = expandedId === order._id;
+                    const badge       = getStatusBadge(order.status);
+                    const quotes      = order.quotes as any[] || [];
+                    const trackingUrl = order.trackingNumber && order.ishipCourierCode
+                        ? TRACKING_URL[order.ishipCourierCode]?.(order.trackingNumber)
+                        : null;
 
                     return (
-                        <div key={q._id} className="group transition-all">
-                            <div 
-                                onClick={() => setExpandedId(isExpanded ? null : q._id)}
+                        <div key={order._id} className="group transition-all">
+                            <div
+                                onClick={() => setExpandedId(isExpanded ? null : order._id)}
                                 className={cn(
                                     "flex flex-col md:flex-row md:items-center px-6 py-5 cursor-pointer hover:bg-slate-50/50 transition-colors",
                                     isExpanded && "bg-slate-50/80"
                                 )}
                             >
                                 {/* 1. Order ID & Tracking */}
-                                <div className="w-full md:w-[30%] mb-3 md:mb-0">
-                                    <div className="text-[13px] font-black text-slate-900 tracking-tight">{orderId}</div>
-                                    {q.trackingNumber && (
-                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                                            หมายเลขติดตาม: {q.trackingNumber}
+                                <div className="w-full md:w-[28%] mb-3 md:mb-0">
+                                    <div className="text-[13px] font-black text-slate-900 tracking-tight">
+                                        {order.orderNumber}
+                                    </div>
+                                    {order.trackingNumber ? (
+                                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                            <Truck size={10} className="text-slate-400 shrink-0" />
+                                            <span className="text-[10px] font-bold text-slate-500 font-mono">
+                                                {order.trackingNumber}
+                                            </span>
+                                            {order.ishipCourierCode && (
+                                                <span className="text-[9px] text-slate-400">
+                                                    · {COURIER_NAME[order.ishipCourierCode] || order.ishipCourierCode}
+                                                </span>
+                                            )}
+                                            {trackingUrl && (
+                                                <a
+                                                    href={trackingUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    onClick={e => e.stopPropagation()}
+                                                    className="text-[9px] text-blue-500 hover:underline flex items-center gap-0.5"
+                                                >
+                                                    <ExternalLink size={8} /> ติดตาม
+                                                </a>
+                                            )}
                                         </div>
+                                    ) : (
+                                        <div className="text-[10px] text-slate-300 mt-0.5">ยังไม่มีหมายเลขพัสดุ</div>
                                     )}
                                 </div>
 
                                 {/* 2. Date */}
-                                <div className="w-full md:w-[15%] mb-2 md:mb-0 text-[12px] font-bold text-slate-500 font-mono">
-                                    {new Date(q.createdAt).toISOString().split('T')[0]}
+                                <div className="w-full md:w-[14%] mb-2 md:mb-0 text-[12px] font-bold text-slate-500 font-mono">
+                                    {new Date(order.createdAt).toISOString().split("T")[0]}
                                 </div>
 
                                 {/* 3. Items Count */}
                                 <div className="w-full md:w-[10%] mb-4 md:mb-0 text-center text-[12px] font-black text-slate-600">
                                     <span className="md:hidden text-slate-400 mr-2">รายการ:</span>
-                                    1
+                                    {quotes.length}
                                 </div>
 
                                 {/* 4. Status Stepper */}
-                                <div className="w-full md:w-[30%] mb-4 md:mb-0 flex items-center justify-center gap-1.5">
-                                    <div className="flex items-center gap-0.5">
-                                        {steps.map((s, idx) => (
-                                            <React.Fragment key={s}>
-                                                <div className="relative group/step">
-                                                    {/* Tooltip Popup */}
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[9px] font-black rounded shadow-lg opacity-0 group-hover/step:opacity-100 transition-all pointer-events-none whitespace-nowrap z-30 translate-y-1 group-hover/step:translate-y-0">
-                                                        {stepLabels[s-1]}
-                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-[4px] border-transparent border-t-slate-900"></div>
-                                                    </div>
-
-                                                    <div 
-                                                        className={cn(
-                                                            "w-5 h-5 rounded-full border flex items-center justify-center text-[9px] font-black transition-all",
-                                                            s < currentStep 
-                                                                ? "bg-blue-600 border-blue-600 text-white shadow-sm" 
-                                                                : s === currentStep
-                                                                ? "bg-white border-blue-600 text-blue-600 ring-4 ring-blue-50"
+                                <div className="w-full md:w-[28%] mb-4 md:mb-0 flex items-center justify-center gap-2">
+                                    {order.status === "cancelled" ? (
+                                        <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-full border", badge.cls)}>
+                                            {badge.label}
+                                        </span>
+                                    ) : (
+                                        <div className="flex items-center gap-0.5">
+                                            {STATUS_STEPS.map((s, idx) => {
+                                                const stepNum = idx + 1;
+                                                const done    = stepNum < currentStep;
+                                                const active  = stepNum === currentStep;
+                                                return (
+                                                    <React.Fragment key={s.key}>
+                                                        <div className="relative group/step">
+                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[9px] font-black rounded shadow-lg opacity-0 group-hover/step:opacity-100 transition-all pointer-events-none whitespace-nowrap z-30">
+                                                                {s.label}
+                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-[4px] border-transparent border-t-slate-900" />
+                                                            </div>
+                                                            <div className={cn(
+                                                                "w-5 h-5 rounded-full border flex items-center justify-center text-[9px] font-black transition-all",
+                                                                done   ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                                                                : active ? "bg-white border-blue-600 text-blue-600 ring-4 ring-blue-50"
                                                                 : "bg-white border-slate-200 text-slate-300"
+                                                            )}>
+                                                                {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : stepNum}
+                                                            </div>
+                                                        </div>
+                                                        {idx < STATUS_STEPS.length - 1 && (
+                                                            <div className={cn("w-3 h-[1.5px]", done ? "bg-blue-600" : "bg-slate-200")} />
                                                         )}
-                                                    >
-                                                        {s < currentStep ? <CheckCircle2 className="w-3.5 h-3.5" /> : s}
-                                                    </div>
-                                                </div>
-                                                {idx < steps.length - 1 && (
-                                                    <div className={cn("w-3 h-[1.5px]", s < currentStep ? "bg-blue-600" : "bg-slate-200")} />
-                                                )}
-                                            </React.Fragment>
-                                        ))}
-                                    </div>
-                                    <span className="ml-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        {getStatusLabel(currentStep)}
+                                                    </React.Fragment>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    <span className="ml-2 text-[10px] font-black uppercase tracking-widest" style={{ color: badge.cls.includes("emerald") || badge.cls.includes("green") ? "#059669" : badge.cls.includes("blue") ? "#2563eb" : badge.cls.includes("indigo") ? "#4f46e5" : "#94a3b8" }}>
+                                        {badge.label}
                                     </span>
                                 </div>
 
                                 {/* 5. Price & Expand */}
-                                <div className="w-full md:w-[15%] flex items-center justify-end gap-3 pr-2">
+                                <div className="w-full md:w-[20%] flex items-center justify-end gap-3 pr-2">
                                     <div className="text-[14px] font-black text-slate-900 font-mono tracking-tighter">
-                                        ฿{(q.priceDetail?.totalPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        ฿{(order.pricing?.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
-                                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-300" /> : <ChevronDown className="w-4 h-4 text-slate-300" />}
+                                    {isExpanded
+                                        ? <ChevronUp className="w-4 h-4 text-slate-300" />
+                                        : <ChevronDown className="w-4 h-4 text-slate-300" />}
                                 </div>
                             </div>
 
                             {/* Expanded Details */}
                             {isExpanded && (
-                                <div className="px-6 py-6 bg-slate-50/30 border-t border-slate-100 animate-in slide-in-from-top-2 duration-300">
-                                    <div className="flex gap-6">
-                                        <div className="w-20 h-20 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm shrink-0">
-                                            <Package className="w-8 h-8 text-slate-200" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <div className="text-[13px] font-black text-slate-800">{q.originalName}</div>
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">
-                                                        {q.technology} · {q.material} · {q.color}
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">ราคาประเมิน</div>
-                                                    <div className="text-[12px] font-black text-slate-900">฿{(q.priceDetail?.totalPrice || 0).toLocaleString()}</div>
-                                                </div>
+                                <div className="px-6 py-5 bg-slate-50/40 border-t border-slate-100 animate-in slide-in-from-top-2 duration-200 space-y-3">
+                                    {/* Shipping info */}
+                                    {order.trackingNumber && (
+                                        <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                                            <Truck size={14} className="text-emerald-600 shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">จัดส่งโดย {COURIER_NAME[order.ishipCourierCode] || order.ishipCourierCode}</p>
+                                                <p className="text-sm font-black text-slate-800 font-mono select-all">{order.trackingNumber}</p>
                                             </div>
-                                            <div className="flex gap-3 mt-4">
-                                                <button className="px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest shadow-sm">
-                                                    ดูโมเดล 3D
-                                                </button>
-                                                <button className="px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all uppercase tracking-widest shadow-sm">
-                                                    ดาวน์โหลดใบเสนอราคา
-                                                </button>
+                                            {trackingUrl && (
+                                                <a
+                                                    href={trackingUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    onClick={e => e.stopPropagation()}
+                                                    className="flex items-center gap-1 text-xs text-blue-600 font-bold hover:underline whitespace-nowrap"
+                                                >
+                                                    <ExternalLink size={12} /> ติดตามพัสดุ
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Quote items */}
+                                    {quotes.map((q: any) => (
+                                        <div key={q._id} className="flex gap-4">
+                                            <div className="w-16 h-16 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm shrink-0">
+                                                <Package className="w-7 h-7 text-slate-200" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[13px] font-black text-slate-800 truncate">{q.originalName}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">
+                                                    {[q.technology, q.material, q.color].filter(Boolean).join(" · ")}
+                                                </p>
+                                                <p className="text-[11px] font-black text-slate-700 mt-1">
+                                                    ฿{(q.priceDetail?.totalPrice || 0).toLocaleString()}
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
+                                    ))}
+
+                                    {/* Address */}
+                                    {order.shippingAddress && (
+                                        <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+                                            <span className="font-bold text-slate-600">{order.shippingAddress.fullName}</span>
+                                            {" · "}
+                                            {[order.shippingAddress.address, order.shippingAddress.subDistrict, order.shippingAddress.district, order.shippingAddress.province, order.shippingAddress.zipCode].filter(Boolean).join(", ")}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

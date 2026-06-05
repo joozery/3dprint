@@ -211,7 +211,6 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                                         <option value="FlashExpressA">Flash Express</option>
                                         <option value="Kerry">Kerry Express</option>
                                         <option value="ThaiPost">ไปรษณีย์ไทย (EMS)</option>
-                                        <option value="Ninja">Ninja Van</option>
                                         <option value="DHL">DHL</option>
                                     </select>
                                     <p className="text-[10px] text-slate-400 mt-1">* ราคาค่าส่งไม่พบ — อาจเนื่องจากที่อยู่ไม่ครบ</p>

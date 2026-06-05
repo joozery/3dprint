@@ -15,7 +15,6 @@ export const COURIERS = [
     { code: "FlashExpressA", name: "Flash Express",    logo: "/shipping/flashexpress.png" },
     { code: "Kerry",         name: "Kerry Express",    logo: "/shipping/kerryexpress.png" },
     { code: "ThaiPost",      name: "ไปรษณีย์ไทย (EMS)", logo: "/shipping/ems.jpeg" },
-    { code: "Ninja",         name: "Ninja Van",        logo: "/shipping/ninja.png" },
     { code: "DHL",           name: "DHL",              logo: "/shipping/dhl.png" },
 ];
 
