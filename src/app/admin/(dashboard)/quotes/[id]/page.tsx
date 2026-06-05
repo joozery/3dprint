@@ -86,9 +86,11 @@ export default async function AdminQuoteViewPage({ params }: { params: Promise<{
                 {/* From (us) */}
                 <div className="space-y-1">
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">ผู้ออกใบเสนอราคา / From</p>
-                    <p className="text-xs font-black text-slate-900">PDM 3D Print Thailand</p>
-                    <p className="text-[11px] text-slate-600 leading-snug max-w-[250px]">โครงการ 3D Printing Service สำหรับงานอุตสาหกรรมและต้นแบบ</p>
-                    <p className="text-[11px] text-slate-600 leading-snug max-w-[250px] mt-1">123 ถนนตัวอย่าง แขวงจำลอง<br/>เขตสมมติ กรุงเทพมหานคร 10000</p>
+                    <p className="text-xs font-black text-slate-900">บริษัท เซปทิลเลียน จำกัด</p>
+                    <p className="text-[11px] text-slate-600 leading-snug max-w-[250px] mt-1">
+                        388/13-14 บีอเวนิว ถ.ราชพฤกษ์<br/>บางแวก ภาษีเจริญ กทม. 10160
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-1">เลขประจำตัวผู้เสียภาษี 0105556031281</p>
                 </div>
 
                 {/* To (customer) */}

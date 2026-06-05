@@ -103,13 +103,13 @@ export default async function QuoteViewPage({
                 {/* From (us) */}
                 <div className="space-y-1">
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{isEng ? 'From' : 'ผู้ออกใบเสนอราคา / From'}</p>
-                    <p className="text-xs font-black text-slate-900">PDM 3D Print Thailand</p>
-                    <p className="text-[11px] text-slate-600 leading-snug max-w-[250px]">
-                        {isEng ? '3D Printing Service for Industry and Prototyping' : 'โครงการ 3D Printing Service สำหรับงานอุตสาหกรรมและต้นแบบ'}
-                    </p>
+                    <p className="text-xs font-black text-slate-900">บริษัท เซปทิลเลียน จำกัด</p>
                     <p className="text-[11px] text-slate-600 leading-snug max-w-[250px] mt-1">
-                        {isEng ? '123 Example Street, Mock Sub-district' : '123 ถนนตัวอย่าง แขวงจำลอง'}<br/>
-                        {isEng ? 'Mock District, Bangkok 10000' : 'เขตสมมติ กรุงเทพมหานคร 10000'}
+                        388/13-14 บีอเวนิว ถ.ราชพฤกษ์<br/>
+                        บางแวก ภาษีเจริญ กทม. 10160
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                        เลขประจำตัวผู้เสียภาษี 0105556031281
                     </p>
                 </div>
 
