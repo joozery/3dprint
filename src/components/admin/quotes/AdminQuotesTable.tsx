@@ -2,7 +2,7 @@
 
 import { useTransition, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, RefreshCw, FileText, SlidersHorizontal, Loader2, Download, X, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, FileText, SlidersHorizontal, Loader2, Download, X, Package, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuoteFile {
@@ -64,6 +64,8 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
   const [isPending, startTransition] = useTransition();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [downloadPopup, setDownloadPopup] = useState<{ quoteNumber: string; files: QuoteFile[] } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; quoteNumber: string; fileCount: number } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -76,6 +78,22 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", p.toString());
     startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    setDeletingId(deleteConfirm.id);
+    try {
+      const res = await fetch(`/api/admin/quotes/${deleteConfirm.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("ลบไม่สำเร็จ");
+      toast.success(`ลบใบเสนอราคา ${deleteConfirm.quoteNumber} แล้ว (${deleteConfirm.fileCount} ไฟล์)`);
+      setDeleteConfirm(null);
+      router.refresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -152,6 +170,42 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
           <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
             <p className="text-[11px] text-slate-400">{downloadPopup.files.length} ไฟล์ในชุดนี้</p>
             <button onClick={() => setDownloadPopup(null)} className="px-4 py-1.5 text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors">ปิด</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Delete Confirmation Modal */}
+    {deleteConfirm && (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)}>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          <div className="p-6 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={28} className="text-red-500" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900 mb-1">ยืนยันการลบ?</h3>
+            <p className="text-sm text-slate-500 mb-1">
+              ใบเสนอราคา <span className="font-black text-slate-800">{deleteConfirm.quoteNumber}</span>
+            </p>
+            <p className="text-xs text-red-500 font-bold">
+              จะลบทั้งหมด {deleteConfirm.fileCount} ไฟล์ในชุดนี้ และไม่สามารถกู้คืนได้
+            </p>
+          </div>
+          <div className="flex gap-3 px-6 pb-6">
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50 transition-colors"
+            >
+              ยกเลิก
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={!!deletingId}
+              className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {deletingId ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              ลบทิ้ง
+            </button>
           </div>
         </div>
       </div>
@@ -336,6 +390,13 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                               <FileText size={12} strokeWidth={2.5} />
                               จัดการ
                             </a>
+                            <button
+                              onClick={() => setDeleteConfirm({ id: q._id, quoteNumber: q.quoteNumber || q._id, fileCount: q.fileCount || 1 })}
+                              title="ลบใบเสนอราคา"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-500 text-slate-400 hover:text-white transition-all shadow-sm"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                         </div>
                       </td>
                     </tr>
