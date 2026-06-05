@@ -7,6 +7,7 @@ import { ArrowLeft, Package, User as UserIcon, MapPin, CreditCard, Clock, CheckC
 import AdminSlipUploader from "@/components/admin/orders/AdminSlipUploader";
 import AdminOrderStatusSelect from "@/components/admin/orders/AdminOrderStatusSelect";
 import SlipViewerButton from "@/components/admin/orders/SlipViewerButton";
+import IShipPanel from "@/components/admin/orders/IShipPanel";
 
 // For typing purposes if needed
 const formatCur = (v: number) => Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -152,18 +153,25 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 </div>
             </div>
 
-            {/* Admin Internal tracking */}
-            {order.trackingNumber && (
-                <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-6 flex items-center gap-4">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
-                        <Package size={18} />
-                    </div>
-                    <div>
-                        <p className="text-xs font-semibold text-emerald-700 uppercase tracking-widest mb-0.5">Tracking Number</p>
-                        <p className="text-lg font-black text-slate-800">{order.trackingNumber}</p>
-                    </div>
-                </div>
-            )}
+            {/* iShip Shipping Panel */}
+            <IShipPanel
+                orderId={order._id.toString()}
+                shippingAddress={{
+                    zipCode:     order.shippingAddress?.zipCode     || "",
+                    province:    order.shippingAddress?.province    || "",
+                    district:    (order.shippingAddress as any)?.district    || "",
+                    subDistrict: (order.shippingAddress as any)?.subDistrict || "",
+                }}
+                quotesData={(quotes as any[]).map(q => ({
+                    weightGrams: q.weightGrams || 0,
+                    dimensions:  q.dimensions  || { x: 10, y: 10, z: 5 },
+                }))}
+                existing={{
+                    trackingNumber:   (order as any).trackingNumber   || "",
+                    ishipOrderId:     (order as any).ishipOrderId     || "",
+                    ishipCourierCode: (order as any).ishipCourierCode || "",
+                }}
+            />
 
         </div>
 
@@ -204,6 +212,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                         <p className="text-blue-600 font-medium pb-2 border-b border-slate-200">{order.shippingAddress.phone}</p>
                         <p className="pt-2 leading-relaxed">
                             {order.shippingAddress.address}<br/>
+                            {(order.shippingAddress as any).subDistrict ? `ต.${(order.shippingAddress as any).subDistrict} ` : ""}
+                            {(order.shippingAddress as any).district ? `อ.${(order.shippingAddress as any).district} ` : ""}
                             จ.{order.shippingAddress.province} {order.shippingAddress.zipCode}
                         </p>
                     </div>
