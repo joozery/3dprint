@@ -13,8 +13,11 @@ export interface SlicerJob {
   error?: string;
 }
 
-// In-memory store — resets on server restart, keeps last 200 jobs
-const jobs = new Map<string, SlicerJob>();
+// Global singleton — ทุก route handler ใช้ Map เดียวกันผ่าน globalThis
+// (module-level Map จะเป็นคนละ instance ใน Next.js App Router)
+const g = globalThis as typeof globalThis & { __slicerJobs?: Map<string, SlicerJob> };
+if (!g.__slicerJobs) g.__slicerJobs = new Map<string, SlicerJob>();
+const jobs = g.__slicerJobs;
 const MAX_JOBS = 200;
 
 export function createJob(
