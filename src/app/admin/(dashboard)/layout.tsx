@@ -6,6 +6,8 @@ import AdminTopbar from "@/components/admin/AdminTopbar";
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Admin Dashboard | PDM 3D Print",
   description: "ระบบจัดการหลังบ้าน PDM 3D Print Thailand",

@@ -46,7 +46,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
   // Addresses fallback (if user doesn't have it on profile, find from latest order/quote)
   const billing = user.billing || quotes.find((q: any) => q.billing?.firstName)?.billing || null;
-  const shipping = user.shippingAddress || orders.find((o: any) => o.shippingAddress?.fullName)?.shippingAddress || null;
+  const shipping = (user as any).shippingAddress || orders.find((o: any) => o.shippingAddress?.fullName)?.shippingAddress || null;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">

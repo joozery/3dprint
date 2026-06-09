@@ -61,7 +61,7 @@ const OrderSchema = new mongoose.Schema(
         // FedEx
         shippingProvider: {
             type: String,
-            enum: ["iship", "fedex"],
+            enum: ["iship", "fedex", "dhl"],
         },
         fedexServiceType: {
             type: String,
@@ -69,9 +69,21 @@ const OrderSchema = new mongoose.Schema(
         fedexLabelUrl: {
             type: String,
         },
+        // DHL Express
+        dhlProductCode: {
+            type: String,
+        },
+        dhlLabelBase64: {
+            type: String,
+        },
     },
     { timestamps: true }
 );
+
+OrderSchema.index({ status: 1 });
+OrderSchema.index({ "paymentDetails.status": 1, createdAt: -1 });
+OrderSchema.index({ userId: 1, createdAt: -1 });
+OrderSchema.index({ createdAt: -1 });
 
 // auto-increment หรือรหัส Orders รันออโต้
 OrderSchema.pre("validate", function (next: any) {
@@ -85,9 +97,4 @@ OrderSchema.pre("validate", function (next: any) {
     }
 });
 
-// แก้ปัญหา Next.js แคช Mongoose Model ในโหมด Dev
-if (mongoose.models.Order) {
-    delete mongoose.models.Order;
-}
-
-export default mongoose.models.Order || mongoose.model("Order", OrderSchema);
+export default (mongoose.models.Order as mongoose.Model<any>) || mongoose.model("Order", OrderSchema);

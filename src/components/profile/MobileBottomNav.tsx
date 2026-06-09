@@ -16,9 +16,12 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { signOut } from "next-auth/react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export function MobileBottomNav() {
     const pathname = usePathname();
+    const { t } = useLanguage();
+    const p = t.profile;
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/50 pb-safe shadow-[0_-4px_30px_rgba(0,0,0,0.05)] px-2 pb-2">
@@ -27,13 +30,13 @@ export function MobileBottomNav() {
                 {/* 1. Dashboard */}
                 <Link href="/profile" className={`flex flex-col items-center justify-center w-full h-12 gap-1 rounded-xl transition-all ${pathname === '/profile' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
                     <LayoutDashboard size={22} className={pathname === '/profile' ? 'scale-110' : ''} />
-                    <span className="text-[10px] font-bold">ภาพรวม</span>
+                    <span className="text-[10px] font-bold">{p.overview}</span>
                 </Link>
 
                 {/* 2. Orders */}
                 <Link href="/orders" className={`flex flex-col items-center justify-center w-full h-12 gap-1 rounded-xl transition-all ${pathname === '/orders' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
                     <History size={22} className={pathname === '/orders' ? 'scale-110' : ''} />
-                    <span className="text-[10px] font-bold">ออเดอร์</span>
+                    <span className="text-[10px] font-bold">{p.ordersNav}</span>
                 </Link>
 
                 {/* 3. Floating Action Button for Quote (Center) */}
@@ -53,7 +56,7 @@ export function MobileBottomNav() {
                     className="flex flex-col items-center justify-center w-full h-12 gap-1 rounded-xl text-slate-400 hover:text-slate-600 transition-all"
                 >
                     <Headset size={22} />
-                    <span className="text-[10px] font-bold">แชท LINE</span>
+                    <span className="text-[10px] font-bold">{p.lineChat}</span>
                 </a>
 
                 {/* 5. More Menu using Sheet */}
@@ -61,12 +64,12 @@ export function MobileBottomNav() {
                     <SheetTrigger asChild>
                         <button className="flex flex-col items-center justify-center w-full h-12 gap-1 rounded-xl text-slate-400 hover:text-slate-600 transition-all outline-none">
                             <Menu size={22} />
-                            <span className="text-[10px] font-bold">เมนูอื่นๆ</span>
+                            <span className="text-[10px] font-bold">{p.moreMenu}</span>
                         </button>
                     </SheetTrigger>
                     <SheetContent side="bottom" className="rounded-t-[2rem] px-6 py-8 pb-12 outline-none border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] h-[85vh] overflow-y-auto no-scrollbar">
                         <SheetHeader className="mb-6 text-left">
-                            <SheetTitle className="text-xl font-black text-slate-900">เมนูบัญชีและช่วยเหลือ</SheetTitle>
+                            <SheetTitle className="text-xl font-black text-slate-900">{p.accountAndHelp}</SheetTitle>
                         </SheetHeader>
                         
                         <div className="space-y-6">
@@ -77,7 +80,7 @@ export function MobileBottomNav() {
                                         <div className="p-2.5 bg-white rounded-xl shadow-sm text-slate-500">
                                             <FileText size={20} className="text-amber-500" />
                                         </div>
-                                        <span className="font-bold text-sm text-slate-700">ใบแจ้งหนี้ / ประวัติชำระเงิน</span>
+                                        <span className="font-bold text-sm text-slate-700">{p.invoiceHistory}</span>
                                     </div>
                                     <ChevronRight size={18} className="text-slate-300" />
                                 </Link>
@@ -87,7 +90,7 @@ export function MobileBottomNav() {
                                         <div className="p-2.5 bg-white rounded-xl shadow-sm text-slate-500">
                                             <Settings size={20} className="text-slate-700" />
                                         </div>
-                                        <span className="font-bold text-sm text-slate-700">ตั้งค่าบัญชีส่วนตัว</span>
+                                        <span className="font-bold text-sm text-slate-700">{p.accountSettings}</span>
                                     </div>
                                     <ChevronRight size={18} className="text-slate-300" />
                                 </Link>
@@ -97,7 +100,7 @@ export function MobileBottomNav() {
                                         <div className="p-2.5 bg-white rounded-xl shadow-sm text-slate-500">
                                             <HelpCircle size={20} className="text-emerald-500" />
                                         </div>
-                                        <span className="font-bold text-sm text-slate-700">ศูนย์ช่วยเหลือ 24/7</span>
+                                        <span className="font-bold text-sm text-slate-700">{p.helpCenter}</span>
                                     </div>
                                     <ChevronRight size={18} className="text-slate-300" />
                                 </Link>
@@ -111,18 +114,18 @@ export function MobileBottomNav() {
                                     <Headset size={24} />
                                 </div>
                                 
-                                <h4 className="text-base font-black tracking-wide text-slate-800 mb-2 relative z-10">ปรึกษาวิศวกร 3D</h4>
+                                <h4 className="text-base font-black tracking-wide text-slate-800 mb-2 relative z-10">{p.consultEngineer}</h4>
                                 <p className="text-xs font-bold text-slate-500 leading-relaxed mb-5 relative z-10">
-                                    ต้องการคำแนะนำเรื่องวัสดุ หรือตรวจสอบไฟล์ก่อนพิมพ์? เราติดต่อง่ายและพร้อมช่วยคุณ
+                                    {p.consultEngineerDesc}
                                 </p>
-                                
-                                <a 
-                                    href="https://line.me/ti/p/@3dev" 
-                                    target="_blank" 
+
+                                <a
+                                    href="https://line.me/ti/p/@3dev"
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="block w-full text-center py-3.5 bg-indigo-600 rounded-xl text-xs font-bold text-white shadow-lg shadow-indigo-600/20 active:scale-[0.98] transition-all relative z-10"
                                 >
-                                    เริ่มแชทบน LINE (@3dev)
+                                    {p.startLineChat}
                                 </a>
                             </div>
 
@@ -132,7 +135,7 @@ export function MobileBottomNav() {
                                     onClick={() => signOut({ callbackUrl: '/' })} 
                                     className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-red-50 text-red-600 font-bold text-sm border border-red-100 active:scale-[0.98] transition-transform"
                                 >
-                                    <LogOut size={18} /> ออกจากระบบ
+                                    <LogOut size={18} /> {p.logout}
                                 </button>
                             </div>
                         </div>

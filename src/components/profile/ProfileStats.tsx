@@ -1,4 +1,7 @@
+"use client";
+
 import { Box, Package, Clock, ShieldCheck, User, ShoppingBag } from "lucide-react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface ProfileStatsProps {
     userName: string;
@@ -9,6 +12,9 @@ interface ProfileStatsProps {
 }
 
 export function ProfileStats({ userName, totalQuotes, pendingQuotes, totalOrders, totalSpending }: ProfileStatsProps) {
+    const { t } = useLanguage();
+    const p = t.profile;
+
     return (
         <div className="mb-10">
             {/* Header Greeting */}
@@ -18,8 +24,8 @@ export function ProfileStats({ userName, totalQuotes, pendingQuotes, totalOrders
                         <User size={24} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800 tracking-tight">สวัสดี, <span className="text-blue-600">{userName}</span></h1>
-                        <p className="text-slate-500 text-sm mt-1 font-medium">ภาพรวมบัญชีและการสั่งพิมพ์ 3 มิติของคุณ</p>
+                        <h1 className="text-3xl font-black text-slate-800 tracking-tight">{p.greeting}, <span className="text-blue-600">{userName}</span></h1>
+                        <p className="text-slate-500 text-sm mt-1 font-medium">{p.accountOverview}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-full border border-emerald-200">
@@ -27,7 +33,7 @@ export function ProfileStats({ userName, totalQuotes, pendingQuotes, totalOrders
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    ระบบประเมินราคาพร้อมใช้งาน
+                    {p.systemReady}
                 </div>
             </div>
 
@@ -39,24 +45,24 @@ export function ProfileStats({ userName, totalQuotes, pendingQuotes, totalOrders
                         <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
                             <Box size={20} />
                         </div>
-                        <span className="px-2 py-1 bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-slate-100">ทั้งหมด</span>
+                        <span className="px-2 py-1 bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-slate-100">{p.allBadge}</span>
                     </div>
                     <div>
-                        <div className="text-slate-500 text-xs font-semibold mb-1">ใบเสนอราคาทั้งหมด</div>
+                        <div className="text-slate-500 text-xs font-semibold mb-1">{p.totalQuotes}</div>
                         <div className="text-4xl font-black text-slate-800 tracking-tight">{totalQuotes}</div>
                     </div>
                 </div>
 
-                {/* Stat 2: Pending quotes (draft) */}
+                {/* Stat 2: Pending quotes */}
                 <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-lg transition-all group">
                     <div className="flex justify-between items-start mb-4">
                         <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
                             <Clock size={20} />
                         </div>
-                        <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-amber-100">รอดำเนินการ</span>
+                        <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-amber-100">{p.pendingBadge}</span>
                     </div>
                     <div>
-                        <div className="text-slate-500 text-xs font-semibold mb-1">รายการรอประเมินราคา</div>
+                        <div className="text-slate-500 text-xs font-semibold mb-1">{p.awaitingQuote}</div>
                         <div className="text-4xl font-black text-slate-800 tracking-tight">{pendingQuotes}</div>
                     </div>
                 </div>
@@ -67,10 +73,10 @@ export function ProfileStats({ userName, totalQuotes, pendingQuotes, totalOrders
                         <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                             <ShoppingBag size={20} />
                         </div>
-                        <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-emerald-100">คำสั่งซื้อ</span>
+                        <span className="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-widest rounded-lg border border-emerald-100">{p.ordersBadge}</span>
                     </div>
                     <div>
-                        <div className="text-slate-500 text-xs font-semibold mb-1">คำสั่งซื้อทั้งหมด</div>
+                        <div className="text-slate-500 text-xs font-semibold mb-1">{p.totalOrders}</div>
                         <div className="text-4xl font-black text-slate-800 tracking-tight">{totalOrders}</div>
                     </div>
                 </div>
@@ -84,11 +90,11 @@ export function ProfileStats({ userName, totalQuotes, pendingQuotes, totalOrders
                             <Package size={20} />
                         </div>
                         <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1.5 rounded-lg border border-emerald-500/20">
-                            <ShieldCheck size={14} /> ยอดสะสม
+                            <ShieldCheck size={14} /> {p.accumulated}
                         </span>
                     </div>
                     <div className="relative z-10">
-                        <div className="text-slate-400 text-xs font-semibold mb-1">ยอดสั่งซื้อรวมทั้งหมด</div>
+                        <div className="text-slate-400 text-xs font-semibold mb-1">{p.totalSpending}</div>
                         <div className="text-3xl font-black text-white tracking-tight">
                             ฿{totalSpending.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </div>

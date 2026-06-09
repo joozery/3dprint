@@ -116,6 +116,10 @@ const QuoteSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+QuoteSchema.index({ internalStatus: 1 });
+QuoteSchema.index({ status: 1 });
+QuoteSchema.index({ userId: 1, createdAt: -1 });
+
 // Auto-generate quoteNumber
 QuoteSchema.pre("validate", function (next: any) {
     if (!this.quoteNumber) {
@@ -128,7 +132,4 @@ QuoteSchema.pre("validate", function (next: any) {
     }
 });
 
-if (mongoose.models.Quote) {
-    delete mongoose.models.Quote;
-}
-export default mongoose.models.Quote || mongoose.model("Quote", QuoteSchema);
+export default (mongoose.models.Quote as mongoose.Model<any>) || mongoose.model("Quote", QuoteSchema);

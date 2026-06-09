@@ -36,6 +36,7 @@ const menuItems = [
   { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
   { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
   { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
+  { label: "จัดการหน้าบริการ", icon: FileText, href: "/admin/services-content", badge: null },
   { label: "Newsletter", icon: Mail, href: "/admin/subscribers", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },

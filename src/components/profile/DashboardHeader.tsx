@@ -1,8 +1,11 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+"use client";
 
-export default async function DashboardHeader() {
-    const session = await getServerSession(authOptions);
+import { useSession } from "next-auth/react";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+
+export default function DashboardHeader() {
+    const { data: session } = useSession();
+    const { t } = useLanguage();
 
     return (
         <header className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-10 py-4 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-all">
@@ -23,7 +26,7 @@ export default async function DashboardHeader() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                        <input type="text" className="pl-9 pr-4 py-2 bg-slate-100/50 border border-slate-200/60 rounded-full text-[13px] font-medium text-slate-700 placeholder-slate-400 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all shadow-sm" placeholder="ค้นหาโปรเจกต์ หรือส่วนต่างๆ..." />
+                        <input type="text" className="pl-9 pr-4 py-2 bg-slate-100/50 border border-slate-200/60 rounded-full text-[13px] font-medium text-slate-700 placeholder-slate-400 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all shadow-sm" placeholder={t.profile.searchPlaceholder} />
                     </div>
 
                     {/* Profile Dropdown Area */}
@@ -33,7 +36,6 @@ export default async function DashboardHeader() {
                             <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">{session?.user?.email || "user@example.com"}</p>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20 border-2 border-white object-cover overflow-hidden group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all">
-                            {/* @ts-ignore */}
                             {session?.user?.image ? (
                                 <img src={session.user.image} alt="Profile" className="w-full h-full object-cover" />
                             ) : (

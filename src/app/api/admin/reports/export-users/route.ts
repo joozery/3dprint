@@ -21,7 +21,7 @@ export async function GET() {
 
     // Loop and map
     for (const user of users) {
-        const orderDate = new Date(user.createdAt).toLocaleDateString('th-TH');
+        const orderDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH') : '-';
         csv += `"${user._id}","${(user.name || '').replace(/"/g, '""')}","${user.email || ''}","${user.provider || 'credentials'}","${user.role || 'user'}", "${orderDate}"\n`;
     }
 

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Package, CheckCircle2, ExternalLink, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 interface OrderHistoryTableProps {
     orders: any[];
@@ -24,40 +25,43 @@ const COURIER_NAME: Record<string, string> = {
     fedex:         "FedEx",
 };
 
-const STATUS_STEPS = [
-    { key: "pending_payment", label: "รอชำระเงิน" },
-    { key: "processing",      label: "ดำเนินการ" },
-    { key: "printing",        label: "กำลังพิมพ์" },
-    { key: "shipped",         label: "จัดส่งแล้ว" },
-    { key: "delivered",       label: "ส่งถึงแล้ว" },
-];
-
-function getStep(status: string): number {
-    const idx = STATUS_STEPS.findIndex(s => s.key === status);
-    return idx >= 0 ? idx + 1 : 1;
-}
-
-function getStatusBadge(status: string) {
-    switch (status) {
-        case "pending_payment": return { label: "รอชำระเงิน",  cls: "bg-amber-50 text-amber-600 border-amber-200" };
-        case "processing":      return { label: "ดำเนินการ",   cls: "bg-blue-50 text-blue-600 border-blue-200" };
-        case "printing":        return { label: "กำลังพิมพ์",  cls: "bg-indigo-50 text-indigo-600 border-indigo-200" };
-        case "shipped":         return { label: "จัดส่งแล้ว",  cls: "bg-emerald-50 text-emerald-600 border-emerald-200" };
-        case "delivered":       return { label: "ส่งถึงแล้ว",  cls: "bg-green-50 text-green-700 border-green-200" };
-        case "cancelled":       return { label: "ยกเลิก",       cls: "bg-red-50 text-red-600 border-red-200" };
-        default:                return { label: status,          cls: "bg-slate-50 text-slate-500 border-slate-200" };
-    }
-}
 
 export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const { t } = useLanguage();
+    const p = t.profile;
+
+    const STATUS_STEPS = [
+        { key: "pending_payment", label: p.statusPendingPayment },
+        { key: "processing",      label: p.statusProcessing },
+        { key: "printing",        label: p.statusPrinting },
+        { key: "shipped",         label: p.statusShipped },
+        { key: "delivered",       label: p.statusDelivered },
+    ];
+
+    function getStep(status: string): number {
+        const idx = STATUS_STEPS.findIndex(s => s.key === status);
+        return idx >= 0 ? idx + 1 : 1;
+    }
+
+    function getStatusBadge(status: string) {
+        switch (status) {
+            case "pending_payment": return { label: p.statusPendingPayment, cls: "bg-amber-50 text-amber-600 border-amber-200" };
+            case "processing":      return { label: p.statusProcessing,     cls: "bg-blue-50 text-blue-600 border-blue-200" };
+            case "printing":        return { label: p.statusPrinting,       cls: "bg-indigo-50 text-indigo-600 border-indigo-200" };
+            case "shipped":         return { label: p.statusShipped,        cls: "bg-emerald-50 text-emerald-600 border-emerald-200" };
+            case "delivered":       return { label: p.statusDelivered,      cls: "bg-green-50 text-green-700 border-green-200" };
+            case "cancelled":       return { label: p.statusCancelled,      cls: "bg-red-50 text-red-600 border-red-200" };
+            default:                return { label: status,                  cls: "bg-slate-50 text-slate-500 border-slate-200" };
+        }
+    }
 
     if (orders.length === 0) {
         return (
             <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
                 <Package className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-slate-900 font-black tracking-tight">ไม่พบประวัติคำสั่งซื้อ</h3>
-                <p className="text-slate-400 text-xs mt-1 font-bold">คุณยังไม่มีรายการสั่งซื้อในขณะนี้</p>
+                <h3 className="text-slate-900 font-black tracking-tight">{p.noHistory}</h3>
+                <p className="text-slate-400 text-xs mt-1 font-bold">{p.noHistoryDesc}</p>
             </div>
         );
     }
@@ -66,11 +70,11 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             {/* Desktop Header */}
             <div className="hidden md:flex items-center px-6 py-4 bg-white border-b border-slate-100 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                <div className="w-[28%]">คำสั่งซื้อ</div>
-                <div className="w-[14%]">วันที่</div>
-                <div className="w-[10%] text-center">รายการ</div>
-                <div className="w-[28%] text-center">สถานะ</div>
-                <div className="w-[20%] text-right pr-4">รวม</div>
+                <div className="w-[28%]">{p.orderCol}</div>
+                <div className="w-[14%]">{p.dateCol}</div>
+                <div className="w-[10%] text-center">{p.itemsCol}</div>
+                <div className="w-[28%] text-center">{p.status}</div>
+                <div className="w-[20%] text-right pr-4">{p.totalCol}</div>
             </div>
 
             <div className="divide-y divide-slate-100">
@@ -119,12 +123,12 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                                                     onClick={e => e.stopPropagation()}
                                                     className="text-[9px] text-blue-500 hover:underline flex items-center gap-0.5"
                                                 >
-                                                    <ExternalLink size={8} /> ติดตาม
+                                                    <ExternalLink size={8} /> {p.trackLink}
                                                 </a>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="text-[10px] text-slate-300 mt-0.5">ยังไม่มีหมายเลขพัสดุ</div>
+                                        <div className="text-[10px] text-slate-300 mt-0.5">{p.noTracking}</div>
                                     )}
                                 </div>
 
@@ -135,7 +139,7 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
 
                                 {/* 3. Items Count */}
                                 <div className="w-full md:w-[10%] mb-4 md:mb-0 text-center text-[12px] font-black text-slate-600">
-                                    <span className="md:hidden text-slate-400 mr-2">รายการ:</span>
+                                    <span className="md:hidden text-slate-400 mr-2">{p.itemsLabel}</span>
                                     {quotes.length}
                                 </div>
 
@@ -199,7 +203,7 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                                         <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
                                             <Truck size={14} className="text-emerald-600 shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">จัดส่งโดย {COURIER_NAME[courierKey] || courierKey}</p>
+                                                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">{p.shippedBy} {COURIER_NAME[courierKey] || courierKey}</p>
                                                 <p className="text-sm font-black text-slate-800 font-mono select-all">{order.trackingNumber}</p>
                                             </div>
                                             {trackingUrl && (
@@ -210,7 +214,7 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                                                     onClick={e => e.stopPropagation()}
                                                     className="flex items-center gap-1 text-xs text-blue-600 font-bold hover:underline whitespace-nowrap"
                                                 >
-                                                    <ExternalLink size={12} /> ติดตามพัสดุ
+                                                    <ExternalLink size={12} /> {p.trackPackage}
                                                 </a>
                                             )}
                                         </div>

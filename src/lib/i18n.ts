@@ -25,6 +25,19 @@ export interface TranslationSchema {
     readonly slaDesc: string;
     readonly multicolor: string;
     readonly multicolorDesc: string;
+    readonly scanning: string;
+    readonly scanningDesc: string;
+    readonly sheetMetal: string;
+    readonly sheetMetalDesc: string;
+    readonly pcb: string;
+    readonly pcbDesc: string;
+    readonly postProcess: string;
+    readonly postProcessDesc: string;
+    readonly featuredTitle: string;
+    readonly featuredDesc: string;
+    readonly featuredCta: string;
+    readonly printingTechLabel: string;
+    readonly additionalLabel: string;
   };
   readonly materials: {
     readonly pla: string;
@@ -35,12 +48,54 @@ export interface TranslationSchema {
     readonly petgDesc: string;
     readonly resin: string;
     readonly resinDesc: string;
+    readonly tpu: string;
+    readonly tpuDesc: string;
+    readonly nylon: string;
+    readonly nylonDesc: string;
+    readonly engResin: string;
+    readonly engResinDesc: string;
+    readonly filamentLabel: string;
+    readonly resinLabel: string;
+    readonly guideTitle: string;
+    readonly guideCta: string;
+  };
+  readonly models: {
+    readonly gallery: string;
+    readonly galleryDesc: string;
+    readonly functional: string;
+    readonly functionalDesc: string;
+    readonly decorative: string;
+    readonly decorativeDesc: string;
+    readonly upload: string;
+    readonly uploadDesc: string;
   };
   readonly support: {
     readonly guide: string;
     readonly guideDesc: string;
     readonly faq: string;
     readonly faqDesc: string;
+    readonly contact: string;
+    readonly contactDesc: string;
+    readonly blog: string;
+    readonly blogDesc: string;
+    readonly chat: string;
+    readonly chatDesc: string;
+    readonly ticket: string;
+    readonly ticketDesc: string;
+    readonly resourcesLabel: string;
+    readonly contactLabel: string;
+  };
+  readonly about: {
+    readonly company: string;
+    readonly companyDesc: string;
+    readonly factory: string;
+    readonly factoryDesc: string;
+    readonly team: string;
+    readonly teamDesc: string;
+    readonly careers: string;
+    readonly careersDesc: string;
+    readonly sustainability: string;
+    readonly sustainabilityDesc: string;
     readonly contact: string;
     readonly contactDesc: string;
   };
@@ -234,6 +289,142 @@ export interface TranslationSchema {
     readonly resetBtn: string;
     readonly saving: string;
   };
+  readonly profile: {
+    readonly newProject: string;
+    readonly mainMenu: string;
+    readonly overview: string;
+    readonly orderHistory: string;
+    readonly docsAndSettings: string;
+    readonly myQuotes: string;
+    readonly profileInfo: string;
+    readonly shippingAddress: string;
+    readonly consultEngineer: string;
+    readonly consultEngineerDesc: string;
+    readonly helpCenter: string;
+    readonly startLineChat: string;
+    readonly searchPlaceholder: string;
+    readonly greeting: string;
+    readonly accountOverview: string;
+    readonly systemReady: string;
+    readonly allBadge: string;
+    readonly totalQuotes: string;
+    readonly pendingBadge: string;
+    readonly awaitingQuote: string;
+    readonly ordersBadge: string;
+    readonly totalOrders: string;
+    readonly totalSpending: string;
+    readonly accumulated: string;
+    readonly statusDraft: string;
+    readonly statusPending: string;
+    readonly statusOrdered: string;
+    readonly statusCancelled: string;
+    readonly statusPendingPayment: string;
+    readonly statusProcessing: string;
+    readonly statusPrinting: string;
+    readonly statusShipped: string;
+    readonly statusDelivered: string;
+    readonly recentQuotes: string;
+    readonly recentQuotesDesc: string;
+    readonly viewAll: string;
+    readonly noOrders: string;
+    readonly noOrdersDesc: string;
+    readonly getQuote: string;
+    readonly fileList: string;
+    readonly requestDate: string;
+    readonly estPrice: string;
+    readonly status: string;
+    readonly more: string;
+    readonly awaitingEstimate: string;
+    readonly statusLabel: string;
+    readonly ordersNav: string;
+    readonly lineChat: string;
+    readonly moreMenu: string;
+    readonly accountAndHelp: string;
+    readonly invoiceHistory: string;
+    readonly accountSettings: string;
+    readonly logout: string;
+    readonly noHistory: string;
+    readonly noHistoryDesc: string;
+    readonly orderCol: string;
+    readonly dateCol: string;
+    readonly itemsCol: string;
+    readonly totalCol: string;
+    readonly noTracking: string;
+    readonly trackLink: string;
+    readonly shippedBy: string;
+    readonly trackPackage: string;
+    readonly itemsLabel: string;
+    readonly saveSuccess: string;
+    readonly saveFailed: string;
+    readonly profileTitle: string;
+    readonly profileSubtitle: string;
+    readonly save: string;
+    readonly accountType: string;
+    readonly individual: string;
+    readonly individualDesc: string;
+    readonly companyType: string;
+    readonly companyDesc: string;
+    readonly primaryContact: string;
+    readonly primaryContactDesc: string;
+    readonly fullName: string;
+    readonly emailLabel: string;
+    readonly phoneLabel: string;
+    readonly passwordLabel: string;
+    readonly changePassword: string;
+    readonly companySection: string;
+    readonly companyBillingDesc: string;
+    readonly companyNameTH: string;
+    readonly companyNameEN: string;
+    readonly taxId: string;
+    readonly branchCode: string;
+    readonly vatRegistered: string;
+    readonly industryLabel: string;
+    readonly contactPerson: string;
+    readonly officePhone: string;
+    readonly companyEmail: string;
+    readonly websiteLabel: string;
+    readonly companySizeLabel: string;
+    readonly addressTitle: string;
+    readonly shippingAddressesDesc: string;
+    readonly addAddress: string;
+    readonly defaultBadge: string;
+    readonly editBtn: string;
+    readonly setAsDefault: string;
+    readonly noAddresses: string;
+    readonly noAddressesDesc: string;
+    readonly addAddressTitle: string;
+    readonly editAddressTitle: string;
+    readonly addressFormSubtitle: string;
+    readonly placeLabel: string;
+    readonly recipientName: string;
+    readonly phoneNumber: string;
+    readonly internationalAddress: string;
+    readonly addressDetail: string;
+    readonly cancel: string;
+    readonly savingAddress: string;
+    readonly saveAddress: string;
+    readonly quotesPageTitle: string;
+    readonly quotesPageDesc: string;
+    readonly createNewQuote: string;
+    readonly searchQuotes: string;
+    readonly filter: string;
+    readonly noQuoteHistory: string;
+    readonly noQuoteHistoryDesc: string;
+    readonly firstQuote: string;
+    readonly itemSpec: string;
+    readonly createdDate: string;
+    readonly deliveredTo: string;
+    readonly netTotal: string;
+    readonly statusManage: string;
+    readonly pageOf: string;
+    readonly ofTotal: string;
+    readonly awaitingQuoteLabel: string;
+    readonly moreItems: string;
+    readonly allRightsReserved: string;
+    readonly privacyPolicy: string;
+    readonly termsOfService: string;
+    readonly cookiePolicy: string;
+  };
 }
 
 export const I18N: Record<Language, TranslationSchema> = {
@@ -256,30 +447,85 @@ export const I18N: Record<Language, TranslationSchema> = {
       loginRegister: "เข้าสู่ระบบ / สมัครสมาชิก",
     },
     services: {
-      fdm: "FDM Printing (เส้นพลาสติก)",
-      fdmDesc: "ราคาประหยัด เหมาะกับต้นแบบ",
-      sla: "SLA Resin (เรซิ่น)",
-      slaDesc: "ความละเอียดสูง พื้นผิวเนียน",
-      multicolor: "Multi-color",
-      multicolorDesc: "พิมพ์หลายสีในชิ้นเดียว",
+      fdm: "FDM Printing",
+      fdmDesc: "ราคาประหยัด เหมาะกับต้นแบบและชิ้นงานขนาดใหญ่",
+      sla: "SLA Resin",
+      slaDesc: "ความละเอียดสูง พื้นผิวเนียนเรียบ",
+      multicolor: "Multi-color Printing",
+      multicolorDesc: "พิมพ์หลายสีในชิ้นเดียวด้วยเทคโนโลยี AMS",
+      scanning: "3D Scanning",
+      scanningDesc: "แปลงชิ้นงานจริงเป็นโมเดล 3D ดิจิทัล",
+      sheetMetal: "Sheet Metal",
+      sheetMetalDesc: "ตัดพับโลหะแผ่นตามแบบ",
+      pcb: "PCB / PCBA",
+      pcbDesc: "ออกแบบและประกอบแผงวงจรอิเล็กทรอนิกส์",
+      postProcess: "Post-Processing",
+      postProcessDesc: "ขัดเรียบ พ่นสี ชุบผิวระดับ Premium",
+      featuredTitle: "รับราคาทันทีใน 30 วินาที",
+      featuredDesc: "อัปโหลดไฟล์ 3D แล้วระบบ AI คำนวณราคาให้คุณทันที",
+      featuredCta: "สั่งพิมพ์เลย",
+      printingTechLabel: "เทคโนโลยีการพิมพ์",
+      additionalLabel: "บริการเพิ่มเติม",
     },
     materials: {
       pla: "PLA",
-      plaDesc: "เป็นมิตรกับสิ่งแวดล้อม",
+      plaDesc: "เป็นมิตรกับสิ่งแวดล้อม ราคาประหยัด",
       abs: "ABS",
-      absDesc: "ทนความร้อน แข็งแรง",
+      absDesc: "ทนความร้อนสูง แข็งแรง",
       petg: "PETG",
-      petgDesc: "ยืดหยุ่น ทนสารเคมี",
-      resin: "Resin",
-      resinDesc: "ละเอียดสูง",
+      petgDesc: "ยืดหยุ่น ทนสารเคมี กึ่งโปร่งใส",
+      resin: "Standard Resin",
+      resinDesc: "ละเอียดสูง พื้นผิวเนียน",
+      tpu: "TPU",
+      tpuDesc: "ยืดหยุ่น ทนแรงกระแทก เหมือนยาง",
+      nylon: "Nylon SLS",
+      nylonDesc: "แข็งแรงสูง เบา ทนทาน",
+      engResin: "Engineering Resin",
+      engResinDesc: "ทนความร้อนสูง แรงกดอัด",
+      filamentLabel: "Filament (FDM)",
+      resinLabel: "Resin & Engineering",
+      guideTitle: "ไม่รู้จะเลือกวัสดุไหน?",
+      guideCta: "ดูคู่มือเปรียบเทียบวัสดุ",
+    },
+    models: {
+      gallery: "แกลเลอรีโมเดลทั้งหมด",
+      galleryDesc: "โมเดลสำเร็จรูปพร้อมพิมพ์กว่า 1,000+ แบบ",
+      functional: "ชิ้นส่วนใช้งาน",
+      functionalDesc: "เฟือง คลิป ตัวยึด อุปกรณ์ทั่วไป",
+      decorative: "งานตกแต่ง",
+      decorativeDesc: "ของแต่งบ้าน ของสะสม งานศิลปะ",
+      upload: "อัปโหลดโมเดลของคุณ",
+      uploadDesc: "แบ่งปันงานออกแบบกับชุมชน",
     },
     support: {
       guide: "คู่มือการใช้งาน",
-      guideDesc: "เริ่มต้นใช้งานระบบ",
-      faq: "FAQ",
-      faqDesc: "คำถามที่พบบ่อย",
+      guideDesc: "เริ่มต้นใช้งานระบบแบบ Step-by-Step",
+      faq: "คำถามที่พบบ่อย",
+      faqDesc: "คำตอบสำหรับปัญหาที่พบบ่อย",
       contact: "ติดต่อเรา",
-      contactDesc: "พูดคุยกับทีมงาน",
+      contactDesc: "อีเมล โทรศัพท์ หรือฟอร์มออนไลน์",
+      blog: "บทความและเทคนิค",
+      blogDesc: "เทคนิค 3D Printing และเทรนด์ล่าสุด",
+      chat: "Live Chat",
+      chatDesc: "คุยกับทีมงานแบบ Real-time",
+      ticket: "ส่งคำร้อง",
+      ticketDesc: "ฝากปัญหาไว้กับทีมงาน",
+      resourcesLabel: "แหล่งเรียนรู้",
+      contactLabel: "ติดต่อทีมงาน",
+    },
+    about: {
+      company: "เกี่ยวกับ PrintMyDesign",
+      companyDesc: "พันธกิจ วิสัยทัศน์ และเรื่องราวของเรา",
+      factory: "โรงงาน & เทคโนโลยี",
+      factoryDesc: "เครื่องจักรระดับอุตสาหกรรมและกระบวนการผลิต",
+      team: "ทีมงาน",
+      teamDesc: "วิศวกรและผู้เชี่ยวชาญด้านการผลิต",
+      careers: "ร่วมงานกับเรา",
+      careersDesc: "ตำแหน่งงานที่เปิดรับสมัคร",
+      sustainability: "ความยั่งยืน",
+      sustainabilityDesc: "การผลิตที่รับผิดชอบต่อสิ่งแวดล้อม",
+      contact: "ติดต่อเรา",
+      contactDesc: "พูดคุยกับทีม PDM โดยตรง",
     },
     showcase: {
       heading: "บริการพิมพ์ 3 มิติ โดย PrintMyDesign",
@@ -471,6 +717,142 @@ export const I18N: Record<Language, TranslationSchema> = {
       resetBtn: "รีเซ็ตรหัสผ่าน",
       saving: "กำลังบันทึก...",
     },
+    profile: {
+      newProject: "สร้างโปรเจกต์ใหม่",
+      mainMenu: "เมนูหลัก",
+      overview: "ภาพรวมการใช้งาน",
+      orderHistory: "ประวัติการสั่งซื้อ",
+      docsAndSettings: "เอกสารและตั้งค่า",
+      myQuotes: "ใบเสนอราคาของฉัน",
+      profileInfo: "ข้อมูลโปรไฟล์",
+      shippingAddress: "ที่อยู่จัดส่ง",
+      consultEngineer: "ปรึกษาวิศวกร 3D",
+      consultEngineerDesc: "ต้องการคำแนะนำเรื่องวัสดุ หรือตรวจสอบไฟล์ก่อนพิมพ์? เราพร้อมช่วยคุณ",
+      helpCenter: "ศูนย์ช่วยเหลือ 24/7",
+      startLineChat: "เริ่มแชทบน LINE (@3dev)",
+      searchPlaceholder: "ค้นหาโปรเจกต์ หรือส่วนต่างๆ...",
+      greeting: "สวัสดี",
+      accountOverview: "ภาพรวมบัญชีและการสั่งพิมพ์ 3 มิติของคุณ",
+      systemReady: "ระบบประเมินราคาพร้อมใช้งาน",
+      allBadge: "ทั้งหมด",
+      totalQuotes: "ใบเสนอราคาทั้งหมด",
+      pendingBadge: "รอดำเนินการ",
+      awaitingQuote: "รายการรอประเมินราคา",
+      ordersBadge: "คำสั่งซื้อ",
+      totalOrders: "คำสั่งซื้อทั้งหมด",
+      totalSpending: "ยอดสั่งซื้อรวมทั้งหมด",
+      accumulated: "ยอดสะสม",
+      statusDraft: "รอประเมินราคา",
+      statusPending: "รอดำเนินการ",
+      statusOrdered: "สั่งซื้อแล้ว",
+      statusCancelled: "ยกเลิกแล้ว",
+      statusPendingPayment: "รอชำระเงิน",
+      statusProcessing: "ดำเนินการ",
+      statusPrinting: "กำลังพิมพ์",
+      statusShipped: "จัดส่งแล้ว",
+      statusDelivered: "ส่งถึงแล้ว",
+      recentQuotes: "ใบเสนอราคาล่าสุด",
+      recentQuotesDesc: "แสดงรายการอัปโหลดและประเมินราคา 10 รายการล่าสุด",
+      viewAll: "ดูทั้งหมด",
+      noOrders: "ยังไม่มีการสั่งซื้อ",
+      noOrdersDesc: "อัปโหลดโมเดล 3 มิติ เพื่อรับการประเมินราคาได้ทันที",
+      getQuote: "เริ่มต้นขอใบเสนอราคา",
+      fileList: "รายการไฟล์",
+      requestDate: "วันที่ส่งคำขอ",
+      estPrice: "ราคาประเมิน",
+      status: "สถานะ",
+      more: "เพิ่มเติม",
+      awaitingEstimate: "รอประเมิน",
+      statusLabel: "สถานะ:",
+      ordersNav: "ออเดอร์",
+      lineChat: "แชท LINE",
+      moreMenu: "เมนูอื่นๆ",
+      accountAndHelp: "เมนูบัญชีและช่วยเหลือ",
+      invoiceHistory: "ใบแจ้งหนี้ / ประวัติชำระเงิน",
+      accountSettings: "ตั้งค่าบัญชีส่วนตัว",
+      logout: "ออกจากระบบ",
+      noHistory: "ไม่พบประวัติคำสั่งซื้อ",
+      noHistoryDesc: "คุณยังไม่มีรายการสั่งซื้อในขณะนี้",
+      orderCol: "คำสั่งซื้อ",
+      dateCol: "วันที่",
+      itemsCol: "รายการ",
+      totalCol: "รวม",
+      noTracking: "ยังไม่มีหมายเลขพัสดุ",
+      trackLink: "ติดตาม",
+      shippedBy: "จัดส่งโดย",
+      trackPackage: "ติดตามพัสดุ",
+      itemsLabel: "รายการ:",
+      saveSuccess: "บันทึกข้อมูลสำเร็จแล้ว",
+      saveFailed: "บันทึกข้อมูลไม่สำเร็จ",
+      profileTitle: "โปรไฟล์",
+      profileSubtitle: "ข้อมูลบัญชีของคุณ",
+      save: "บันทึก",
+      accountType: "ประเภทบัญชี",
+      individual: "บุคคลธรรมดา",
+      individualDesc: "ใช้ส่วนตัว",
+      companyType: "นิติบุคคล",
+      companyDesc: "ออกใบกำกับภาษีในนามบริษัท",
+      primaryContact: "บุคคลธรรมดา",
+      primaryContactDesc: "ข้อมูลติดต่อหลัก",
+      fullName: "ชื่อ-นามสกุล",
+      emailLabel: "อีเมล",
+      phoneLabel: "เบอร์โทร",
+      passwordLabel: "รหัสผ่าน",
+      changePassword: "เปลี่ยน",
+      companySection: "นิติบุคคล",
+      companyBillingDesc: "ข้อมูลนิติบุคคลสำหรับออกใบกำกับภาษี",
+      companyNameTH: "ชื่อบริษัท (ไทย)",
+      companyNameEN: "ชื่อบริษัท (อังกฤษ)",
+      taxId: "เลขประจำตัวผู้เสียภาษี",
+      branchCode: "รหัสสาขา",
+      vatRegistered: "จดทะเบียนแล้ว · มี VAT 7%",
+      industryLabel: "อุตสาหกรรม",
+      contactPerson: "ผู้ติดต่อ",
+      officePhone: "เบอร์บริษัท",
+      companyEmail: "อีเมลบริษัท",
+      websiteLabel: "เว็บไซต์",
+      companySizeLabel: "ขนาดบริษัท",
+      addressTitle: "ที่อยู่",
+      shippingAddressesDesc: "ที่อยู่จัดส่งของคุณ",
+      addAddress: "เพิ่มที่อยู่",
+      defaultBadge: "ค่าเริ่มต้น",
+      editBtn: "แก้ไข",
+      setAsDefault: "ตั้งเป็นค่าเริ่มต้น",
+      noAddresses: "ยังไม่มีที่อยู่สำหรับจัดส่ง",
+      noAddressesDesc: "เพิ่มที่อยู่ใหม่เพื่อความสะดวกรวดเร็วในการสั่งพิมพ์",
+      addAddressTitle: "เพิ่มที่อยู่ใหม่",
+      editAddressTitle: "แก้ไขที่อยู่",
+      addressFormSubtitle: "กรอกรายละเอียดสถานที่จัดส่ง",
+      placeLabel: "ชื่อสถานที่ (เช่น บ้าน, ออฟฟิศ)",
+      recipientName: "ชื่อ-นามสกุล ผู้รับ",
+      phoneNumber: "เบอร์โทรศัพท์",
+      internationalAddress: "ที่อยู่ต่างประเทศ (International Address)",
+      addressDetail: "ที่อยู่ (บ้านเลขที่, อาคาร, ถนน)",
+      cancel: "ยกเลิก",
+      savingAddress: "กำลังบันทึก...",
+      saveAddress: "บันทึกที่อยู่",
+      quotesPageTitle: "ใบเสนอราคา",
+      quotesPageDesc: "ประวัติการขอใบเสนอราคาและเอกสารที่เกี่ยวข้อง",
+      createNewQuote: "สร้างใบเสนอราคาใหม่",
+      searchQuotes: "ค้นหาด้วยรหัส หรือชื่อชิ้นงาน...",
+      filter: "ตัวกรอง",
+      noQuoteHistory: "ยังไม่มีประวัติทำรายการ",
+      noQuoteHistoryDesc: "เริ่มสร้างออเดอร์ให้เราประเมินราคาได้ทันทีแบบไม่มีค่าใช้จ่าย",
+      firstQuote: "ขอใบเสนอราคาชิ้นแรก",
+      itemSpec: "รายชื่อ / สเปคงาน",
+      createdDate: "วันที่สร้าง",
+      deliveredTo: "ส่งถึง",
+      netTotal: "ยอดสุทธิ",
+      statusManage: "สถานะ / จัดการ",
+      pageOf: "หน้า",
+      ofTotal: "จาก",
+      awaitingQuoteLabel: "รอประเมิน",
+      moreItems: "+ อีก",
+      allRightsReserved: "สงวนลิขสิทธิ์",
+      privacyPolicy: "นโยบายความเป็นส่วนตัว",
+      termsOfService: "ข้อกำหนดการให้บริการ",
+      cookiePolicy: "นโยบายคุกกี้",
+    },
   },
   en: {
     nav: {
@@ -491,30 +873,85 @@ export const I18N: Record<Language, TranslationSchema> = {
       loginRegister: "Sign In / Register",
     },
     services: {
-      fdm: "FDM Printing (Filament)",
-      fdmDesc: "Economical, ideal for prototyping",
-      sla: "SLA Resin (Resin)",
-      slaDesc: "High resolution, smooth surface",
+      fdm: "FDM Printing",
+      fdmDesc: "Economical, ideal for prototypes & large parts",
+      sla: "SLA Resin",
+      slaDesc: "High resolution, ultra-smooth surface finish",
       multicolor: "Multi-color Printing",
-      multicolorDesc: "Print multiple colors in one piece",
+      multicolorDesc: "Multiple colors in one part with AMS technology",
+      scanning: "3D Scanning",
+      scanningDesc: "Convert physical objects to digital 3D models",
+      sheetMetal: "Sheet Metal",
+      sheetMetalDesc: "Custom cutting & bending of metal sheets",
+      pcb: "PCB / PCBA",
+      pcbDesc: "PCB design and electronic board assembly",
+      postProcess: "Post-Processing",
+      postProcessDesc: "Sanding, painting & premium surface coating",
+      featuredTitle: "Get Instant Quote in 30 Seconds",
+      featuredDesc: "Upload your 3D file and our AI calculates the price immediately",
+      featuredCta: "Order Now",
+      printingTechLabel: "Printing Technologies",
+      additionalLabel: "Additional Services",
     },
     materials: {
       pla: "PLA",
-      plaDesc: "Eco-friendly filament",
+      plaDesc: "Eco-friendly & economical",
       abs: "ABS",
       absDesc: "Heat resistant & strong",
       petg: "PETG",
-      petgDesc: "Flexible & chemical resistant",
-      resin: "Resin",
-      resinDesc: "Ultra high detail",
+      petgDesc: "Flexible, chemical resistant, semi-clear",
+      resin: "Standard Resin",
+      resinDesc: "Ultra-high detail, smooth surface",
+      tpu: "TPU",
+      tpuDesc: "Flexible, impact resistant, rubber-like",
+      nylon: "Nylon SLS",
+      nylonDesc: "High strength, lightweight, durable",
+      engResin: "Engineering Resin",
+      engResinDesc: "High heat & compression resistance",
+      filamentLabel: "Filament (FDM)",
+      resinLabel: "Resin & Engineering",
+      guideTitle: "Not sure which material?",
+      guideCta: "View Material Comparison Guide",
+    },
+    models: {
+      gallery: "Browse All Models",
+      galleryDesc: "1,000+ print-ready models to choose from",
+      functional: "Functional Parts",
+      functionalDesc: "Gears, clips, mounts & everyday tools",
+      decorative: "Decorative & Art",
+      decorativeDesc: "Home decor, collectibles & art pieces",
+      upload: "Upload Your Model",
+      uploadDesc: "Share your design with the community",
     },
     support: {
       guide: "User Guide",
-      guideDesc: "Get started with the platform",
-      faq: "FAQ",
-      faqDesc: "Frequently asked questions",
+      guideDesc: "Step-by-step guide to get started",
+      faq: "Frequently Asked Questions",
+      faqDesc: "Quick answers to common problems",
       contact: "Contact Us",
-      contactDesc: "Chat with our support team",
+      contactDesc: "Email, phone or online contact form",
+      blog: "Blog & Techniques",
+      blogDesc: "3D printing tips and latest trends",
+      chat: "Live Chat",
+      chatDesc: "Chat with our team in real time",
+      ticket: "Submit a Ticket",
+      ticketDesc: "Leave a request for our support team",
+      resourcesLabel: "Learning Resources",
+      contactLabel: "Contact the Team",
+    },
+    about: {
+      company: "About PrintMyDesign",
+      companyDesc: "Our mission, vision and company story",
+      factory: "Factory & Technology",
+      factoryDesc: "Industrial-grade machinery & production process",
+      team: "Our Team",
+      teamDesc: "Our engineers and manufacturing experts",
+      careers: "Careers",
+      careersDesc: "Open positions we're hiring for",
+      sustainability: "Sustainability",
+      sustainabilityDesc: "Our commitment to responsible manufacturing",
+      contact: "Contact Us",
+      contactDesc: "Talk directly to the PDM team",
     },
     showcase: {
       heading: "3D Printing Services by PrintMyDesign",
@@ -705,6 +1142,142 @@ export const I18N: Record<Language, TranslationSchema> = {
       confirmNewPasswordLabel: "Confirm New Password",
       resetBtn: "Reset Password",
       saving: "Saving...",
+    },
+    profile: {
+      newProject: "New Project",
+      mainMenu: "Main Menu",
+      overview: "Overview",
+      orderHistory: "Order History",
+      docsAndSettings: "Documents & Settings",
+      myQuotes: "My Quotes",
+      profileInfo: "Profile Info",
+      shippingAddress: "Shipping Address",
+      consultEngineer: "Consult 3D Engineer",
+      consultEngineerDesc: "Need material advice or file verification before printing? We're ready to help.",
+      helpCenter: "Help Center 24/7",
+      startLineChat: "Chat on LINE (@3dev)",
+      searchPlaceholder: "Search projects or sections...",
+      greeting: "Hello",
+      accountOverview: "Your account and 3D printing overview",
+      systemReady: "Pricing system ready",
+      allBadge: "Total",
+      totalQuotes: "Total Quotes",
+      pendingBadge: "Pending",
+      awaitingQuote: "Awaiting Quote",
+      ordersBadge: "Orders",
+      totalOrders: "Total Orders",
+      totalSpending: "Total Spending",
+      accumulated: "Accumulated",
+      statusDraft: "Awaiting Quote",
+      statusPending: "Pending",
+      statusOrdered: "Ordered",
+      statusCancelled: "Cancelled",
+      statusPendingPayment: "Pending Payment",
+      statusProcessing: "Processing",
+      statusPrinting: "Printing",
+      statusShipped: "Shipped",
+      statusDelivered: "Delivered",
+      recentQuotes: "Recent Quotes",
+      recentQuotesDesc: "Showing last 10 uploaded and quoted items",
+      viewAll: "View All",
+      noOrders: "No orders yet",
+      noOrdersDesc: "Upload a 3D model to get an instant quote",
+      getQuote: "Get a Quote",
+      fileList: "File",
+      requestDate: "Request Date",
+      estPrice: "Est. Price",
+      status: "Status",
+      more: "More",
+      awaitingEstimate: "Awaiting",
+      statusLabel: "Status:",
+      ordersNav: "Orders",
+      lineChat: "LINE Chat",
+      moreMenu: "More",
+      accountAndHelp: "Account & Help",
+      invoiceHistory: "Invoice / Payment History",
+      accountSettings: "Account Settings",
+      logout: "Log Out",
+      noHistory: "No order history found",
+      noHistoryDesc: "You have no orders at this time",
+      orderCol: "Order",
+      dateCol: "Date",
+      itemsCol: "Items",
+      totalCol: "Total",
+      noTracking: "No tracking number yet",
+      trackLink: "Track",
+      shippedBy: "Shipped by",
+      trackPackage: "Track Package",
+      itemsLabel: "Items:",
+      saveSuccess: "Profile saved successfully",
+      saveFailed: "Failed to save",
+      profileTitle: "Profile",
+      profileSubtitle: "Your account information",
+      save: "Save",
+      accountType: "Account Type",
+      individual: "Individual",
+      individualDesc: "Personal use",
+      companyType: "Company",
+      companyDesc: "Tax invoice in company name",
+      primaryContact: "Individual",
+      primaryContactDesc: "Primary contact information",
+      fullName: "Full Name",
+      emailLabel: "Email",
+      phoneLabel: "Phone",
+      passwordLabel: "Password",
+      changePassword: "Change",
+      companySection: "Company",
+      companyBillingDesc: "Company details for tax invoices",
+      companyNameTH: "Company Name (Thai)",
+      companyNameEN: "Company Name (English)",
+      taxId: "Tax ID",
+      branchCode: "Branch Code",
+      vatRegistered: "Registered · VAT 7%",
+      industryLabel: "Industry",
+      contactPerson: "Contact Person",
+      officePhone: "Office Phone",
+      companyEmail: "Company Email",
+      websiteLabel: "Website",
+      companySizeLabel: "Company Size",
+      addressTitle: "Addresses",
+      shippingAddressesDesc: "Your shipping addresses",
+      addAddress: "Add Address",
+      defaultBadge: "Default",
+      editBtn: "Edit",
+      setAsDefault: "Set as Default",
+      noAddresses: "No shipping addresses yet",
+      noAddressesDesc: "Add a new address for faster ordering",
+      addAddressTitle: "Add New Address",
+      editAddressTitle: "Edit Address",
+      addressFormSubtitle: "Enter shipping location details",
+      placeLabel: "Place name (e.g. Home, Office)",
+      recipientName: "Recipient Full Name",
+      phoneNumber: "Phone Number",
+      internationalAddress: "International Address",
+      addressDetail: "Address (House no., Building, Street)",
+      cancel: "Cancel",
+      savingAddress: "Saving...",
+      saveAddress: "Save Address",
+      quotesPageTitle: "Quotes",
+      quotesPageDesc: "Quote history and related documents",
+      createNewQuote: "New Quote",
+      searchQuotes: "Search by code or part name...",
+      filter: "Filter",
+      noQuoteHistory: "No history yet",
+      noQuoteHistoryDesc: "Start an order for a free instant quote",
+      firstQuote: "Request First Quote",
+      itemSpec: "Item / Spec",
+      createdDate: "Created",
+      deliveredTo: "Delivered To",
+      netTotal: "Net Total",
+      statusManage: "Status / Manage",
+      pageOf: "Page",
+      ofTotal: "of",
+      awaitingQuoteLabel: "Awaiting",
+      moreItems: "+ More",
+      allRightsReserved: "All rights reserved.",
+      privacyPolicy: "Privacy Policy",
+      termsOfService: "Terms of Service",
+      cookiePolicy: "Cookie Policy",
     },
   },
 };

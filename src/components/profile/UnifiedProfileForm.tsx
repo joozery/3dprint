@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { User, Building2, Save, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Plus, Star, Trash2, Edit3, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CascadingAddressPicker, { AddressData } from "@/components/ui/CascadingAddressPicker";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 type BillingType = "individual" | "company";
 
@@ -17,6 +19,7 @@ interface Address {
   province: string;
   zipCode: string;
   isDefault: boolean;
+  isInternational?: boolean;
 }
 
 interface UnifiedForm {
@@ -53,6 +56,8 @@ const empty: UnifiedForm = {
 };
 
 export default function UnifiedProfileForm() {
+  const { t } = useLanguage();
+  const p = t.profile;
   const [form, setForm] = useState<UnifiedForm>(empty);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -63,7 +68,7 @@ export default function UnifiedProfileForm() {
 
   const [isMounted, setIsMounted] = useState(false);
   const [addressForm, setAddressForm] = useState<Address>({
-    label: "", fullName: "", phone: "", address: "", district: "", subDistrict: "", province: "", zipCode: "", isDefault: false
+    label: "", fullName: "", phone: "", address: "", district: "", subDistrict: "", province: "", zipCode: "", isDefault: false, isInternational: false
   });
   const [savingAddress, setSavingAddress] = useState(false);
   const [addressFeedback, setAddressFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -102,7 +107,7 @@ export default function UnifiedProfileForm() {
       setAddressForm(editingAddress);
     } else {
       setAddressForm({
-        label: "", fullName: "", phone: "", address: "", district: "", subDistrict: "", province: "", zipCode: "", isDefault: false
+        label: "", fullName: "", phone: "", address: "", district: "", subDistrict: "", province: "", zipCode: "", isDefault: false, isInternational: false
       });
     }
   }, [editingAddress]);
@@ -140,8 +145,8 @@ export default function UnifiedProfileForm() {
           shippingAddresses: sanitizedAddresses
         }),
       });
-      if (!res.ok) throw new Error("บันทึกข้อมูลไม่สำเร็จ");
-      setFeedback({ text: "บันทึกข้อมูลสำเร็จแล้ว", type: "success" });
+      if (!res.ok) throw new Error(p.saveFailed);
+      setFeedback({ text: p.saveSuccess, type: "success" });
       setTimeout(() => setFeedback(null), 3000);
     } catch (err: any) {
       setFeedback({ text: err.message, type: "error" });
@@ -226,15 +231,15 @@ export default function UnifiedProfileForm() {
       {/* Header with Save Button */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-[32px] font-black text-slate-900 tracking-tight leading-tight">โปรไฟล์</h1>
-          <p className="text-slate-400 font-bold mt-1 uppercase tracking-widest text-sm">ข้อมูลบัญชีของคุณ</p>
+          <h1 className="text-[32px] font-black text-slate-900 tracking-tight leading-tight">{p.profileTitle}</h1>
+          <p className="text-slate-400 font-bold mt-1 uppercase tracking-widest text-sm">{p.profileSubtitle}</p>
         </div>
         <button 
           type="submit"
           disabled={loading}
           className="px-8 py-3 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-[0.98] flex items-center gap-2"
         >
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> บันทึก</>}
+          {loading ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> {p.save}</>}
         </button>
       </div>
 
@@ -247,7 +252,7 @@ export default function UnifiedProfileForm() {
 
       {/* 1. Account Type */}
       <div className={bentoClass}>
-        <h3 className={labelClass}>ประเภทบัญชี</h3>
+        <h3 className={labelClass}>{p.accountType}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className={cn(
             "relative flex items-center gap-4 p-5 rounded-[20px] border-2 cursor-pointer transition-all",
@@ -258,8 +263,8 @@ export default function UnifiedProfileForm() {
               {form.billingType === 'individual' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
             </div>
             <div>
-              <div className="text-sm font-black text-slate-800">บุคคลธรรมดา</div>
-              <div className="text-[11px] font-bold text-slate-400">ใช้ส่วนตัว</div>
+              <div className="text-sm font-black text-slate-800">{p.individual}</div>
+              <div className="text-[11px] font-bold text-slate-400">{p.individualDesc}</div>
             </div>
           </label>
           <label className={cn(
@@ -271,8 +276,8 @@ export default function UnifiedProfileForm() {
               {form.billingType === 'company' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
             </div>
             <div>
-              <div className="text-sm font-black text-slate-800">นิติบุคคล</div>
-              <div className="text-[11px] font-bold text-slate-400">ออกใบกำกับภาษีในนามบริษัท</div>
+              <div className="text-sm font-black text-slate-800">{p.companyType}</div>
+              <div className="text-[11px] font-bold text-slate-400">{p.companyDesc}</div>
             </div>
           </label>
         </div>
@@ -281,19 +286,19 @@ export default function UnifiedProfileForm() {
       {/* 2. Individual Info */}
       <div className={bentoClass}>
         <div className="mb-8">
-          <h3 className="text-sm font-black text-slate-900 tracking-tight">บุคคลธรรมดา</h3>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">ข้อมูลติดต่อหลัก</p>
+          <h3 className="text-sm font-black text-slate-900 tracking-tight">{p.primaryContact}</h3>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{p.primaryContactDesc}</p>
         </div>
         <div className="mb-6">
-          <label className={labelClass}>ชื่อ-นามสกุล</label>
+          <label className={labelClass}>{p.fullName}</label>
           <input type="text" value={form.fullName} onChange={e => set("fullName", e.target.value)} className={inputClass} placeholder="สมชาย วิศวกร" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div><label className={labelClass}>อีเมล</label><input type="email" value={form.email} onChange={e => set("email", e.target.value)} className={inputClass} placeholder="somchai@siaminnovation.co.th" /></div>
-          <div><label className={labelClass}>เบอร์โทร</label><input type="text" value={form.phone} onChange={e => set("phone", e.target.value)} className={inputClass} placeholder="+66 81 234 5678" /></div>
+          <div><label className={labelClass}>{p.emailLabel}</label><input type="email" value={form.email} onChange={e => set("email", e.target.value)} className={inputClass} placeholder="somchai@siaminnovation.co.th" /></div>
+          <div><label className={labelClass}>{p.phoneLabel}</label><input type="text" value={form.phone} onChange={e => set("phone", e.target.value)} className={inputClass} placeholder="+66 81 234 5678" /></div>
         </div>
         <div>
-          <label className={labelClass}>รหัสผ่าน</label>
+          <label className={labelClass}>{p.passwordLabel}</label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input type={showPassword ? "text" : "password"} value=".........." readOnly className={cn(inputClass, "bg-slate-50 border-slate-100")} />
@@ -301,7 +306,7 @@ export default function UnifiedProfileForm() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <button type="button" className="px-6 h-11 bg-white border border-slate-200 rounded-xl font-black text-[13px] text-slate-600 hover:bg-slate-50 transition-all">เปลี่ยน</button>
+            <button type="button" className="px-6 h-11 bg-white border border-slate-200 rounded-xl font-black text-[13px] text-slate-600 hover:bg-slate-50 transition-all">{p.changePassword}</button>
           </div>
         </div>
       </div>
@@ -309,15 +314,15 @@ export default function UnifiedProfileForm() {
       {/* 3. Corporate Info */}
       <div className={bentoClass}>
         <div className="mb-8">
-          <h3 className="text-sm font-black text-slate-900 tracking-tight">นิติบุคคล</h3>
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">ข้อมูลนิติบุคคลสำหรับออกใบกำกับภาษี</p>
+          <h3 className="text-sm font-black text-slate-900 tracking-tight">{p.companySection}</h3>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{p.companyBillingDesc}</p>
         </div>
         <div className="space-y-6">
-          <div><label className={labelClass}>ชื่อบริษัท (ไทย)</label><input type="text" value={form.companyName} onChange={e => set("companyName", e.target.value)} className={inputClass} placeholder="บริษัท สยาม อินโนเวชั่น จำกัด" /></div>
-          <div><label className={labelClass}>ชื่อบริษัท (อังกฤษ)</label><input type="text" value={form.companyNameEng} onChange={e => set("companyNameEng", e.target.value)} className={inputClass} placeholder="Siam Innovation Co., Ltd." /></div>
+          <div><label className={labelClass}>{p.companyNameTH}</label><input type="text" value={form.companyName} onChange={e => set("companyName", e.target.value)} className={inputClass} placeholder="บริษัท สยาม อินโนเวชั่น จำกัด" /></div>
+          <div><label className={labelClass}>{p.companyNameEN}</label><input type="text" value={form.companyNameEng} onChange={e => set("companyNameEng", e.target.value)} className={inputClass} placeholder="Siam Innovation Co., Ltd." /></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><label className={labelClass}>เลขประจำตัวผู้เสียภาษี</label><input type="text" value={form.taxId} onChange={e => set("taxId", e.target.value)} className={inputClass} placeholder="0-1055-61234-56-7" /></div>
-            <div><label className={labelClass}>รหัสสาขา</label><input type="text" value={form.branchCode} onChange={e => set("branchCode", e.target.value)} className={inputClass} placeholder="00001" /></div>
+            <div><label className={labelClass}>{p.taxId}</label><input type="text" value={form.taxId} onChange={e => set("taxId", e.target.value)} className={inputClass} placeholder="0-1055-61234-56-7" /></div>
+            <div><label className={labelClass}>{p.branchCode}</label><input type="text" value={form.branchCode} onChange={e => set("branchCode", e.target.value)} className={inputClass} placeholder="00001" /></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
@@ -325,20 +330,20 @@ export default function UnifiedProfileForm() {
                 <input type="checkbox" checked={form.isVatRegistered} onChange={e => set("isVatRegistered", e.target.checked)} className="sr-only peer" />
                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
-              <div className="text-[12px] font-bold text-slate-600">จดทะเบียนแล้ว · มี VAT 7%</div>
+              <div className="text-[12px] font-bold text-slate-600">{p.vatRegistered}</div>
             </div>
-            <div><label className={labelClass}>อุตสาหกรรม</label><input type="text" value={form.industry} onChange={e => set("industry", e.target.value)} className={inputClass} placeholder="Electronics" /></div>
+            <div><label className={labelClass}>{p.industryLabel}</label><input type="text" value={form.industry} onChange={e => set("industry", e.target.value)} className={inputClass} placeholder="Electronics" /></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><label className={labelClass}>ผู้ติดต่อ</label><input type="text" value={form.contactName} onChange={e => set("contactName", e.target.value)} className={inputClass} placeholder="สมชาย วิศวกร" /></div>
-            <div><label className={labelClass}>เบอร์บริษัท</label><input type="text" value={form.officePhone} onChange={e => set("officePhone", e.target.value)} className={inputClass} placeholder="+66 2 610 9999" /></div>
+            <div><label className={labelClass}>{p.contactPerson}</label><input type="text" value={form.contactName} onChange={e => set("contactName", e.target.value)} className={inputClass} placeholder="สมชาย วิศวกร" /></div>
+            <div><label className={labelClass}>{p.officePhone}</label><input type="text" value={form.officePhone} onChange={e => set("officePhone", e.target.value)} className={inputClass} placeholder="+66 2 610 9999" /></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><label className={labelClass}>อีเมลบริษัท</label><input type="email" value={form.corporateEmail} onChange={e => set("corporateEmail", e.target.value)} className={inputClass} placeholder="info@siaminnovation.co.th" /></div>
-            <div><label className={labelClass}>เว็บไซต์</label><input type="text" value={form.website} onChange={e => set("website", e.target.value)} className={inputClass} placeholder="siaminnovation.co.th" /></div>
+            <div><label className={labelClass}>{p.companyEmail}</label><input type="email" value={form.corporateEmail} onChange={e => set("corporateEmail", e.target.value)} className={inputClass} placeholder="info@siaminnovation.co.th" /></div>
+            <div><label className={labelClass}>{p.websiteLabel}</label><input type="text" value={form.website} onChange={e => set("website", e.target.value)} className={inputClass} placeholder="siaminnovation.co.th" /></div>
           </div>
           <div>
-            <label className={labelClass}>ขนาดบริษัท</label>
+            <label className={labelClass}>{p.companySizeLabel}</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {["1-10", "11-50", "51-200", "201+"].map(size => (
                 <button
@@ -362,15 +367,15 @@ export default function UnifiedProfileForm() {
       <div id="shipping-addresses" className="mb-10 mt-12 scroll-mt-24">
         <div className="flex justify-between items-center mb-6">
             <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight">ที่อยู่</h2>
-                <p className="text-slate-400 font-bold text-sm">ที่อยู่จัดส่งของคุณ</p>
+                <h2 className="text-[24px] font-black text-slate-900 tracking-tight">{p.addressTitle}</h2>
+                <p className="text-slate-400 font-bold text-sm">{p.shippingAddressesDesc}</p>
             </div>
             <button 
                 type="button"
                 onClick={() => { setEditingAddress(null); setShowAddressModal(true); }}
                 className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-black text-xs hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
             >
-                <Plus size={14} /> เพิ่มที่อยู่
+                <Plus size={14} /> {p.addAddress}
             </button>
         </div>
 
@@ -393,7 +398,7 @@ export default function UnifiedProfileForm() {
                         {addr.isDefault && (
                             <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
                                 <Star size={10} className="fill-emerald-600" />
-                                <span className="text-[10px] font-black uppercase">ค่าเริ่มต้น</span>
+                                <span className="text-[10px] font-black uppercase">{p.defaultBadge}</span>
                             </div>
                         )}
                     </div>
@@ -412,7 +417,7 @@ export default function UnifiedProfileForm() {
                             onClick={() => { setEditingAddress(addr); setShowAddressModal(true); }}
                             className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-100 transition-all"
                         >
-                            <Edit3 size={12} /> แก้ไข
+                            <Edit3 size={12} /> {p.editBtn}
                         </button>
                         {!addr.isDefault && (
                             <button 
@@ -420,7 +425,7 @@ export default function UnifiedProfileForm() {
                                 onClick={() => handleSetDefaultAddress(idx)}
                                 className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition-all"
                             >
-                                ตั้งเป็นค่าเริ่มต้น
+                                {p.setAsDefault}
                             </button>
                         )}
                         <button 
@@ -437,8 +442,8 @@ export default function UnifiedProfileForm() {
                     <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-300 mb-4">
                         <MapPin size={32} />
                     </div>
-                    <p className="text-[15px] font-bold text-slate-800">ยังไม่มีที่อยู่สำหรับจัดส่ง</p>
-                    <p className="text-sm text-slate-400 mt-1">เพิ่มที่อยู่ใหม่เพื่อความสะดวกรวดเร็วในการสั่งพิมพ์</p>
+                    <p className="text-[15px] font-bold text-slate-800">{p.noAddresses}</p>
+                    <p className="text-sm text-slate-400 mt-1">{p.noAddressesDesc}</p>
                 </div>
             )}
         </div>
@@ -451,8 +456,8 @@ export default function UnifiedProfileForm() {
                 {/* Modal Header */}
                 <div className="flex justify-between items-center px-7 pt-7 pb-4 shrink-0">
                     <div>
-                        <h2 className="text-[18px] font-black text-slate-900 leading-tight">{editingAddress ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}</h2>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">กรอกรายละเอียดสถานที่จัดส่ง</p>
+                        <h2 className="text-[18px] font-black text-slate-900 leading-tight">{editingAddress ? p.editAddressTitle : p.addAddressTitle}</h2>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{p.addressFormSubtitle}</p>
                     </div>
                     <button type="button" onClick={() => setShowAddressModal(false)} className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
                         <X size={18} />
@@ -461,18 +466,55 @@ export default function UnifiedProfileForm() {
 
                 {/* Modal Body - Scrollable */}
                 <div className="px-7 py-2 overflow-y-auto no-scrollbar space-y-5 flex-1">
-                    <div><label className={labelClass}>ชื่อสถานที่ (เช่น บ้าน, ออฟฟิศ)</label><input type="text" value={addressForm.label} onChange={e => setAddressForm({...addressForm, label: e.target.value})} className={inputClass} placeholder="ออฟฟิศสำนักงานใหญ่" /></div>
-                    <div><label className={labelClass}>ชื่อ-นามสกุล ผู้รับ</label><input type="text" value={addressForm.fullName} onChange={e => setAddressForm({...addressForm, fullName: e.target.value})} className={inputClass} placeholder="คุณสมชาย วิศวกร" /></div>
-                    <div><label className={labelClass}>เบอร์โทรศัพท์</label><input type="text" value={addressForm.phone} onChange={e => setAddressForm({...addressForm, phone: e.target.value})} className={inputClass} placeholder="+66 2 610 9999" /></div>
-                    <div><label className={labelClass}>ที่อยู่ (บ้านเลขที่, อาคาร, ถนน)</label><textarea value={addressForm.address} onChange={e => setAddressForm({...addressForm, address: e.target.value})} className={cn(inputClass, "h-20 py-3")} placeholder="88/12 อาคารสยามพารากอน ชั้น 4" /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div><label className={labelClass}>แขวง/ตำบล</label><input type="text" value={addressForm.subDistrict} onChange={e => setAddressForm({...addressForm, subDistrict: e.target.value})} className={inputClass} placeholder="ปทุมวัน" /></div>
-                        <div><label className={labelClass}>เขต/อำเภอ</label><input type="text" value={addressForm.district} onChange={e => setAddressForm({...addressForm, district: e.target.value})} className={inputClass} placeholder="ปทุมวัน" /></div>
+                    <div><label className={labelClass}>{p.placeLabel}</label><input type="text" value={addressForm.label} onChange={e => setAddressForm({...addressForm, label: e.target.value})} className={inputClass} placeholder="ออฟฟิศสำนักงานใหญ่" /></div>
+                    <div><label className={labelClass}>{p.recipientName}</label><input type="text" value={addressForm.fullName} onChange={e => setAddressForm({...addressForm, fullName: e.target.value})} className={inputClass} placeholder="คุณสมชาย วิศวกร" /></div>
+                    <div><label className={labelClass}>{p.phoneNumber}</label><input type="text" value={addressForm.phone} onChange={e => setAddressForm({...addressForm, phone: e.target.value})} className={inputClass} placeholder="+66 2 610 9999" /></div>
+                    
+                    <div className="flex items-center gap-2 mt-2 mb-2">
+                      <input 
+                        type="checkbox" 
+                        id="isInternational"
+                        checked={addressForm.isInternational} 
+                        onChange={e => setAddressForm({...addressForm, isInternational: e.target.checked})} 
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                      <label htmlFor="isInternational" className="text-sm font-bold text-slate-700 cursor-pointer">
+                        {p.internationalAddress}
+                      </label>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div><label className={labelClass}>จังหวัด</label><input type="text" value={addressForm.province} onChange={e => setAddressForm({...addressForm, province: e.target.value})} className={inputClass} placeholder="กรุงเทพมหานคร" /></div>
-                        <div><label className={labelClass}>รหัสไปรษณีย์</label><input type="text" value={addressForm.zipCode} onChange={e => setAddressForm({...addressForm, zipCode: e.target.value})} className={inputClass} placeholder="10330" /></div>
-                    </div>
+
+                    <div><label className={labelClass}>{p.addressDetail}</label><textarea value={addressForm.address} onChange={e => setAddressForm({...addressForm, address: e.target.value})} className={cn(inputClass, "h-20 py-3")} placeholder="88/12 อาคารสยามพารากอน ชั้น 4" /></div>
+                    
+                    {addressForm.isInternational ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div><label className={labelClass}>City / District</label><input type="text" value={addressForm.subDistrict} onChange={e => setAddressForm({...addressForm, subDistrict: e.target.value})} className={inputClass} placeholder="City" /></div>
+                            <div><label className={labelClass}>State / Province</label><input type="text" value={addressForm.district} onChange={e => setAddressForm({...addressForm, district: e.target.value})} className={inputClass} placeholder="State" /></div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div><label className={labelClass}>Country</label><input type="text" value={addressForm.province} onChange={e => setAddressForm({...addressForm, province: e.target.value})} className={inputClass} placeholder="Country" /></div>
+                            <div><label className={labelClass}>Zip/Postal Code</label><input type="text" value={addressForm.zipCode} onChange={e => setAddressForm({...addressForm, zipCode: e.target.value})} className={inputClass} placeholder="Zipcode" /></div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="pt-2 pb-6">
+                        <CascadingAddressPicker
+                          value={{
+                            province: addressForm.province,
+                            amphure: addressForm.district,
+                            district: addressForm.subDistrict,
+                            zipcode: addressForm.zipCode
+                          }}
+                          onChange={(addr: AddressData) => setAddressForm({
+                            ...addressForm,
+                            province: addr.province,
+                            district: addr.amphure,
+                            subDistrict: addr.district,
+                            zipCode: addr.zipcode
+                          })}
+                        />
+                      </div>
+                    )}
                 </div>
 
                 {/* Modal Footer */}
@@ -490,7 +532,7 @@ export default function UnifiedProfileForm() {
                         disabled={savingAddress}
                         className="flex-1 h-11 rounded-xl border border-slate-200 font-black text-xs text-slate-500 hover:bg-slate-50 transition-all disabled:opacity-50"
                       >
-                        ยกเลิก
+                        {p.cancel}
                       </button>
                       <button
                         type="button"
@@ -499,8 +541,8 @@ export default function UnifiedProfileForm() {
                         className="flex-[2] h-11 px-8 bg-blue-600 text-white rounded-xl font-black text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2 disabled:opacity-70"
                       >
                         {savingAddress
-                          ? <><Loader2 size={14} className="animate-spin" /> กำลังบันทึก...</>
-                          : <><Save size={14} /> บันทึกที่อยู่</>}
+                          ? <><Loader2 size={14} className="animate-spin" /> {p.savingAddress}</>
+                          : <><Save size={14} /> {p.saveAddress}</>}
                       </button>
                     </div>
                 </div>

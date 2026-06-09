@@ -9,6 +9,44 @@ export interface IUser extends Document {
   isVerified: boolean;
   verificationStatus: "pending" | "verified";
   role: "admin" | "user";
+  adminOTP?: string;
+  adminOTPExpires?: Date;
+  billing?: {
+    type?: "individual" | "company";
+    firstName?: string;
+    lastName?: string;
+    idCard?: string;
+    companyName?: string;
+    taxId?: string;
+    contactName?: string;
+    address?: string;
+    district?: string;
+    province?: string;
+    postalCode?: string;
+    phone?: string;
+    email?: string;
+    companyNameEng?: string;
+    branchCode?: string;
+    isVatRegistered?: boolean;
+    industry?: string;
+    officePhone?: string;
+    website?: string;
+    companySize?: string;
+  };
+  shippingAddresses?: {
+    _id?: any;
+    label?: string;
+    fullName?: string;
+    phone?: string;
+    address?: string;
+    district?: string;
+    subDistrict?: string;
+    province?: string;
+    zipCode?: string;
+    isDefault?: boolean;
+  }[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const UserSchema = new Schema(
@@ -90,9 +128,4 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-// ป้องกัน error เวลา compile ใหม่บน Next.js และอัปเดต Schema ใหม่เวลามีการเพิ่มฟิลด์
-if (mongoose.models.User) {
-  delete mongoose.models.User;
-}
-
-export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+export default (mongoose.models.User as mongoose.Model<IUser>) || mongoose.model<IUser>("User", UserSchema);

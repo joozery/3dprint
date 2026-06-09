@@ -36,8 +36,4 @@ const MaterialConfigSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
-if (mongoose.models.MaterialConfig) {
-  delete mongoose.models.MaterialConfig;
-}
-
-export default mongoose.models.MaterialConfig || mongoose.model("MaterialConfig", MaterialConfigSchema);
+export default (mongoose.models.MaterialConfig as mongoose.Model<any>) || mongoose.model("MaterialConfig", MaterialConfigSchema);

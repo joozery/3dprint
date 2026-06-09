@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import dbConnect from "@/lib/mongoose";
 import Order from "@/models/Order";
 import Quote from "@/models/Quote";

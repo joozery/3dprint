@@ -9,6 +9,7 @@ import AdminOrderStatusSelect from "@/components/admin/orders/AdminOrderStatusSe
 import SlipViewerButton from "@/components/admin/orders/SlipViewerButton";
 import IShipPanel from "@/components/admin/orders/IShipPanel";
 import FedExPanel from "@/components/admin/orders/FedExPanel";
+import DHLPanel from "@/components/admin/orders/DHLPanel";
 
 // For typing purposes if needed
 const formatCur = (v: number) => Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -189,6 +190,20 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     shippingProvider: (order as any).shippingProvider || "",
                     fedexServiceType: (order as any).fedexServiceType || "",
                     fedexLabelUrl:    (order as any).fedexLabelUrl    || "",
+                }}
+            />
+
+            <DHLPanel
+                orderId={order._id.toString()}
+                quotesData={(quotes as any[]).map(q => ({
+                    weightGrams: q.weightGrams || 0,
+                    dimensions:  q.dimensions  || { x: 10, y: 10, z: 5 },
+                }))}
+                existing={{
+                    trackingNumber:   (order as any).shippingProvider === "dhl" ? (order as any).trackingNumber : "",
+                    shippingProvider: (order as any).shippingProvider || "",
+                    dhlProductCode:   (order as any).dhlProductCode   || "",
+                    dhlLabelBase64:   (order as any).dhlLabelBase64   || "",
                 }}
             />
 
