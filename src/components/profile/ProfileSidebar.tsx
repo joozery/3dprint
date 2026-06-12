@@ -28,12 +28,8 @@ export function ProfileSidebar() {
 
             {/* Header / Logo */}
             <div className="px-8 pt-8 pb-5">
-                <Link href="/" className="inline-flex items-center gap-3 group relative w-full">
-                    <div className="absolute top-1/2 left-4 -translate-y-1/2 w-10 h-10 bg-blue-500/20 blur-xl rounded-full group-hover:bg-blue-500/30 transition-all duration-500"></div>
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-white to-slate-50 shadow-sm border border-slate-200 flex items-center justify-center relative overflow-hidden shrink-0 group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-300">
-                        <Image src="/logo/PDM_Logo_Icon_40x40px.svg" alt="PDM Logo" fill className="object-contain p-2" />
-                    </div>
-                    <span className="text-[20px] font-black tracking-tight text-slate-800">PDM <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">PRO</span></span>
+                <Link href="/" className="inline-flex items-center group relative w-full">
+                    <Image src="/logo/logo.png" alt="Print My Design Logo" width={160} height={60} className="h-10 w-auto object-contain group-hover:scale-105 transition-transform duration-300" />
                 </Link>
             </div>
 

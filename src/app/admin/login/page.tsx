@@ -76,9 +76,8 @@ export default function AdminLoginPage() {
 
         <div className="relative z-10 flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <Image src="/logo/PDM_Logo_Icon_40x40px.svg" alt="PDM Logo" width={36} height={36} className="rounded-lg" />
-            <span className="text-white font-bold text-sm tracking-wide">PDM Admin</span>
+          <div className="flex items-center">
+            <Image src="/logo/logo.png" alt="Print My Design Logo" width={160} height={60} className="h-10 w-auto object-contain" />
           </div>
 
           {/* Center content */}
@@ -124,9 +123,8 @@ export default function AdminLoginPage() {
         <div className="w-full max-w-[400px]">
 
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-10 lg:hidden">
-            <Image src="/logo/PDM_Logo_Icon_40x40px.svg" alt="PDM Logo" width={32} height={32} className="rounded-lg" />
-            <span className="font-bold text-slate-800 text-sm">PDM Admin</span>
+          <div className="flex items-center mb-10 lg:hidden">
+            <Image src="/logo/logo.png" alt="Print My Design Logo" width={140} height={52} className="h-9 w-auto object-contain" />
           </div>
 
           {/* Step indicator */}
