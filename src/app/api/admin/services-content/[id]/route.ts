@@ -8,10 +8,10 @@ import User from "@/models/User";
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     await dbConnect();
-    const user = await User.findById(session.user.id);
+    const user = await User.findById((session.user as any).id);
     if (!user || user.role !== "admin") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
     const { id } = await params;
@@ -28,10 +28,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     await dbConnect();
-    const user = await User.findById(session.user.id);
+    const user = await User.findById((session.user as any).id);
     if (!user || user.role !== "admin") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
     const body = await req.json();

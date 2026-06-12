@@ -1,10 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { User, Building2, Save, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Plus, Star, Trash2, Edit3, MapPin, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Building2, Save, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Plus, Star, Trash2, Edit3, MapPin, X, Globe, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CascadingAddressPicker, { AddressData } from "@/components/ui/CascadingAddressPicker";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+
+const COUNTRIES = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina",
+  "Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados",
+  "Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
+  "Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia",
+  "Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros",
+  "Congo","Costa Rica","Croatia","Cuba","Cyprus","Czechia","Denmark","Djibouti","Dominica",
+  "Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea",
+  "Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia",
+  "Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana",
+  "Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland",
+  "Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kosovo",
+  "Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya",
+  "Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives",
+  "Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia",
+  "Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia",
+  "Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea",
+  "North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama",
+  "Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar",
+  "Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
+  "Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe",
+  "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia",
+  "Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan",
+  "Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan",
+  "Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago",
+  "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates",
+  "United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City",
+  "Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+];
 
 type BillingType = "individual" | "company";
 
@@ -20,6 +50,75 @@ interface Address {
   zipCode: string;
   isDefault: boolean;
   isInternational?: boolean;
+}
+
+function CountryCombobox({ value, onChange, inputClass }: {
+  value: string;
+  onChange: (v: string) => void;
+  inputClass: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = query.trim()
+    ? COUNTRIES.filter(c => c.toLowerCase().includes(query.toLowerCase()))
+    : COUNTRIES;
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSelect = (country: string) => {
+    onChange(country);
+    setQuery("");
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
+      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
+      <input
+        type="text"
+        className={cn(inputClass, "pl-9 pr-8 cursor-pointer")}
+        placeholder="Search country..."
+        value={open ? query : value}
+        onFocus={() => { setOpen(true); setQuery(""); }}
+        onChange={e => { setQuery(e.target.value); setOpen(true); }}
+      />
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100">
+            <Search size={13} className="text-slate-400 shrink-0" />
+            <span className="text-[11px] text-slate-400 font-bold">
+              {filtered.length} countries
+            </span>
+          </div>
+          <ul className="max-h-52 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <li className="px-4 py-3 text-[13px] text-slate-400 text-center">No results</li>
+            ) : filtered.map(c => (
+              <li
+                key={c}
+                onMouseDown={() => handleSelect(c)}
+                className={cn(
+                  "px-4 py-2.5 text-[13px] font-bold cursor-pointer transition-colors",
+                  c === value ? "bg-blue-50 text-blue-600" : "text-slate-700 hover:bg-slate-50"
+                )}
+              >
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface UnifiedForm {
@@ -192,7 +291,25 @@ export default function UnifiedProfileForm() {
     } catch {}
   };
 
+  const validateAddress = (): string | null => {
+    if (!addressForm.label.trim()) return "กรุณาระบุชื่อที่อยู่ (เช่น บ้าน, ออฟฟิศ)";
+    if (!addressForm.fullName.trim()) return "กรุณาระบุชื่อผู้รับ";
+    if (!addressForm.phone.trim()) return "กรุณาระบุเบอร์โทรศัพท์";
+    if (!addressForm.address.trim()) return "กรุณาระบุที่อยู่โดยละเอียด";
+    if (addressForm.isInternational) {
+      if (!addressForm.subDistrict.trim()) return "กรุณาระบุ City / District";
+      if (!addressForm.province.trim()) return "กรุณาเลือกประเทศ (Country)";
+      if (!addressForm.zipCode.trim()) return "กรุณาระบุรหัสไปรษณีย์";
+    } else {
+      if (!addressForm.province.trim() || !addressForm.district.trim() || !addressForm.subDistrict.trim() || !addressForm.zipCode.trim())
+        return "กรุณาเลือกจังหวัด, เขต/อำเภอ, แขวง/ตำบล และรหัสไปรษณีย์ให้ครบ";
+    }
+    return null;
+  };
+
   const handleSaveAddress = async () => {
+    const error = validateAddress();
+    if (error) { setAddressFeedback({ text: error, type: "error" }); return; }
     setSavingAddress(true);
     setAddressFeedback(null);
     try {
@@ -392,7 +509,9 @@ export default function UnifiedProfileForm() {
                         <div>
                             <h4 className="text-[15px] font-black text-slate-800">{addr.label}</h4>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TH · {addr.zipCode}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                  {addr.isInternational ? `${addr.province || "INTL"} · ${addr.zipCode}` : `TH · ${addr.zipCode}`}
+                                </span>
                             </div>
                         </div>
                         {addr.isDefault && (
@@ -488,12 +607,28 @@ export default function UnifiedProfileForm() {
                     {addressForm.isInternational ? (
                       <>
                         <div className="grid grid-cols-2 gap-4">
-                            <div><label className={labelClass}>City / District</label><input type="text" value={addressForm.subDistrict} onChange={e => setAddressForm({...addressForm, subDistrict: e.target.value})} className={inputClass} placeholder="City" /></div>
-                            <div><label className={labelClass}>State / Province</label><input type="text" value={addressForm.district} onChange={e => setAddressForm({...addressForm, district: e.target.value})} className={inputClass} placeholder="State" /></div>
+                          <div>
+                            <label className={labelClass}>City / District <span className="text-red-400">*</span></label>
+                            <input type="text" value={addressForm.subDistrict} onChange={e => setAddressForm({...addressForm, subDistrict: e.target.value})} className={inputClass} placeholder="City" />
+                          </div>
+                          <div>
+                            <label className={labelClass}>State / Province</label>
+                            <input type="text" value={addressForm.district} onChange={e => setAddressForm({...addressForm, district: e.target.value})} className={inputClass} placeholder="State (optional)" />
+                          </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div><label className={labelClass}>Country</label><input type="text" value={addressForm.province} onChange={e => setAddressForm({...addressForm, province: e.target.value})} className={inputClass} placeholder="Country" /></div>
-                            <div><label className={labelClass}>Zip/Postal Code</label><input type="text" value={addressForm.zipCode} onChange={e => setAddressForm({...addressForm, zipCode: e.target.value})} className={inputClass} placeholder="Zipcode" /></div>
+                          <div>
+                            <label className={labelClass}>Country <span className="text-red-400">*</span></label>
+                            <CountryCombobox
+                              value={addressForm.province}
+                              onChange={v => setAddressForm({...addressForm, province: v})}
+                              inputClass={inputClass}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Zip/Postal Code <span className="text-red-400">*</span></label>
+                            <input type="text" value={addressForm.zipCode} onChange={e => setAddressForm({...addressForm, zipCode: e.target.value})} className={inputClass} placeholder="Zipcode" />
+                          </div>
                         </div>
                       </>
                     ) : (

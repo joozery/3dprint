@@ -10,6 +10,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
+export const dynamic = 'force-dynamic';
+
 // Helper for dynamic colors
 const getColorClasses = (color: string) => {
     switch(color) {
