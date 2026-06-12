@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: "PDM 3D Print Thailand | แพลตฟอร์มสั่งพิมพ์ 3 มิติครบวงจร",
   description: "บริการพิมพ์ 3 มิติระดับอุตสาหกรรม รวดเร็ว แม่นยำ และเป็นมืออาชีพที่สุดในไทย",
   icons: {
-    icon: "/logo/PDM_Logo_Icon_40x40px.svg",
-    apple: "/logo/PDM_Logo_Icon_40x40px.svg",
+    icon: "/logo/browser.jpg",
+    apple: "/logo/browser.jpg",
   },
 };
 

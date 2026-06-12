@@ -126,16 +126,13 @@ export default function Navbar() {
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-6">
 
                 {/* ── Logo ── */}
-                <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+                <Link href="/" className="flex items-center shrink-0 group">
                     <Image
-                        src="/logo/PDM_Logo_Icon_40x40px.svg"
-                        alt="PDM Logo"
-                        width={40} height={40} priority
-                        className="h-10 w-auto object-contain transition-transform group-hover:scale-110"
+                        src="/logo/logo.png"
+                        alt="Print My Design Logo"
+                        width={160} height={60} priority
+                        className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
                     />
-                    <span className="font-black text-2xl tracking-[0.2em] text-slate-900 group-hover:text-blue-600 transition-colors uppercase ml-1">
-                        PDM
-                    </span>
                 </Link>
 
                 {/* ── Desktop Nav ── */}

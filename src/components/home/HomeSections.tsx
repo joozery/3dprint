@@ -277,17 +277,14 @@ export function Footer() {
                 {/* Top Section: Newsletter & Branding */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16 pb-16 border-b border-slate-800/60">
                     <div className="lg:col-span-5">
-                        <div className="mb-6 flex items-center gap-2.5">
+                        <div className="mb-6">
                             <Image
-                                src="/logo/PDM_Logo_Icon_40x40px.svg"
-                                alt="PrintMyDesign Logo"
-                                width={40}
-                                height={40}
-                                className="h-10 w-auto object-contain"
+                                src="/logo/logo.png"
+                                alt="Print My Design Logo"
+                                width={180}
+                                height={70}
+                                className="h-14 w-auto object-contain"
                             />
-                            <span className="font-black text-2xl tracking-[0.2em] text-white uppercase ml-1">
-                                PrintMyDesign
-                            </span>
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed max-w-md mb-8">
                             {t.footer.tagline}
