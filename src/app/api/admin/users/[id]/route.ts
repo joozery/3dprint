@@ -69,3 +69,29 @@ export async function PATCH(
 
   return NextResponse.json({ success: true, user: { id: user._id, role: user.role } });
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const admin = await checkAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+
+  if (id === (admin as any)._id.toString()) {
+    return NextResponse.json({ error: "ไม่สามารถลบบัญชีของตัวเองได้" }, { status: 400 });
+  }
+
+  const user = await User.findByIdAndDelete(id);
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  await AdminLog.create({
+    adminId: (admin as any)._id,
+    action: "DELETE_USER",
+    details: `Admin deleted user: ${user.email} (role: ${user.role})`,
+    targetId: id,
+  });
+
+  return NextResponse.json({ success: true });
+}

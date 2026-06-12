@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Search, RefreshCw, Mail, AlertCircle, CheckCircle2, X, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Search, RefreshCw, Mail, AlertCircle, CheckCircle2, X, ExternalLink, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -67,6 +67,8 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [verifyModal, setVerifyModal] = useState<{isOpen: boolean, userId: string | null}>({isOpen: false, userId: null});
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, user: User | null}>({isOpen: false, user: null});
+  const [deleting, setDeleting] = useState(false);
 
   const setPage = (p: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -112,6 +114,24 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
       toast.error(e.message || "เกิดข้อผิดพลาด");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    const user = deleteModal.user;
+    if (!user) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${user._id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "ลบไม่สำเร็จ");
+      toast.success(`ลบบัญชี ${user.name} เรียบร้อยแล้ว`);
+      setDeleteModal({ isOpen: false, user: null });
+      router.refresh();
+    } catch (e: any) {
+      toast.error(e.message || "เกิดข้อผิดพลาด");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -258,6 +278,14 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
                               : user.role === "admin" ? <ShieldCheck size={13} /> : <ShieldOff size={13} />
                             }
                           </button>
+
+                          <button
+                            onClick={() => setDeleteModal({ isOpen: true, user })}
+                            title="ลบบัญชีนี้"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all border bg-white text-slate-400 border-slate-200 hover:bg-red-600 hover:text-white hover:border-red-600"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -321,6 +349,49 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
                     ยืนยันตัวตน
                  </button>
                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteModal.isOpen && deleteModal.user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDeleteModal({ isOpen: false, user: null })} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="absolute top-4 right-4">
+              <button onClick={() => setDeleteModal({ isOpen: false, user: null })} className="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-full transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-6 text-center space-y-4">
+              <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center border-4 border-white shadow-sm ring-1 ring-red-100">
+                <Trash2 size={28} className="text-red-500" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-slate-800">ยืนยันการลบบัญชี</h3>
+                <p className="text-sm text-slate-500">
+                  ต้องการลบบัญชี <span className="font-semibold text-red-600">{deleteModal.user.name}</span> ออกจากระบบ?
+                </p>
+                <p className="text-xs text-slate-400 mt-1">การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+              </div>
+              <div className="pt-4 flex items-center gap-3">
+                <button
+                  onClick={() => setDeleteModal({ isOpen: false, user: null })}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-red-500/20 disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {deleting ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  ลบบัญชี
+                </button>
+              </div>
             </div>
           </div>
         </div>
