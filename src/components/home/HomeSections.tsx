@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     UploadCloud,
@@ -266,10 +266,37 @@ function NewsletterForm({ t }: { t: { footer: { newsletterTitle: string; newslet
     );
 }
 
+type FooterLinkItem = { _id: string; label: string; url: string; openInNewTab: boolean };
+
 // --- Section 3: Footer ---
 export function Footer() {
     const { t } = useLanguage();
     const currentYear = new Date().getFullYear();
+    const [dbLinks, setDbLinks] = useState<Record<string, FooterLinkItem[]>>({});
+
+    useEffect(() => {
+        fetch("/api/admin/footer-links")
+            .then(r => r.json())
+            .then(data => {
+                if (data.links) {
+                    const grouped: Record<string, FooterLinkItem[]> = {};
+                    for (const link of data.links) {
+                        if (!link.isActive) continue;
+                        if (!grouped[link.category]) grouped[link.category] = [];
+                        grouped[link.category].push(link);
+                    }
+                    setDbLinks(grouped);
+                }
+            })
+            .catch(() => {});
+    }, []);
+
+    const categories: Array<{ key: string; headingKey: string }> = [
+        { key: "services",  headingKey: "servicesHeading" },
+        { key: "materials", headingKey: "materialsHeading" },
+        { key: "resources", headingKey: "resourcesHeading" },
+        { key: "company",   headingKey: "companyHeading" },
+    ];
 
     return (
         <footer className="bg-[#0f172a] text-slate-300 pt-20 pb-10 border-t border-slate-800">
@@ -298,6 +325,7 @@ export function Footer() {
 
                 {/* Middle Section: Links */}
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-16">
+                    {/* Contact column */}
                     <div className="col-span-2 lg:col-span-1">
                         <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">Global Presence</h4>
                         <div className="flex items-center gap-2 text-sm text-slate-400 mb-4 hover:text-white cursor-pointer transition-colors">
@@ -315,44 +343,34 @@ export function Footer() {
                         </div>
                     </div>
 
-                    <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.servicesHeading}</h4>
-                        <ul className="space-y-3 text-sm text-slate-400">
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s1}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.s2}</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.materialsHeading}</h4>
-                        <ul className="space-y-3 text-sm text-slate-400">
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">Industrial Resin (SLA)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">Nylon (SLS/MJF)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">Stainless Steel (SLM)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">Standard Plastic (FDM)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">Wax (MJF)</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.m5}</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.resourcesHeading}</h4>
-                        <ul className="space-y-3 text-sm text-slate-400">
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r1}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r2}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r3}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r4}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.r5}</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">{t.footer.companyHeading}</h4>
-                        <ul className="space-y-3 text-sm text-slate-400">
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c1}</Link></li>
-                            <li><Link href="#" className="hover:text-blue-400 transition-colors">{t.footer.c5}</Link></li>
-                        </ul>
-                    </div>
+                    {/* Dynamic link columns from DB */}
+                    {categories.map(({ key, headingKey }) => {
+                        const links = dbLinks[key] || [];
+                        return (
+                            <div key={key}>
+                                <h4 className="text-white font-bold mb-6 tracking-wide text-sm uppercase">
+                                    {(t.footer as any)[headingKey]}
+                                </h4>
+                                <ul className="space-y-3 text-sm text-slate-400">
+                                    {links.map(link => (
+                                        <li key={link._id}>
+                                            <Link
+                                                href={link.url}
+                                                target={link.openInNewTab ? "_blank" : undefined}
+                                                rel={link.openInNewTab ? "noopener noreferrer" : undefined}
+                                                className="hover:text-blue-400 transition-colors"
+                                            >
+                                                {link.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                    {links.length === 0 && (
+                                        <li className="text-slate-600 text-xs italic">ยังไม่มีลิ้งค์</li>
+                                    )}
+                                </ul>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* Bottom Section */}

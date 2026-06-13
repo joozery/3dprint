@@ -382,7 +382,7 @@ export default function AdminFooterLinksPage() {
                 <div className="relative">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
-                    type="url"
+                    type="text"
                     value={form.url}
                     onChange={(e) => setForm({ ...form, url: e.target.value })}
                     placeholder="https://example.com หรือ /about"

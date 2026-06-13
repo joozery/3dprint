@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Truck, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, ChevronDown } from "lucide-react";
+import { Truck, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, ChevronDown, RotateCcw } from "lucide-react";
 
 const COURIER_NAMES: Record<string, string> = {
     FlashExpressA: "Flash Express",
@@ -37,6 +37,8 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
     const [rates, setRates]                      = useState<any[]>([]);
     const [loadingRates, setLoadingRates]        = useState(false);
     const [creating, setCreating]                = useState(false);
+    const [resetting, setResetting]              = useState(false);
+    const [confirmReset, setConfirmReset]        = useState(false);
     const [error, setError]                      = useState("");
     const [labelUrl, setLabelUrl]                = useState("");
     const [result, setResult]                    = useState<{ trackingNumber: string; ishipOrderId: string; ishipRef?: string } | null>(
@@ -115,6 +117,30 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
         window.open(url, "_blank");
     };
 
+    const handleReset = async () => {
+        setResetting(true);
+        setError("");
+        try {
+            const res = await fetch("/api/shipping/reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderId }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setResult(null);
+                setConfirmReset(false);
+                setSelectedCourier(customerCourier);
+            } else {
+                setError(data.error || "ไม่สามารถรีเซ็ตได้");
+            }
+        } catch {
+            setError("ระบบขัดข้อง กรุณาลองใหม่");
+        } finally {
+            setResetting(false);
+        }
+    };
+
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-5">
@@ -156,6 +182,43 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                             className="flex items-center gap-1 text-xs text-blue-500 hover:underline justify-center">
                             <ExternalLink size={12} /> เปิด label URL อีกครั้ง
                         </a>
+                    )}
+
+                    {/* Reset / recreate */}
+                    {!confirmReset ? (
+                        <button
+                            onClick={() => setConfirmReset(true)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100"
+                        >
+                            <RotateCcw size={12} /> สร้างพัสดุใหม่ (ยกเลิกพัสดุเดิม)
+                        </button>
+                    ) : (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+                            <p className="text-xs text-red-700 font-bold text-center">ยืนยันการยกเลิกพัสดุเดิมและสร้างใหม่?</p>
+                            <p className="text-[10px] text-red-500 text-center">iShip ID {result!.ishipOrderId} จะถูกยกเลิก</p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setConfirmReset(false)}
+                                    className="flex-1 py-1.5 text-xs text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={handleReset}
+                                    disabled={resetting}
+                                    className="flex-1 py-1.5 text-xs text-white bg-red-500 hover:bg-red-600 rounded-lg disabled:opacity-50 flex items-center justify-center gap-1"
+                                >
+                                    {resetting ? <RefreshCw size={10} className="animate-spin" /> : <RotateCcw size={10} />}
+                                    {resetting ? "กำลังยกเลิก..." : "ยืนยัน"}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">
+                            <AlertCircle size={14} className="shrink-0" /> {error}
+                        </div>
                     )}
                 </div>
 
