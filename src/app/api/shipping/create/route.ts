@@ -25,6 +25,13 @@ export async function POST(req: NextRequest) {
         const order = await Order.findById(orderId).populate("quotes").lean() as any;
         if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
+        if ((order as any).ishipOrderId) {
+            return NextResponse.json(
+                { error: `พัสดุนี้สร้างไปแล้ว (iShip ID: ${(order as any).ishipOrderId}) หากต้องการสร้างใหม่ให้ยกเลิกพัสดุเดิมก่อน` },
+                { status: 409 }
+            );
+        }
+
         const addr = order.shippingAddress;
         if (!addr?.zipCode) {
             return NextResponse.json({ error: "Order missing shipping address" }, { status: 400 });
@@ -33,15 +40,22 @@ export async function POST(req: NextRequest) {
         // คำนวณ package dimensions จากทุก quote
         const quotes = order.quotes as any[];
         const totalWeightGrams = quotes.reduce((sum: number, q: any) => sum + (q.weightGrams || 0), 0);
-        const maxWidth  = Math.max(...quotes.map((q: any) => q.dimensions?.x || 10));
-        const maxLength = Math.max(...quotes.map((q: any) => q.dimensions?.y || 10));
-        const maxHeight = quotes.reduce((sum: number, q: any) => sum + (q.dimensions?.z || 5), 0);
+        // dimensions stored in mm → convert to cm
+        const maxWidth  = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
+        const maxLength = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
+        const maxHeight = quotes.reduce((sum: number, q: any) => sum + (q.dimensions?.z || 5) / 10, 0);
         const weightKg  = Math.max(totalWeightGrams / 1000, 0.1);
+
+        // sanitize phone: remove spaces, fix "+66 +66..." → "+66..."
+        const rawPhone = addr.phone || "0000000000";
+        const cleanPhone = rawPhone.replace(/\s+/g, "").replace(/^\+66\+66/, "+66");
+
+        console.log("[iShip create] payload:", { courier_code, dst_phone: cleanPhone, weightKg, width: Math.ceil(maxWidth), length: Math.ceil(maxLength), height: Math.ceil(maxHeight) });
 
         const result = await createIShipOrder({
             courier_code,
             dst_name:     addr.fullName || "Customer",
-            dst_phone:    addr.phone    || "0000000000",
+            dst_phone:    cleanPhone,
             dst_address:  addr.address  || "",
             dst_district: addr.subDistrict || "",
             dst_amphure:  addr.district    || "",
@@ -57,11 +71,11 @@ export async function POST(req: NextRequest) {
             remark:      order.customerNotes || "",
         });
 
+        console.log("[iShip create_order response]", JSON.stringify(result, null, 2));
+
         if (!result.status && result.code !== undefined) {
             return NextResponse.json({ error: result.message || "iShip error", raw: result }, { status: 400 });
         }
-
-        console.log("[iShip create_order response]", JSON.stringify(result, null, 2));
 
         const data = result.data || {};
         const trackingNumber = data.tracking_number || "";

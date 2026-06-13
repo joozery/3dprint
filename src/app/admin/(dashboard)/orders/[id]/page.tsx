@@ -166,7 +166,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 }}
                 quotesData={(quotes as any[]).map(q => ({
                     weightGrams: q.weightGrams || 0,
-                    dimensions:  q.dimensions  || { x: 10, y: 10, z: 5 },
+                    dimensions:  {
+                        x: (q.dimensions?.x || 10) / 10,
+                        y: (q.dimensions?.y || 10) / 10,
+                        z: (q.dimensions?.z || 5)  / 10,
+                    },
                 }))}
                 existing={{
                     trackingNumber:   (order as any).trackingNumber   || "",
@@ -183,7 +187,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 }}
                 quotesData={(quotes as any[]).map(q => ({
                     weightGrams: q.weightGrams || 0,
-                    dimensions:  q.dimensions  || { x: 10, y: 10, z: 5 },
+                    dimensions:  {
+                        x: (q.dimensions?.x || 10) / 10,
+                        y: (q.dimensions?.y || 10) / 10,
+                        z: (q.dimensions?.z || 5)  / 10,
+                    },
                 }))}
                 existing={{
                     trackingNumber:   (order as any).shippingProvider === "fedex" ? (order as any).trackingNumber : "",
@@ -197,7 +205,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 orderId={order._id.toString()}
                 quotesData={(quotes as any[]).map(q => ({
                     weightGrams: q.weightGrams || 0,
-                    dimensions:  q.dimensions  || { x: 10, y: 10, z: 5 },
+                    dimensions:  {
+                        x: (q.dimensions?.x || 10) / 10,
+                        y: (q.dimensions?.y || 10) / 10,
+                        z: (q.dimensions?.z || 5)  / 10,
+                    },
                 }))}
                 existing={{
                     trackingNumber:   (order as any).shippingProvider === "dhl" ? (order as any).trackingNumber : "",

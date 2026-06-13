@@ -67,7 +67,7 @@ export async function getDHLRates(params: DHLRateParams): Promise<DHLRate[]> {
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
     const timeStr = now.toTimeString().slice(0, 8);
-    const plannedDate = `${dateStr}T${timeStr} GMT+07:00`;
+    const plannedDate = `${dateStr}T${timeStr}GMT+07:00`;
 
     const raw = await dhlPost("rates", {
         customerDetails: {
@@ -137,7 +137,7 @@ export async function createDHLShipment(params: DHLCreateParams) {
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
     const timeStr = now.toTimeString().slice(0, 8);
-    const plannedDate = `${dateStr}T${timeStr} GMT+07:00`;
+    const plannedDate = `${dateStr}T${timeStr}GMT+07:00`;
 
     return dhlPost("shipments", {
         plannedShippingDateAndTime: plannedDate,

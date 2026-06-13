@@ -145,7 +145,7 @@ export async function createIShipOrder(params: CreateOrderParams) {
         dst_amphure:    params.dst_amphure,
         dst_province:   params.dst_province,
         dst_zipcode:    params.dst_zipcode,
-        weight:         params.weightKg,
+        weight:         String(Math.round(params.weightKg * 1000) / 1000),  // kg as string, rounded to nearest gram e.g. "0.129"
         width:          params.width,
         length:         params.length,
         height:         params.height,

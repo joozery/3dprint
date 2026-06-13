@@ -28,9 +28,10 @@ export async function POST(req: NextRequest) {
 
         const quotes   = order.quotes as any[];
         const weightKg = Math.max(quotes.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0) / 1000, 0.1);
-        const maxWidth  = Math.max(...quotes.map((q: any) => q.dimensions?.x || 10));
-        const maxLength = Math.max(...quotes.map((q: any) => q.dimensions?.y || 10));
-        const maxHeight = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5), 0);
+        // dimensions stored in mm → convert to cm
+        const maxWidth  = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
+        const maxLength = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
+        const maxHeight = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
 
         const result = await createFedExShipment({
             serviceType,

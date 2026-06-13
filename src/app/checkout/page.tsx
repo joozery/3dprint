@@ -230,9 +230,10 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
         if (!address?.postal) { setLoading(false); return; }
 
         const totalWeightG = quotes.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0);
-        const maxW = Math.max(...quotes.map((q: any) => q.dimensions?.x || 10));
-        const maxL = Math.max(...quotes.map((q: any) => q.dimensions?.y || 10));
-        const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5), 0);
+        // dimensions stored in mm → convert to cm
+        const maxW = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
+        const maxL = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
+        const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
         const weightKg = Math.max(totalWeightG / 1000, 0.1);
         const dims = {
             width:  Math.ceil(maxW),
@@ -516,8 +517,8 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
 // ─── Summary Panel ───────────────────────────────────────────────────────────
 function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
     const subtotal = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
-    const shipFee = shipping?.price || 0;
-    const total = subtotal + shipFee;
+    const shipFee  = shipping?.price ?? null; // null = not yet selected
+    const total    = subtotal + (shipFee ?? 0);
 
     return (
         <div className="bg-white border rounded-2xl shadow-sm p-6 sticky top-24">
@@ -526,18 +527,51 @@ function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
                 <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">{quotes.length} รายการ</span>
             </div>
 
-            <div className="space-y-3 mb-4">
+            {/* Item list */}
+            <div className="space-y-2 mb-4">
+                {quotes.map((q, i) => {
+                    const name     = q.originalFileName || q.fileName || `ชิ้นงาน ${i + 1}`;
+                    const material = q.material || "";
+                    const price    = q.priceDetail?.totalPrice || 0;
+                    return (
+                        <div key={q._id || i} className="flex items-start justify-between gap-2 text-sm">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-slate-800 font-medium truncate">{name}</p>
+                                {material && <p className="text-[11px] text-slate-400">{material}</p>}
+                            </div>
+                            <span className="font-bold text-slate-900 shrink-0">฿{price.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="border-t border-dashed pt-4 space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
                     <span className="text-slate-500">ราคาชิ้นงาน</span>
-                    <span className="font-bold text-slate-900">฿{subtotal.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-slate-900">฿{subtotal.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                     <span className="text-slate-500">ค่าจัดส่ง</span>
-                    <span className="font-bold text-slate-900">{shipFee > 0 ? `฿${shipFee.toFixed(2)}` : <span className="text-emerald-600">ฟรี</span>}</span>
+                    {shipFee === null ? (
+                        <span className="text-slate-400 text-xs italic">ยังไม่ได้เลือก</span>
+                    ) : shipFee === 0 ? (
+                        <span className="font-bold text-emerald-600">ฟรี</span>
+                    ) : (
+                        <span className="font-bold text-slate-900">฿{shipFee.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span>
+                    )}
                 </div>
-                <div className="border-t border-dashed pt-3 flex justify-between items-baseline">
+                {shipping?.courier_name && (
+                    <p className="text-[11px] text-slate-400 text-right">{shipping.courier_name}</p>
+                )}
+                <div className="border-t border-dashed pt-2 flex justify-between items-baseline">
                     <span className="text-sm font-bold text-slate-900">ยอดชำระทั้งหมด</span>
-                    <span className="text-xl font-black text-slate-900">฿{total.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-xl font-black text-slate-900">
+                        {shipFee === null ? (
+                            <span className="text-base text-slate-400">฿{subtotal.toLocaleString("th-TH", { minimumFractionDigits: 2 })} +ค่าส่ง</span>
+                        ) : (
+                            `฿${total.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`
+                        )}
+                    </span>
                 </div>
             </div>
 

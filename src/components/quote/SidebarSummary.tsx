@@ -34,9 +34,10 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
         if (zipcode.length !== 5 || !hasQuotes) return;
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-            const maxW = Math.max(...quotes.map((q: any) => q.dimensions?.x || 10));
-            const maxL = Math.max(...quotes.map((q: any) => q.dimensions?.y || 10));
-            const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5), 0);
+            // dimensions stored in mm → convert to cm
+            const maxW = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
+            const maxL = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
+            const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
             setLoadingRates(true);
             setShippingRates([]);
             fetch("/api/shipping/rates", {

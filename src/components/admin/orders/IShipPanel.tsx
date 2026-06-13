@@ -1,14 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Truck, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Truck, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, ChevronDown } from "lucide-react";
+
+const COURIER_NAMES: Record<string, string> = {
+    FlashExpressA: "Flash Express",
+    KerryExpress:  "Kerry Express",
+    BestExpress:   "Best Express",
+    ShopeeExpress: "Shopee Express",
+};
 
 interface Props {
     orderId: string;
     shippingAddress: {
-        zipCode:     string;
-        province:    string;
-        district?:   string;
+        zipCode:      string;
+        province:     string;
+        district?:    string;
         subDistrict?: string;
     };
     quotesData: {
@@ -23,29 +30,40 @@ interface Props {
 }
 
 export default function IShipPanel({ orderId, shippingAddress, quotesData, existing }: Props) {
-    const [rates, setRates]           = useState<any[]>([]);
-    const [loadingRates, setLoadingRates] = useState(false);
-    const [selectedCourier, setSelectedCourier] = useState(existing.ishipCourierCode || "");
-    const [creating, setCreating]     = useState(false);
-    const [result, setResult]         = useState<{ trackingNumber: string; ishipOrderId: string; ishipRef?: string } | null>(
+    const customerCourier = existing.ishipCourierCode || "";
+
+    const [selectedCourier, setSelectedCourier] = useState(customerCourier);
+    const [showOverride, setShowOverride]        = useState(false);
+    const [rates, setRates]                      = useState<any[]>([]);
+    const [loadingRates, setLoadingRates]        = useState(false);
+    const [creating, setCreating]                = useState(false);
+    const [error, setError]                      = useState("");
+    const [labelUrl, setLabelUrl]                = useState("");
+    const [result, setResult]                    = useState<{ trackingNumber: string; ishipOrderId: string; ishipRef?: string } | null>(
         existing.trackingNumber && existing.ishipOrderId
             ? { trackingNumber: existing.trackingNumber, ishipOrderId: existing.ishipOrderId, ishipRef: (existing as any).ishipRef || "" }
             : null
     );
-    const [error, setError]           = useState("");
-    const [labelUrl, setLabelUrl]     = useState("");
-    const [loadingLabel, setLoadingLabel] = useState(false);
 
     const alreadyCreated = !!result?.ishipOrderId;
 
-    // คำนวณ package stats
+    // package stats (dimensions already in cm from page.tsx)
     const totalWeightG = quotesData.reduce((s, q) => s + (q.weightGrams || 0), 0);
     const maxW  = Math.max(...quotesData.map(q => q.dimensions?.x || 10));
     const maxL  = Math.max(...quotesData.map(q => q.dimensions?.y || 10));
     const maxH  = quotesData.reduce((s, q) => s + (q.dimensions?.z || 5), 0);
 
+    // KEX limits
+    const KEX_MAX_TOTAL = 180;
+    const KEX_MAX_SIDE  = 100;
+    const kexDimTotal   = Math.ceil(maxW) + Math.ceil(maxL) + Math.ceil(maxH);
+    const kexMaxSide    = Math.max(Math.ceil(maxW), Math.ceil(maxL), Math.ceil(maxH));
+    const kexOversize   = selectedCourier === "KerryExpress" && (kexDimTotal > KEX_MAX_TOTAL || kexMaxSide > KEX_MAX_SIDE);
+
+    // load rates only when override is opened or no pre-selected courier
     useEffect(() => {
         if (alreadyCreated || !shippingAddress?.zipCode) return;
+        if (customerCourier && !showOverride) return; // skip if pre-selected and not overriding
         setLoadingRates(true);
         fetch("/api/shipping/rates", {
             method: "POST",
@@ -65,7 +83,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
             .then(d => { if (d.rates) setRates(d.rates); })
             .catch(() => {})
             .finally(() => setLoadingRates(false));
-    }, []);
+    }, [showOverride]);
 
     const handleCreate = async () => {
         if (!selectedCourier) { setError("กรุณาเลือกบริษัทขนส่งก่อน"); return; }
@@ -90,24 +108,11 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
         }
     };
 
-    const handlePrintLabel = async () => {
+    const handlePrintLabel = () => {
         if (!result?.ishipOrderId) return;
-        setLoadingLabel(true);
-        try {
-            const res = await fetch(`/api/shipping/label?order_id=${result.ishipOrderId}`);
-            const data = await res.json();
-            const url = data.data?.label_url || data.data?.url || data.data?.pdf_url || data.data?.link;
-            if (url) {
-                setLabelUrl(url);
-                window.open(url, "_blank");
-            } else {
-                setError("ไม่พบ URL ของ label: " + JSON.stringify(data.data));
-            }
-        } catch {
-            setError("ดึง label ไม่สำเร็จ");
-        } finally {
-            setLoadingLabel(false);
-        }
+        const url = `https://app.iship.cloud/print/${result.ishipOrderId}`;
+        setLabelUrl(url);
+        window.open(url, "_blank");
     };
 
     return (
@@ -123,7 +128,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                 <span>ปลายทาง: <b className="text-slate-700">{shippingAddress.zipCode} {shippingAddress.province}</b></span>
             </div>
 
-            {/* Already created */}
+            {/* ─── Already created ─── */}
             {alreadyCreated ? (
                 <div className="space-y-3">
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-start gap-3">
@@ -134,19 +139,16 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                             {result!.ishipRef && <p className="text-xs text-slate-500 mt-0.5">Ref: {result!.ishipRef}</p>}
                             <p className="text-xs text-slate-500 mt-0.5">iShip ID: {result!.ishipOrderId}</p>
                             {existing.ishipCourierCode && (
-                                <p className="text-xs text-slate-500">Courier: {existing.ishipCourierCode}</p>
+                                <p className="text-xs text-slate-500">Courier: {COURIER_NAMES[existing.ishipCourierCode] || existing.ishipCourierCode}</p>
                             )}
                         </div>
                     </div>
 
                     <button
                         onClick={handlePrintLabel}
-                        disabled={loadingLabel}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors"
                     >
-                        {loadingLabel
-                            ? <><RefreshCw size={14} className="animate-spin" /> กำลังโหลด label...</>
-                            : <><Printer size={14} /> พิมพ์ label</>}
+                        <Printer size={14} /> พิมพ์ label (iShip)
                     </button>
 
                     {labelUrl && (
@@ -155,11 +157,67 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                             <ExternalLink size={12} /> เปิด label URL อีกครั้ง
                         </a>
                     )}
-
                 </div>
-            ) : (
-                /* Create form */
+
+            ) : customerCourier && !showOverride ? (
+                /* ─── Happy path: customer already chose courier ─── */
                 <div className="space-y-4">
+                    <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                        <Truck size={16} className="text-blue-500 shrink-0" />
+                        <div className="flex-1">
+                            <p className="text-xs text-blue-500 font-bold uppercase tracking-widest">ขนส่งที่ลูกค้าเลือก</p>
+                            <p className="text-sm font-black text-slate-800 mt-0.5">
+                                {COURIER_NAMES[customerCourier] || customerCourier}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShowOverride(true)}
+                            className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"
+                        >
+                            เปลี่ยน <ChevronDown size={12} />
+                        </button>
+                    </div>
+
+                    {kexOversize && (
+                        <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-bold mb-0.5">ขนาดพัสดุเกินข้อกำหนด KEX Express</p>
+                                <p>ขนาดรวม: <b>{kexDimTotal} ซม.</b> (จำกัด 180 ซม.) · ด้านยาวสุด: <b>{kexMaxSide} ซม.</b> (จำกัด 100 ซม.)</p>
+                                <p className="mt-1 text-amber-600">กดปุ่ม "เปลี่ยน" เพื่อเลือกขนส่งเจ้าอื่น</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">
+                            <AlertCircle size={14} className="shrink-0" /> {error}
+                        </div>
+                    )}
+
+                    <button
+                        onClick={handleCreate}
+                        disabled={creating || kexOversize}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                    >
+                        {creating
+                            ? <><RefreshCw size={14} className="animate-spin" /> กำลังสร้างพัสดุ...</>
+                            : <><Package size={14} /> สร้างพัสดุ — {COURIER_NAMES[customerCourier] || customerCourier}</>}
+                    </button>
+                </div>
+
+            ) : (
+                /* ─── Fallback / Override: show rate list ─── */
+                <div className="space-y-4">
+                    {showOverride && (
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">เปลี่ยนขนส่ง</p>
+                            <button onClick={() => { setShowOverride(false); setSelectedCourier(customerCourier); }} className="text-xs text-blue-500 hover:underline">
+                                ยกเลิก
+                            </button>
+                        </div>
+                    )}
+
                     {loadingRates ? (
                         <div className="flex items-center gap-2 py-4 text-slate-400 text-sm justify-center">
                             <RefreshCw size={14} className="animate-spin" /> กำลังโหลดราคาขนส่ง...
@@ -168,7 +226,6 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                         <>
                             {rates.length > 0 ? (
                                 <div className="space-y-2">
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">เลือกบริษัทขนส่ง</p>
                                     {rates.map(r => (
                                         <button
                                             key={r.courier_code}
@@ -182,9 +239,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                                             <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
                                                 selectedCourier === r.courier_code ? "border-blue-500" : "border-slate-300"
                                             }`}>
-                                                {selectedCourier === r.courier_code && (
-                                                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                                )}
+                                                {selectedCourier === r.courier_code && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                                             </div>
                                             {r.logo && (
                                                 <img src={r.logo} alt={r.courier_name}
@@ -199,9 +254,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                                     ))}
                                 </div>
                             ) : (
-                                /* fallback: manual courier select */
                                 <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">เลือกบริษัทขนส่ง</p>
                                     <select
                                         value={selectedCourier}
                                         onChange={e => setSelectedCourier(e.target.value)}
@@ -213,10 +266,20 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                                         <option value="BestExpress">Best Express</option>
                                         <option value="ShopeeExpress">Shopee Express</option>
                                     </select>
-                                    <p className="text-[10px] text-slate-400 mt-1">* ราคาค่าส่งไม่พบ — อาจเนื่องจากที่อยู่ไม่ครบ</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">* ราคาค่าส่งไม่พบ</p>
                                 </div>
                             )}
                         </>
+                    )}
+
+                    {kexOversize && (
+                        <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-bold mb-0.5">ขนาดพัสดุเกินข้อกำหนด KEX Express</p>
+                                <p>ขนาดรวม: <b>{kexDimTotal} ซม.</b> (จำกัด 180 ซม.) · ด้านยาวสุด: <b>{kexMaxSide} ซม.</b> (จำกัด 100 ซม.)</p>
+                            </div>
+                        </div>
                     )}
 
                     {error && (
@@ -227,7 +290,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
 
                     <button
                         onClick={handleCreate}
-                        disabled={creating || !selectedCourier}
+                        disabled={creating || !selectedCourier || kexOversize}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
                     >
                         {creating
