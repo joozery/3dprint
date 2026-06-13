@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Save, Loader2, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function AboutAdminPage() {
     const [loading, setLoading] = useState(true);

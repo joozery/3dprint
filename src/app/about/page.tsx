@@ -174,7 +174,7 @@ export default function AboutPage() {
                                         <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
                                     ) : (
                                         <ul className="space-y-2">
-                                            {item.items?.map((val) => (
+                                            {item.items?.map((val: string) => (
                                                 <li key={val} className="flex items-center gap-2 text-sm text-slate-600">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
                                                     {val}
