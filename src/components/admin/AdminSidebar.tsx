@@ -22,7 +22,8 @@ import {
   Ticket,
   Activity,
   X,
-  Mail
+  Mail,
+  Link2
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -37,6 +38,8 @@ const menuItems = [
   { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
   { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
   { label: "จัดการหน้าบริการ", icon: FileText, href: "/admin/services-content", badge: null },
+  { label: "หน้าเกี่ยวกับเรา (About)", icon: FileText, href: "/admin/about", badge: null },
+  { label: "จัดการลิ้งค์ Footer", icon: Link2, href: "/admin/footer-links", badge: null },
   { label: "Newsletter", icon: Mail, href: "/admin/subscribers", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },

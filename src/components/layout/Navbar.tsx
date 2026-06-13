@@ -37,16 +37,14 @@ import { cn } from "@/lib/utils";
 
 function StandardItem({ href, icon: Icon, label, onClick }: { href: string; icon: React.FC<LucideProps>; label: string; onClick?: () => void; }) {
     return (
-        <NavigationMenuLink asChild>
-            <Link
-                href={href}
-                onClick={onClick}
-                className="group flex flex-row items-center gap-2.5 rounded-lg px-3 py-2 transition-colors hover:bg-slate-50 active:bg-slate-100"
-            >
-                <Icon size={16} className="text-slate-500 shrink-0 group-hover:text-blue-600 transition-colors" />
-                <span className="text-[13px] font-medium text-slate-700 group-hover:text-blue-700">{label}</span>
-            </Link>
-        </NavigationMenuLink>
+        <Link
+            href={href}
+            onClick={onClick}
+            className="group flex flex-row items-center gap-2.5 rounded-lg px-3 py-2 transition-colors hover:bg-slate-50 active:bg-slate-100 no-underline"
+        >
+            <Icon size={16} className="text-slate-400 shrink-0 group-hover:text-blue-600 transition-colors" />
+            <span className="text-[13px] font-medium text-slate-700 group-hover:text-blue-600">{label}</span>
+        </Link>
     );
 }
 
@@ -138,7 +136,7 @@ export default function Navbar() {
                 {/* ── Desktop Nav ── */}
                 <nav className="hidden lg:flex items-center">
                     {isMounted && (
-                        <NavigationMenu>
+                        <NavigationMenu viewport={false}>
                             <NavigationMenuList className="gap-0">
 
                                 {/* ── บริการ ── */}
@@ -158,11 +156,9 @@ export default function Navbar() {
                                             
                                             <div className="h-px bg-slate-100 my-1 mx-2" />
                                             
-                                            <NavigationMenuLink asChild>
-                                                <Link href="/services" className="flex flex-row items-center justify-between px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg mx-1 transition-colors">
-                                                    ดูบริการทั้งหมด <ArrowRight size={14} />
-                                                </Link>
-                                            </NavigationMenuLink>
+                                            <Link href="/services" className="flex flex-row items-center justify-between px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg mx-1 transition-colors">
+                                                ดูบริการทั้งหมด <ArrowRight size={14} />
+                                            </Link>
                                         </div>
                                     </NavigationMenuContent>
                                 </NavigationMenuItem>
@@ -194,11 +190,9 @@ export default function Navbar() {
                                                 </div>
                                             </div>
                                             <div className="h-px bg-slate-100 my-1 mx-2" />
-                                            <NavigationMenuLink asChild>
-                                                <Link href="/materials" className="flex flex-row items-center justify-between px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg mx-1 transition-colors">
-                                                    {t.materials.guideCta} <ChevronRight size={14} />
-                                                </Link>
-                                            </NavigationMenuLink>
+                                            <Link href="/materials" className="flex flex-row items-center justify-between px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg mx-1 transition-colors">
+                                                {t.materials.guideCta} <ChevronRight size={14} />
+                                            </Link>
                                         </div>
                                     </NavigationMenuContent>
                                 </NavigationMenuItem>
@@ -249,20 +243,12 @@ export default function Navbar() {
 
                                 {/* ── เกี่ยวกับเรา ── */}
                                 <NavigationMenuItem>
-                                    <NavigationMenuTrigger className="bg-transparent text-slate-600 hover:text-blue-600 text-sm font-medium h-10 px-3">
+                                    <Link
+                                        href="/about"
+                                        className="inline-flex items-center h-10 px-3 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors rounded-md"
+                                    >
                                         {t.nav.about}
-                                    </NavigationMenuTrigger>
-                                    <NavigationMenuContent>
-                                        <div className="w-[200px] p-2 flex flex-col gap-0.5 shadow-lg rounded-xl bg-white border border-slate-100">
-                                            <StandardItem href="/about" icon={Building2} label={t.about.company} />
-                                            <StandardItem href="/about/factory" icon={Factory} label={t.about.factory} />
-                                            <StandardItem href="/about/team" icon={Users} label={t.about.team} />
-                                            <StandardItem href="/about/careers" icon={Briefcase} label={t.about.careers} />
-                                            <StandardItem href="/about/sustainability" icon={TreePine} label={t.about.sustainability} />
-                                            <div className="h-px bg-slate-100 my-1 mx-2" />
-                                            <StandardItem href="/support/contact" icon={Phone} label={t.about.contact} />
-                                        </div>
-                                    </NavigationMenuContent>
+                                    </Link>
                                 </NavigationMenuItem>
 
                             </NavigationMenuList>
