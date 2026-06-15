@@ -3,7 +3,7 @@ import Order from "@/models/Order";
 import Quote from "@/models/Quote";
 import User from "@/models/User";
 import Link from "next/link";
-import { ArrowLeft, Package, User as UserIcon, MapPin, CreditCard, Clock, CheckCircle2, CircleDollarSign, Printer, Box, FileBox, FileText, ChevronRight, Download } from "lucide-react";
+import { ArrowLeft, Package, User as UserIcon, MapPin, CreditCard, Clock, CheckCircle2, CircleDollarSign, Printer, Box, FileBox, FileText, ChevronRight, Download, Truck } from "lucide-react";
 import AdminSlipUploader from "@/components/admin/orders/AdminSlipUploader";
 import AdminOrderStatusSelect from "@/components/admin/orders/AdminOrderStatusSelect";
 import SlipViewerButton from "@/components/admin/orders/SlipViewerButton";
@@ -155,69 +155,87 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 </div>
             </div>
 
-            {/* Shipping Panels */}
-            <IShipPanel
-                orderId={order._id.toString()}
-                shippingAddress={{
-                    zipCode:     order.shippingAddress?.zipCode     || "",
-                    province:    order.shippingAddress?.province    || "",
-                    district:    (order.shippingAddress as any)?.district    || "",
-                    subDistrict: (order.shippingAddress as any)?.subDistrict || "",
-                }}
-                quotesData={(quotes as any[]).map(q => ({
+            {/* Shipping Section */}
+            {(() => {
+                const provider = (order as any).shippingProvider || "iship";
+                const quotesDataMapped = (quotes as any[]).map(q => ({
                     weightGrams: q.weightGrams || 0,
-                    dimensions:  {
+                    dimensions: {
                         x: (q.dimensions?.x || 10) / 10,
                         y: (q.dimensions?.y || 10) / 10,
                         z: (q.dimensions?.z || 5)  / 10,
                     },
-                }))}
-                existing={{
-                    trackingNumber:   (order as any).trackingNumber   || "",
-                    ishipOrderId:     (order as any).ishipOrderId     || "",
-                    ishipCourierCode: (order as any).ishipCourierCode || "",
-                }}
-            />
+                }));
 
-            <FedExPanel
-                orderId={order._id.toString()}
-                shippingAddress={{
-                    zipCode:  order.shippingAddress?.zipCode  || "",
-                    province: order.shippingAddress?.province || "",
-                }}
-                quotesData={(quotes as any[]).map(q => ({
-                    weightGrams: q.weightGrams || 0,
-                    dimensions:  {
-                        x: (q.dimensions?.x || 10) / 10,
-                        y: (q.dimensions?.y || 10) / 10,
-                        z: (q.dimensions?.z || 5)  / 10,
-                    },
-                }))}
-                existing={{
-                    trackingNumber:   (order as any).shippingProvider === "fedex" ? (order as any).trackingNumber : "",
-                    shippingProvider: (order as any).shippingProvider || "",
-                    fedexServiceType: (order as any).fedexServiceType || "",
-                    fedexLabelUrl:    (order as any).fedexLabelUrl    || "",
-                }}
-            />
+                const providerInfo: Record<string, { label: string; color: string; bg: string; border: string; dot: string }> = {
+                    iship:  { label: "iShip (Flash / Kerry / Best / Shopee)",  color: "text-blue-700",   bg: "bg-blue-50",   border: "border-blue-200",  dot: "bg-blue-500" },
+                    fedex:  { label: "FedEx Express",                          color: "text-violet-700", bg: "bg-violet-50", border: "border-violet-200", dot: "bg-violet-500" },
+                    dhl:    { label: "DHL Express",                             color: "text-yellow-700", bg: "bg-yellow-50", border: "border-yellow-200", dot: "bg-yellow-500" },
+                };
+                const info = providerInfo[provider] ?? providerInfo.iship;
 
-            <DHLPanel
-                orderId={order._id.toString()}
-                quotesData={(quotes as any[]).map(q => ({
-                    weightGrams: q.weightGrams || 0,
-                    dimensions:  {
-                        x: (q.dimensions?.x || 10) / 10,
-                        y: (q.dimensions?.y || 10) / 10,
-                        z: (q.dimensions?.z || 5)  / 10,
-                    },
-                }))}
-                existing={{
-                    trackingNumber:   (order as any).shippingProvider === "dhl" ? (order as any).trackingNumber : "",
-                    shippingProvider: (order as any).shippingProvider || "",
-                    dhlProductCode:   (order as any).dhlProductCode   || "",
-                    dhlLabelBase64:   (order as any).dhlLabelBase64   || "",
-                }}
-            />
+                return (
+                    <div className="space-y-4">
+                        {/* Provider badge */}
+                        <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${info.bg} ${info.border}`}>
+                            <Truck size={16} className={info.color} />
+                            <div className="flex-1">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">วิธีจัดส่งที่ลูกค้าเลือก</p>
+                                <p className={`text-sm font-black mt-0.5 ${info.color}`}>{info.label}</p>
+                            </div>
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${info.bg} ${info.color} border ${info.border}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${info.dot}`} />
+                                {provider.toUpperCase()}
+                            </span>
+                        </div>
+
+                        {/* Panel ตาม provider */}
+                        {provider === "fedex" ? (
+                            <FedExPanel
+                                orderId={order._id.toString()}
+                                shippingAddress={{
+                                    zipCode:  order.shippingAddress?.zipCode  || "",
+                                    province: order.shippingAddress?.province || "",
+                                }}
+                                quotesData={quotesDataMapped}
+                                existing={{
+                                    trackingNumber:   (order as any).trackingNumber   || "",
+                                    shippingProvider: "fedex",
+                                    fedexServiceType: (order as any).fedexServiceType || "",
+                                    fedexLabelUrl:    (order as any).fedexLabelUrl    || "",
+                                }}
+                            />
+                        ) : provider === "dhl" ? (
+                            <DHLPanel
+                                orderId={order._id.toString()}
+                                quotesData={quotesDataMapped}
+                                existing={{
+                                    trackingNumber:   (order as any).trackingNumber || "",
+                                    shippingProvider: "dhl",
+                                    dhlProductCode:   (order as any).dhlProductCode || "",
+                                    dhlLabelBase64:   (order as any).dhlLabelBase64 || "",
+                                }}
+                            />
+                        ) : (
+                            <IShipPanel
+                                orderId={order._id.toString()}
+                                shippingAddress={{
+                                    zipCode:     order.shippingAddress?.zipCode     || "",
+                                    province:    order.shippingAddress?.province    || "",
+                                    district:    (order.shippingAddress as any)?.district    || "",
+                                    subDistrict: (order.shippingAddress as any)?.subDistrict || "",
+                                }}
+                                quotesData={quotesDataMapped}
+                                existing={{
+                                    trackingNumber:   (order as any).trackingNumber   || "",
+                                    ishipOrderId:     (order as any).ishipOrderId     || "",
+                                    ishipCourierCode: (order as any).ishipCourierCode || "",
+                                }}
+                            />
+                        )}
+                    </div>
+                );
+            })()}
 
         </div>
 

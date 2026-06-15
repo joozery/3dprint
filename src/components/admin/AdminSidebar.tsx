@@ -111,20 +111,24 @@ export default function AdminSidebar() {
         } h-screen bg-white text-slate-600 flex flex-col relative z-40 shadow-[4px_0_24px_rgba(0,0,0,0.04)] transition-all duration-500 ease-in-out border-r border-slate-200/80`}
       >
         {/* Brand Header */}
-        <div className="h-24 flex items-center px-6 mt-2 relative shrink-0">
+        <div className="h-20 flex items-center px-6 relative shrink-0">
           <div className="absolute bottom-0 left-6 right-6 h-[1px] bg-slate-100" />
-          <Link 
-            href="/admin" 
-            className={`flex items-center group w-full ${isCollapsed ? "justify-center" : "gap-3"}`}
+          <Link
+            href="/admin"
+            className={`flex items-center group w-full ${isCollapsed ? "justify-center" : ""}`}
           >
-            <div className="relative flex items-center justify-center p-2 rounded-xl border border-slate-200 group-hover:border-blue-200 group-hover:bg-blue-50 transition-all duration-300 shadow-sm shrink-0">
-               <Image src="/logo/PDM_Logo_Icon_40x40px.svg" alt="PDM" width={30} height={30} />
-            </div>
-            
-            <div className={`flex flex-col overflow-hidden transition-all duration-500 whitespace-nowrap ${isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
-              <span className="text-[19px] font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors duration-300">PDM ADMIN</span>
-              <span className="text-[10px] text-slate-500 font-bold tracking-[0.15em] uppercase mt-0.5">Management v2.0</span>
-            </div>
+            {isCollapsed ? (
+              <div className="relative flex items-center justify-center p-2 rounded-xl border border-slate-200 group-hover:border-blue-200 group-hover:bg-blue-50 transition-all duration-300 shadow-sm shrink-0">
+                <Image src="/logo/PDM_Logo_Icon_40x40px.svg" alt="PDM" width={30} height={30} />
+              </div>
+            ) : (
+              <Image
+                src="/logo/logo.png"
+                alt="Print My Design Logo"
+                width={160} height={60} priority
+                className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
+              />
+            )}
           </Link>
         </div>
 

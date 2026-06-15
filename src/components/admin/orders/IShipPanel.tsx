@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Truck, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, ChevronDown, RotateCcw } from "lucide-react";
+import { Truck, Package, RefreshCw, CheckCircle2, AlertCircle, ChevronDown, RotateCcw, FileDown } from "lucide-react";
 
 const COURIER_NAMES: Record<string, string> = {
     FlashExpressA: "Flash Express",
@@ -40,7 +40,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
     const [resetting, setResetting]              = useState(false);
     const [confirmReset, setConfirmReset]        = useState(false);
     const [error, setError]                      = useState("");
-    const [labelUrl, setLabelUrl]                = useState("");
+    const [labelLoading, setLabelLoading]        = useState(false);
     const [result, setResult]                    = useState<{ trackingNumber: string; ishipOrderId: string; ishipRef?: string } | null>(
         existing.trackingNumber && existing.ishipOrderId
             ? { trackingNumber: existing.trackingNumber, ishipOrderId: existing.ishipOrderId, ishipRef: (existing as any).ishipRef || "" }
@@ -110,11 +110,29 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
         }
     };
 
-    const handlePrintLabel = () => {
-        if (!result?.ishipOrderId) return;
-        const url = `https://app.iship.cloud/print/${result.ishipOrderId}`;
-        setLabelUrl(url);
-        window.open(url, "_blank");
+    const handlePrintLabel = async () => {
+        if (!result?.trackingNumber) return;
+        setLabelLoading(true);
+        setError("");
+        try {
+            const res = await fetch(`/api/shipping/label?tracks=${encodeURIComponent(result.trackingNumber)}`);
+            if (!res.ok) {
+                const data = await res.json();
+                setError(data.error || "ดาวน์โหลด label ไม่สำเร็จ");
+                return;
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `label-${result.trackingNumber}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch {
+            setError("ระบบขัดข้อง กรุณาลองใหม่");
+        } finally {
+            setLabelLoading(false);
+        }
     };
 
     const handleReset = async () => {
@@ -172,17 +190,13 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
 
                     <button
                         onClick={handlePrintLabel}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors"
+                        disabled={labelLoading}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors"
                     >
-                        <Printer size={14} /> พิมพ์ label (iShip)
+                        {labelLoading
+                            ? <><RefreshCw size={14} className="animate-spin" /> กำลังดาวน์โหลด...</>
+                            : <><FileDown size={14} /> ดาวน์โหลด Label PDF</>}
                     </button>
-
-                    {labelUrl && (
-                        <a href={labelUrl} target="_blank" rel="noreferrer"
-                            className="flex items-center gap-1 text-xs text-blue-500 hover:underline justify-center">
-                            <ExternalLink size={12} /> เปิด label URL อีกครั้ง
-                        </a>
-                    )}
 
                     {/* Reset / recreate */}
                     {!confirmReset ? (
