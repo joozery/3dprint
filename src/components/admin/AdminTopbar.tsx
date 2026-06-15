@@ -149,7 +149,7 @@ export default function AdminTopbar({ user }: AdminTopbarProps) {
                   </Link>
                   <div className="h-px bg-slate-50" />
                   <button
-                    onClick={() => signOut({ callbackUrl: "/admin/login" })}
+                    onClick={() => signOut({ callbackUrl: `${window.location.origin}/admin/login` })}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-red-500 hover:bg-red-50 text-sm transition-all"
                   >
                     <LogOut size={16} /> ออกจากระบบ

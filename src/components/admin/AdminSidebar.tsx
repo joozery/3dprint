@@ -228,7 +228,7 @@ export default function AdminSidebar() {
           </button>
 
           <button
-            onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            onClick={() => signOut({ callbackUrl: `${window.location.origin}/admin/login` })}
             className={`flex items-center ${isCollapsed ? "justify-center h-11 w-11 mx-auto rounded-xl" : "gap-3 px-4 py-3 rounded-xl"} text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all duration-300 group relative`}
           >
             <div className="flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shrink-0">
