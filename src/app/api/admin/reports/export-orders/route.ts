@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
 import Order from "@/models/Order";
 import Quote from "@/models/Quote";
+import MaterialConfig from "@/models/MaterialConfig";
 
 export async function GET(req: Request) {
   try {
@@ -27,6 +28,14 @@ export async function GET(req: Request) {
     await dbConnect();
     // Fetch all orders and populate quotes to extract items
     const orders = await Order.find(matchQuery).populate("quotes").sort({ createdAt: -1 }).lean();
+
+    // วัสดุที่เก็บใน quote เป็น MaterialConfig._id (string) — ต้อง resolve เป็นชื่อที่อ่านได้
+    const materialIds = [...new Set(
+      orders.flatMap((o: any) => (o.quotes || []).map((q: any) => q.material)).filter(Boolean)
+    )].filter((mid: any) => /^[0-9a-fA-F]{24}$/.test(mid));
+    const materialDocs = materialIds.length ? await MaterialConfig.find({ _id: { $in: materialIds } }).lean() : [];
+    const materialNameMap: Record<string, string> = {};
+    materialDocs.forEach((m: any) => { materialNameMap[m._id.toString()] = m.name; });
 
     // Prepare CSV header
     let csv = "\uFEFF" + // BOM for excel utf-8
@@ -52,7 +61,7 @@ export async function GET(req: Request) {
         const unitPrice = quote.priceDetail?.pricePerUnit || 0;
 
         csv += `"${order.orderNumber}","${order.status}","${order.paymentDetails?.status || ''}","${(order.customerNotes || '').replace(/"/g, '""')}",` +
-               `"${(quote.originalName || '').replace(/"/g, '""')}","${quote.technology || ''}","${quote.material || ''}","${quote.color || ''}","${postProcess}",` +
+               `"${(quote.originalName || '').replace(/"/g, '""')}","${quote.technology || ''}","${materialNameMap[quote.material] || quote.material || ''}","${quote.color || ''}","${postProcess}",` +
                `"${quote.quantity || 0}","${quote.weightGrams || 0}","${quote.printTime || '0'}","${unitCost}","${unitPrice}","${order.pricing?.totalAmount || 0}","${orderDate}"\n`;
       }
     }

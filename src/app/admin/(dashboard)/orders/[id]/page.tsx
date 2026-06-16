@@ -2,6 +2,7 @@ import dbConnect from "@/lib/mongoose";
 import Order from "@/models/Order";
 import Quote from "@/models/Quote";
 import User from "@/models/User";
+import MaterialConfig from "@/models/MaterialConfig";
 import Link from "next/link";
 import { ArrowLeft, Package, User as UserIcon, MapPin, CreditCard, Clock, CheckCircle2, CircleDollarSign, Printer, Box, FileBox, FileText, ChevronRight, Download, Truck } from "lucide-react";
 import AdminSlipUploader from "@/components/admin/orders/AdminSlipUploader";
@@ -35,6 +36,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   const user = order.userId;
   const quotes = order.quotes;
+
+  // วัสดุที่เก็บใน quote เป็น MaterialConfig._id (string) — ต้อง resolve เป็นชื่อที่อ่านได้
+  const materialIds = [...new Set((quotes || []).map((q: any) => q.material).filter(Boolean))]
+    .filter((mid: any) => /^[0-9a-fA-F]{24}$/.test(mid));
+  const materialDocs = materialIds.length ? await MaterialConfig.find({ _id: { $in: materialIds } }).lean() : [];
+  const materialNameMap: Record<string, string> = {};
+  materialDocs.forEach((m: any) => { materialNameMap[m._id.toString()] = m.name; });
+
   const statusCfg = ST_MAP[order.status as string] || ST_MAP["pending_payment"];
   const StatusIcon = statusCfg.icon;
 
@@ -116,7 +125,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                                                 {q.technology?.toUpperCase()}
                                             </span>
                                             <span className="text-[11px] font-medium text-slate-600">
-                                                {q.material} / {q.color}
+                                                {materialNameMap[q.material] || q.material} / {q.color}
                                             </span>
                                         </div>
                                     </td>

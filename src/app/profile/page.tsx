@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
 import Order from "@/models/Order";
+import MaterialConfig from "@/models/MaterialConfig";
 import { redirect } from "next/navigation";
 import ProfileFooter from "@/components/profile/ProfileFooter";
 
@@ -42,6 +43,14 @@ export default async function UserDashboard() {
   const totalOrders   = orders.length;
   const totalSpending = orders.reduce((sum: number, o: any) => sum + (o.pricing?.totalAmount || 0), 0);
 
+  // วัสดุที่เก็บใน quote เป็น MaterialConfig._id (string) — ต้อง resolve เป็นชื่อที่อ่านได้ ก่อนส่งให้ client component
+  const materialIds = [...new Set(recentQuotes.map((q: any) => q.material).filter(Boolean))]
+    .filter((mid: any) => /^[0-9a-fA-F]{24}$/.test(mid));
+  const materialDocs = materialIds.length ? await MaterialConfig.find({ _id: { $in: materialIds } }).lean() : [];
+  const materialNameMap: Record<string, string> = {};
+  materialDocs.forEach((m: any) => { materialNameMap[m._id.toString()] = m.name; });
+  const recentQuotesResolved = recentQuotes.map((q: any) => ({ ...q, material: materialNameMap[q.material] || q.material }));
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans relative overflow-hidden">
       
@@ -76,7 +85,7 @@ export default async function UserDashboard() {
 
             {/* ── Table Orders ── */}
             <div className="mt-10">
-                <RecentOrdersTable quotes={recentQuotes} />
+                <RecentOrdersTable quotes={recentQuotesResolved} />
             </div>
 
             {/* Footer */}

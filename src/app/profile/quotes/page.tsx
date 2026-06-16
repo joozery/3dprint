@@ -3,6 +3,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
 import mongoose from "mongoose";
 import Quote from "@/models/Quote";
+import MaterialConfig from "@/models/MaterialConfig";
 import { redirect } from "next/navigation";
 import { ProfileSidebar } from "@/components/profile/ProfileSidebar";
 import DashboardHeader from "@/components/profile/DashboardHeader";
@@ -44,11 +45,19 @@ export default async function ProfileQuotesPage({ searchParams }: { searchParams
     { $skip: skip },
     { $limit: limit }
   ]);
-  const quotes = JSON.parse(JSON.stringify(raw)).map((g: any) => ({
+  const quotesRaw = JSON.parse(JSON.stringify(raw)).map((g: any) => ({
       ...g.doc,
       priceDetail: { ...g.doc.priceDetail, totalPrice: g.totalAmount },
       groupedItemsCount: g.totalItems
   }));
+
+  // วัสดุที่เก็บใน quote เป็น MaterialConfig._id (string) — ต้อง resolve เป็นชื่อที่อ่านได้ ก่อนส่งให้ client component
+  const materialIds = [...new Set(quotesRaw.map((q: any) => q.material).filter(Boolean))]
+    .filter((mid: any) => /^[0-9a-fA-F]{24}$/.test(mid));
+  const materialDocs = materialIds.length ? await MaterialConfig.find({ _id: { $in: materialIds } }).lean() : [];
+  const materialNameMap: Record<string, string> = {};
+  materialDocs.forEach((m: any) => { materialNameMap[m._id.toString()] = m.name; });
+  const quotes = quotesRaw.map((q: any) => ({ ...q, material: materialNameMap[q.material] || q.material }));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans relative overflow-hidden">
