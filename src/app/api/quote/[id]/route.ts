@@ -49,24 +49,45 @@ export async function PATCH(
         }
 
         const finalQuantity    = quantity ?? quote.quantity ?? 1;
-        const finalInfill      = infill   ?? quote.infill  ?? 20;
-
-        // filament approximation เมื่อ infill เปลี่ยน
-        // baseFilamentCm3 = filament ที่ slice ได้ตอน upload (infill default = 20%)
-        // shellVolumeCm3 = ส่วนที่ไม่ใช่ infill (ผนัง + top/bottom) — คงที่ตลอด
-        // filamentCm3(x%) = shellVolumeCm3 + volumeCm3 * (x/100)
-        const BASE_INFILL      = 20;
-        const baseFilamentCm3  = (quote as any).baseFilamentCm3 || (quote as any).filamentCm3 || quote.volumeCm3 || 0;
-        const volumeCm3        = quote.volumeCm3 || 0;
-        const shellVolumeCm3   = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
-        const newFilamentCm3   = shellVolumeCm3 + volumeCm3 * (finalInfill / 100);
-
-        // print time approximation — ประมาณ 30% ของเวลาคือ infill
-        const INFILL_TIME_FRACTION = 0.30;
-        const basePrintMinutes = (quote as any).basePrintTimeMinutes || parsePrintTimeToMinutes(quote.printTime || "0m");
-        const newPrintMinutes  = basePrintMinutes * (1 - INFILL_TIME_FRACTION + INFILL_TIME_FRACTION * (finalInfill / BASE_INFILL));
-
+        const finalTechnology  = (technology || quote.technology || "sla").toLowerCase();
+        const BASE_INFILL       = 20;
+        const MAX_INFILL        = 100;
         const supportVolumeCm3 = (quote as any).supportVolumeCm3 || 0;
+
+        // infill เป็น concept เฉพาะ FDM — เก็บค่าที่ user ปรับไว้เสมอ (เผื่อสลับกลับมา FDM)
+        // แต่ใช้คำนวณราคาจริงเฉพาะตอน technology = fdm เท่านั้น เทคโนโลยีอื่น (MJF/SLA/SLS ฯลฯ) ถือว่าทึบเต็มเนื้อ (100%)
+        const finalInfill   = infill ?? quote.infill ?? 20;
+        const pricingInfill = finalTechnology === "fdm" ? finalInfill : MAX_INFILL;
+
+        // filament: ใช้ shellVolumeCm3 + infillSlopeCm3PerPercent ที่ได้จาก double-slice ตอน upload
+        // (slice จริงที่ infill 0% และ 20% ⇒ ความสัมพันธ์เป็นเส้นตรงและแม่นยำ ไม่ต้องประมาณจาก geometry volume)
+        const shellVolumeCm3       = (quote as any).shellVolumeCm3 ?? 0;
+        const infillSlopeCm3PerPct = (quote as any).infillSlopeCm3PerPercent ?? 0;
+
+        let newFilamentCm3: number;
+        if (shellVolumeCm3 > 0 || infillSlopeCm3PerPct > 0) {
+            newFilamentCm3 = shellVolumeCm3 + supportVolumeCm3 + infillSlopeCm3PerPct * pricingInfill;
+        } else {
+            // fallback สำหรับ quote เก่าก่อนมี double-slice (ประมาณจาก geometry volume)
+            const baseFilamentCm3 = (quote as any).baseFilamentCm3 || (quote as any).filamentCm3 || quote.volumeCm3 || 0;
+            const volumeCm3       = quote.volumeCm3 || 0;
+            const approxShell     = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
+            newFilamentCm3 = approxShell + volumeCm3 * (pricingInfill / 100);
+        }
+
+        // print time: ใช้ shellPrintTimeMinutes + timeSlopePerPercent จาก double-slice (เช่นกัน)
+        const shellPrintTimeMinutes = (quote as any).shellPrintTimeMinutes ?? 0;
+        const timeSlopePerPct       = (quote as any).timeSlopePerPercent ?? 0;
+        const basePrintMinutes = (quote as any).basePrintTimeMinutes || parsePrintTimeToMinutes(quote.printTime || "0m");
+
+        let newPrintMinutes: number;
+        if (shellPrintTimeMinutes > 0 && timeSlopePerPct > 0) {
+            newPrintMinutes = shellPrintTimeMinutes + timeSlopePerPct * pricingInfill;
+        } else {
+            // fallback — ประมาณ 30% ของเวลาคือ infill
+            const INFILL_TIME_FRACTION = 0.30;
+            newPrintMinutes = basePrintMinutes * (1 - INFILL_TIME_FRACTION + INFILL_TIME_FRACTION * (pricingInfill / BASE_INFILL));
+        }
 
         const priceBreakdown = calculatePrice({
             filamentCm3:     newFilamentCm3,

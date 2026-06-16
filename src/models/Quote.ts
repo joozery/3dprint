@@ -58,6 +58,14 @@ const QuoteSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        shellVolumeCm3: {
+            type: Number,
+            default: 0,
+        },
+        infillSlopeCm3PerPercent: {
+            type: Number,
+            default: 0,
+        },
         infill: {
             type: Number,
             default: 20,
@@ -67,6 +75,14 @@ const QuoteSchema = new mongoose.Schema(
             default: "N/A",
         },
         basePrintTimeMinutes: {
+            type: Number,
+            default: 0,
+        },
+        shellPrintTimeMinutes: {
+            type: Number,
+            default: 0,
+        },
+        timeSlopePerPercent: {
             type: Number,
             default: 0,
         },

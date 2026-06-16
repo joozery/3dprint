@@ -26,6 +26,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentFile, setCurrentFile] = useState("");
+    const [uploadPhase, setUploadPhase] = useState<"upload" | "processing">("upload");
+    const [isDragging, setIsDragging] = useState(false);
     const [debugStack, setDebugStack] = useState<string | null>(null);
 
     // Coupon states
@@ -141,8 +143,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             .finally(() => setLoadingShippingRates(false));
     }, [selectedAddressId, userAddresses, quotes.length]);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
+    const processFiles = async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
 
         if (!session) {
@@ -155,6 +156,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             const file = files[i];
             setCurrentFile(file.name);
             setProgress(0);
+            setUploadPhase("upload");
 
             const formData = new FormData();
             formData.append("file", file);
@@ -162,8 +164,11 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             try {
                 const res = await axios.post("/api/quote/upload", formData, {
                     onUploadProgress: (progressEvent) => {
-                        const p = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 100));
+                        const total = progressEvent.total || file.size || 1;
+                        const p = Math.round((progressEvent.loaded * 100) / total);
                         setProgress(p);
+                        // อัปโหลดถึง 100% แล้ว แต่ server ยังต้อง slice ไฟล์ (PrusaSlicer) ต่อ ~10-40s
+                        if (p >= 100) setUploadPhase("processing");
                     }
                 });
 
@@ -180,7 +185,31 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         }
         setUploading(false);
         setCurrentFile("");
+        setUploadPhase("upload");
         if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+        await processFiles(files);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        await processFiles(files);
     };
 
     const deleteQuote = async (id: string) => {
@@ -215,15 +244,29 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                     const sellPerMinute = mat.pricing?.sellPerMinute || 0;
                     const setupFee      = mat.pricing?.setupFee      || 0;
 
-                    // infill approximation (client-side mirrors server logic)
-                    const BASE_INFILL      = 20;
-                    const baseFilamentCm3  = current.baseFilamentCm3 || current.filamentCm3 || current.volumeCm3 || 10;
-                    const volumeCm3        = current.volumeCm3 || 0;
-                    const finalInfill      = updates.infill ?? current.infill ?? BASE_INFILL;
-                    const shellVolumeCm3   = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
-                    const filamentCm3      = shellVolumeCm3 + volumeCm3 * (finalInfill / 100);
+                    // infill เป็น concept เฉพาะ FDM — เก็บค่าที่ user ปรับไว้เสมอ แต่ใช้คำนวณราคาจริง
+                    // เฉพาะตอน technology = fdm เท่านั้น เทคโนโลยีอื่น (MJF/SLA/SLS ฯลฯ) ถือว่าทึบเต็มเนื้อ (100%)
+                    // mirrors server logic ใน /api/quote/[id]/route.ts
+                    const BASE_INFILL          = 20;
+                    const MAX_INFILL           = 100;
+                    const finalTechnology      = (updates.technology || current.technology || "sla").toLowerCase();
+                    const finalInfill          = updates.infill ?? current.infill ?? BASE_INFILL;
+                    const pricingInfill        = finalTechnology === "fdm" ? finalInfill : MAX_INFILL;
+                    const shellVolumeCm3       = current.shellVolumeCm3 ?? 0;
+                    const infillSlopeCm3PerPct = current.infillSlopeCm3PerPercent ?? 0;
 
-                    // print time approximation
+                    let filamentCm3: number;
+                    if (shellVolumeCm3 > 0 || infillSlopeCm3PerPct > 0) {
+                        filamentCm3 = shellVolumeCm3 + supportCm3 + infillSlopeCm3PerPct * pricingInfill;
+                    } else {
+                        // fallback สำหรับ quote เก่าก่อนมี double-slice
+                        const baseFilamentCm3 = current.baseFilamentCm3 || current.filamentCm3 || current.volumeCm3 || 10;
+                        const volumeCm3       = current.volumeCm3 || 0;
+                        const approxShell     = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
+                        filamentCm3 = approxShell + volumeCm3 * (pricingInfill / 100);
+                    }
+
+                    // print time: ใช้ shellPrintTimeMinutes + timeSlopePerPercent จาก double-slice เช่นกัน
                     const parseMins = (s: string) => {
                         if (!s || s === "N/A") return 0;
                         let m = 0;
@@ -233,8 +276,16 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         if (sec) m += parseInt(sec[1]) / 60;
                         return m;
                     };
-                    const basePrintMins    = current.basePrintTimeMinutes || parseMins(current.printTime || "0m");
-                    const printTimeMinutes = basePrintMins * (0.70 + 0.30 * (finalInfill / BASE_INFILL));
+                    const shellPrintTimeMinutes = current.shellPrintTimeMinutes ?? 0;
+                    const timeSlopePerPct       = current.timeSlopePerPercent ?? 0;
+                    const basePrintMins         = current.basePrintTimeMinutes || parseMins(current.printTime || "0m");
+
+                    let printTimeMinutes: number;
+                    if (shellPrintTimeMinutes > 0 && timeSlopePerPct > 0) {
+                        printTimeMinutes = shellPrintTimeMinutes + timeSlopePerPct * pricingInfill;
+                    } else {
+                        printTimeMinutes = basePrintMins * (0.70 + 0.30 * (pricingInfill / BASE_INFILL));
+                    }
 
                     // finish price
                     const finishId = updates.finish || current.finish || "standard";
@@ -458,10 +509,41 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                             </div>
                             <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} accept=".stl,.3mf,.obj,.step,.stp" />
                         </div>
-                        <button onClick={() => fileInputRef.current?.click()} className="w-full py-8 px-3 border-[1.5px] border-dashed border-slate-200 rounded-xl flex flex-col items-center gap-2 hover:bg-slate-50 text-slate-400 transition-all hover:border-slate-300">
-                            <Upload className="w-7 h-7 opacity-20" />
-                            <div className="text-[11px] font-bold text-slate-600">{t.quote.dropOrSelect}</div>
-                            <div className="text-[9px] font-mono tracking-wide opacity-50 uppercase">{t.quote.fileFormats}</div>
+                        <button
+                            onClick={() => !uploading && fileInputRef.current?.click()}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            disabled={uploading}
+                            className={cn(
+                                "w-full py-8 px-3 border-[1.5px] border-dashed rounded-xl flex flex-col items-center gap-2 transition-all",
+                                isDragging ? "border-blue-400 bg-blue-50" : "border-slate-200 hover:bg-slate-50 hover:border-slate-300",
+                                uploading ? "cursor-default" : "text-slate-400"
+                            )}
+                        >
+                            {uploading ? (
+                                <>
+                                    <div className="w-full flex items-center justify-between text-[11px] font-black text-slate-700">
+                                        <span className="truncate max-w-[140px]">{currentFile}</span>
+                                        <span className="tabular-nums text-blue-600">{progress}%</span>
+                                    </div>
+                                    <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                        <div
+                                            className={cn("h-full rounded-full transition-all duration-200", uploadPhase === "processing" ? "bg-amber-400 animate-pulse" : "bg-blue-500")}
+                                            style={{ width: uploadPhase === "processing" ? "100%" : `${progress}%` }}
+                                        />
+                                    </div>
+                                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                                        {uploadPhase === "processing" ? "กำลังวิเคราะห์ไฟล์ 3D (slicing)... อาจใช้เวลาถึง 1 นาที" : "กำลังอัปโหลด..."}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="w-7 h-7 opacity-20" />
+                                    <div className="text-[11px] font-bold text-slate-600">{t.quote.dropOrSelect}</div>
+                                    <div className="text-[9px] font-mono tracking-wide opacity-50 uppercase">{t.quote.fileFormats}</div>
+                                </>
+                            )}
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-2">
@@ -539,8 +621,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 {/* SVG Grid Background from HTML */}
                                 <svg viewBox="-120 -120 240 240" width="100%" height="100%" className="absolute inset-0 pointer-events-none" style={{ display: 'block' }}>
                                     <defs>
-                                        <pattern id="dotgrid" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-                                            <circle cx="5" cy="5" r="0.5" fill="rgba(30,36,51,0.15)"></circle>
+                                        <pattern id="dotgrid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                                            <circle cx="10" cy="10" r="1" fill="rgba(30,36,51,0.15)"></circle>
                                         </pattern>
                                     </defs>
                                     <rect x="-120" y="-120" width="240" height="240" fill="url(#dotgrid)"></rect>

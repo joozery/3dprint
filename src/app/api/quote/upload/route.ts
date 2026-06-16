@@ -133,6 +133,8 @@ export async function POST(req: NextRequest) {
         }
 
         const printTimeMinutes = parsePrintTimeToMinutes(analysis.printTime);
+        const shellPrintTimeMinutes = parsePrintTimeToMinutes((analysis as any).shellPrintTime || analysis.printTime);
+        const timeSlopePerPercent = Math.max(0, (printTimeMinutes - shellPrintTimeMinutes) / 20);
 
         const priceBreakdown = calculatePrice({
             filamentCm3:       (analysis as any).filamentCm3      || analysis.volumeCm3,
@@ -160,6 +162,8 @@ export async function POST(req: NextRequest) {
 
         const baseFilamentCm3 = (analysis as any).filamentCm3 || analysis.volumeCm3;
         const supportVolumeCm3 = (analysis as any).supportVolumeCm3 ?? 0;
+        const shellVolumeCm3 = (analysis as any).shellVolumeCm3 ?? 0;
+        const infillSlopeCm3PerPercent = (analysis as any).infillSlopeCm3PerPercent ?? 0;
 
         const quote = await Quote.create({
             userId: userId || null,
@@ -177,10 +181,14 @@ export async function POST(req: NextRequest) {
             filamentCm3: baseFilamentCm3,
             baseFilamentCm3,
             supportVolumeCm3,
+            shellVolumeCm3,
+            infillSlopeCm3PerPercent,
             infill: 20,
             weightGrams,
             printTime: analysis.printTime,
             basePrintTimeMinutes: printTimeMinutes,
+            shellPrintTimeMinutes,
+            timeSlopePerPercent,
             dimensions: analysis.dimensions,
             needsSupport: (analysis as any).needsSupport ?? false,
             isManifold: (analysis as any).isManifold ?? true,
