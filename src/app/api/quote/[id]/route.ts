@@ -26,7 +26,7 @@ export async function PATCH(
         const { id } = await params;
         await dbConnect();
         const body = await req.json();
-        const { technology, material, color, quantity, deliverySpeed, finish, billing, shipping } = body;
+        const { technology, material, color, quantity, deliverySpeed, finish, billing, shipping, infill } = body;
 
         const quote = await Quote.findById(id);
         if (!quote) return NextResponse.json({ error: "Quote not found" }, { status: 404 });
@@ -35,10 +35,10 @@ export async function PATCH(
         const MaterialConfig = require("@/models/MaterialConfig").default;
         const matConfig = await MaterialConfig.findById(material || quote.material).catch(() => null);
 
-        const density       = matConfig?.density            || 1.15;
-        const sellPerGram   = matConfig?.pricing?.sellPerGram   || 1;
-        const sellPerMinute = matConfig?.pricing?.sellPerMinute || 0;
-        const setupFee      = matConfig?.pricing?.setupFee      || 0;
+        const density       = matConfig?.density                 || 1.15;
+        const sellPerGram   = matConfig?.pricing?.sellPerGram    || 1;
+        const sellPerMinute = matConfig?.pricing?.sellPerMinute  || 0;
+        const setupFee      = matConfig?.pricing?.setupFee       || 0;
 
         // หา finish price จาก postProcessing ของ material
         const finalFinish = finish || quote.finish || "standard";
@@ -48,17 +48,32 @@ export async function PATCH(
             if (proc) finishPrice = proc.sellPrice || 0;
         }
 
-        const finalQuantity      = quantity ?? quote.quantity ?? 1;
-        const printTimeMinutes   = parsePrintTimeToMinutes(quote.printTime || "0m");
-        const filamentCm3        = (quote as any).filamentCm3      || quote.volumeCm3 || 0;
-        const supportVolumeCm3   = (quote as any).supportVolumeCm3 || 0;
+        const finalQuantity    = quantity ?? quote.quantity ?? 1;
+        const finalInfill      = infill   ?? quote.infill  ?? 20;
+
+        // filament approximation เมื่อ infill เปลี่ยน
+        // baseFilamentCm3 = filament ที่ slice ได้ตอน upload (infill default = 20%)
+        // shellVolumeCm3 = ส่วนที่ไม่ใช่ infill (ผนัง + top/bottom) — คงที่ตลอด
+        // filamentCm3(x%) = shellVolumeCm3 + volumeCm3 * (x/100)
+        const BASE_INFILL      = 20;
+        const baseFilamentCm3  = (quote as any).baseFilamentCm3 || (quote as any).filamentCm3 || quote.volumeCm3 || 0;
+        const volumeCm3        = quote.volumeCm3 || 0;
+        const shellVolumeCm3   = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
+        const newFilamentCm3   = shellVolumeCm3 + volumeCm3 * (finalInfill / 100);
+
+        // print time approximation — ประมาณ 30% ของเวลาคือ infill
+        const INFILL_TIME_FRACTION = 0.30;
+        const basePrintMinutes = (quote as any).basePrintTimeMinutes || parsePrintTimeToMinutes(quote.printTime || "0m");
+        const newPrintMinutes  = basePrintMinutes * (1 - INFILL_TIME_FRACTION + INFILL_TIME_FRACTION * (finalInfill / BASE_INFILL));
+
+        const supportVolumeCm3 = (quote as any).supportVolumeCm3 || 0;
 
         const priceBreakdown = calculatePrice({
-            filamentCm3,
+            filamentCm3:     newFilamentCm3,
             supportVolumeCm3,
             density,
             sellPerGram,
-            printTimeMinutes,
+            printTimeMinutes: newPrintMinutes,
             sellPerMinute,
             setupFee,
             quantity: finalQuantity,
@@ -76,6 +91,8 @@ export async function PATCH(
                 finish:        finalFinish,
                 billing:       billing       || quote.billing,
                 shipping:      shipping      || quote.shipping,
+                infill:        finalInfill,
+                filamentCm3:   newFilamentCm3,
                 weightGrams:   priceBreakdown.weightGrams,
                 "priceDetail.pricePerUnit":  priceBreakdown.pricePerUnit,
                 "priceDetail.totalPrice":    priceBreakdown.totalPrice,

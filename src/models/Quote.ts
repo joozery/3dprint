@@ -46,9 +46,29 @@ const QuoteSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        filamentCm3: {
+            type: Number,
+            default: 0,
+        },
+        baseFilamentCm3: {
+            type: Number,
+            default: 0,
+        },
+        supportVolumeCm3: {
+            type: Number,
+            default: 0,
+        },
+        infill: {
+            type: Number,
+            default: 20,
+        },
         printTime: {
             type: String,
             default: "N/A",
+        },
+        basePrintTimeMinutes: {
+            type: Number,
+            default: 0,
         },
         weightGrams: {
             type: Number,

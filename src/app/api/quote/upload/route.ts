@@ -158,6 +158,9 @@ export async function POST(req: NextRequest) {
 
         const randomQuoteNumber = `QT-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
+        const baseFilamentCm3 = (analysis as any).filamentCm3 || analysis.volumeCm3;
+        const supportVolumeCm3 = (analysis as any).supportVolumeCm3 ?? 0;
+
         const quote = await Quote.create({
             userId: userId || null,
             quoteNumber: randomQuoteNumber,
@@ -171,11 +174,15 @@ export async function POST(req: NextRequest) {
             color: selColor,
             quantity: 1,
             volumeCm3: analysis.volumeCm3,
+            filamentCm3: baseFilamentCm3,
+            baseFilamentCm3,
+            supportVolumeCm3,
+            infill: 20,
             weightGrams,
             printTime: analysis.printTime,
+            basePrintTimeMinutes: printTimeMinutes,
             dimensions: analysis.dimensions,
             needsSupport: (analysis as any).needsSupport ?? false,
-            supportVolumeCm3: (analysis as any).supportVolumeCm3 ?? 0,
             isManifold: (analysis as any).isManifold ?? true,
             priceDetail: {
                 pricePerUnit:  priceBreakdown.pricePerUnit,

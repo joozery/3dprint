@@ -43,6 +43,9 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [showAddressDropdown, setShowAddressDropdown] = useState(false);
     const [userAddresses, setUserAddresses] = useState<any[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+    const [shippingRates, setShippingRates] = useState<any[]>([]);
+    const [loadingShippingRates, setLoadingShippingRates] = useState(false);
+    const [selectedCourierCode, setSelectedCourierCode] = useState<string>("");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const viewerRef = useRef<any>(null);
 
@@ -97,6 +100,46 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         };
         fetchData();
     }, [session]);
+
+    // Fetch real shipping rates when address or quotes change
+    useEffect(() => {
+        const addr = userAddresses.find(a => a._id === selectedAddressId);
+        const zipCode = addr?.zipCode || "";
+        const sel = quotes.filter(q => selectedIds.has(q._id));
+        if (!zipCode || zipCode.length !== 5 || sel.length === 0) {
+            setShippingRates([]);
+            return;
+        }
+        const weight = sel.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0);
+        const maxW = Math.max(...sel.map((q: any) => (q.dimensions?.x || 10) / 10));
+        const maxL = Math.max(...sel.map((q: any) => (q.dimensions?.y || 10) / 10));
+        const maxH = sel.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
+        setLoadingShippingRates(true);
+        setShippingRates([]);
+        fetch("/api/shipping/rates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                dst_zipcode:  zipCode,
+                dst_province: addr?.province || "",
+                dst_amphure:  addr?.district || "",
+                dst_district: addr?.subDistrict || "",
+                weightKg:  Math.max(weight / 1000, 0.1),
+                width:     Math.ceil(maxW),
+                length:    Math.ceil(maxL),
+                height:    Math.ceil(maxH),
+            }),
+        })
+            .then(r => r.json())
+            .then(d => {
+                if (d.rates && d.rates.length > 0) {
+                    setShippingRates(d.rates);
+                    setSelectedCourierCode(prev => d.rates.find((r: any) => r.courier_code === prev) ? prev : d.rates[0].courier_code);
+                }
+            })
+            .catch(() => {})
+            .finally(() => setLoadingShippingRates(false));
+    }, [selectedAddressId, userAddresses, quotes.length]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -161,19 +204,26 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             if (!current) return;
             const updated = { ...current, ...updates };
             
-            // Recalculate price: สูตรที่ 3 — วัสดุ + เวลา + setup
-            if (updates.material || updates.technology || updates.quantity || updates.finish) {
+            // Recalculate price: วัสดุ + เวลา + setup
+            if (updates.material || updates.technology || updates.quantity || updates.finish || updates.infill !== undefined) {
                 const mat = dbMaterials.find(m => m._id === (updates.material || current.material));
                 if (mat) {
-                    const qty            = updates.quantity ?? current.quantity ?? 1;
-                    const filamentCm3    = current.filamentCm3    || current.volumeCm3 || 10;
-                    const supportCm3     = current.supportVolumeCm3 || 0;
-                    const density        = mat.density            || 1.15;
-                    const sellPerGram    = mat.pricing?.sellPerGram   || 1;
-                    const sellPerMinute  = mat.pricing?.sellPerMinute || 0;
-                    const setupFee       = mat.pricing?.setupFee      || 0;
+                    const qty           = updates.quantity ?? current.quantity ?? 1;
+                    const supportCm3    = current.supportVolumeCm3 || 0;
+                    const density       = mat.density               || 1.15;
+                    const sellPerGram   = mat.pricing?.sellPerGram   || 1;
+                    const sellPerMinute = mat.pricing?.sellPerMinute || 0;
+                    const setupFee      = mat.pricing?.setupFee      || 0;
 
-                    // แปลง printTime → นาที (client-side)
+                    // infill approximation (client-side mirrors server logic)
+                    const BASE_INFILL      = 20;
+                    const baseFilamentCm3  = current.baseFilamentCm3 || current.filamentCm3 || current.volumeCm3 || 10;
+                    const volumeCm3        = current.volumeCm3 || 0;
+                    const finalInfill      = updates.infill ?? current.infill ?? BASE_INFILL;
+                    const shellVolumeCm3   = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
+                    const filamentCm3      = shellVolumeCm3 + volumeCm3 * (finalInfill / 100);
+
+                    // print time approximation
                     const parseMins = (s: string) => {
                         if (!s || s === "N/A") return 0;
                         let m = 0;
@@ -183,7 +233,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         if (sec) m += parseInt(sec[1]) / 60;
                         return m;
                     };
-                    const printTimeMinutes = parseMins(current.printTime || "0m");
+                    const basePrintMins    = current.basePrintTimeMinutes || parseMins(current.printTime || "0m");
+                    const printTimeMinutes = basePrintMins * (0.70 + 0.30 * (finalInfill / BASE_INFILL));
 
                     // finish price
                     const finishId = updates.finish || current.finish || "standard";
@@ -208,6 +259,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         finishCost:   parseFloat(finishPrice.toFixed(2)),
                         setupFee:     parseFloat(setupFee.toFixed(2)),
                     };
+                    updated.filamentCm3 = filamentCm3;
+                    if (updates.infill !== undefined) updated.infill = finalInfill;
                 }
             }
             
@@ -243,7 +296,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             return;
         }
         const ids = selected.map(q => q._id).join(',');
-        const url = `/checkout?addressId=${selectedAddressId || ""}&ids=${ids}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`;
+        const url = `/checkout?addressId=${selectedAddressId || ""}&ids=${ids}&courier=${selectedCourierCode}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`;
         router.push(url);
     };
 
@@ -365,13 +418,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const totalPrice = selectedQuotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
     const vat = totalPrice * 0.07;
 
-    const deliveryConfig: Record<string, { label: string; days: string; price: number }> = {
-        economy:  { label: t.quote.deliveryEconomy,  days: t.quote.deliveryDays710, price: 60 },
-        standard: { label: t.quote.deliveryStandard, days: t.quote.deliveryDays45,  price: 85 },
-        express:  { label: t.quote.deliveryExpress,  days: t.quote.deliveryDays2,   price: 285 },
-    };
-    const currentDelivery = deliveryConfig[activeQuote?.deliverySpeed || 'standard'];
-    const deliveryCost = currentDelivery.price;
+    const selectedRate = shippingRates.find(r => r.courier_code === selectedCourierCode) || shippingRates[0] || null;
+    const deliveryCost = selectedRate ? selectedRate.total_price : 0;
 
     const SETUP_FEE = 150;
     const COUPON_DISCOUNT = appliedCoupon ? appliedCoupon.discountValue : 0;
@@ -732,6 +780,77 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 );
                             })()}
 
+                            {/* Infill — FDM only */}
+                            {(activeQuote.technology || 'sla').toLowerCase() === 'fdm' && (() => {
+                                const PRESETS = [
+                                    { value: 10, label: "10%", desc: "เบา" },
+                                    { value: 20, label: "20%", desc: "ปกติ" },
+                                    { value: 50, label: "50%", desc: "แน่น" },
+                                    { value: 100, label: "100%", desc: "Solid" },
+                                ];
+                                const currentInfill = activeQuote.infill ?? 20;
+                                const infillColor = currentInfill <= 20 ? "#60a5fa" : currentInfill <= 50 ? "#2563eb" : currentInfill <= 75 ? "#1d4ed8" : "#1e3a8a";
+                                return (
+                                    <div>
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="text-[12px] font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                                                Infill
+                                                <span className="text-[10px] font-bold text-slate-400 normal-case tracking-normal">ความหนาแน่นภายใน</span>
+                                            </div>
+                                            <span className="text-[20px] font-black tabular-nums" style={{ color: infillColor }}>{currentInfill}%</span>
+                                        </div>
+
+                                        {/* Progress bar */}
+                                        <div className="h-2 bg-slate-100 rounded-full mb-3 overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full transition-all duration-300"
+                                                style={{ width: `${currentInfill}%`, backgroundColor: infillColor }}
+                                            />
+                                        </div>
+
+                                        {/* Slider */}
+                                        <input
+                                            type="range"
+                                            min={5} max={100} step={5}
+                                            value={currentInfill}
+                                            onChange={e => patchQuote(activeQuote._id, { infill: Number(e.target.value) })}
+                                            className="w-full accent-blue-600 mb-3 cursor-pointer"
+                                        />
+
+                                        {/* Quick presets */}
+                                        <div className="grid grid-cols-4 gap-1">
+                                            {PRESETS.map(p => {
+                                                const isActive = currentInfill === p.value;
+                                                return (
+                                                    <button
+                                                        key={p.value}
+                                                        onClick={() => patchQuote(activeQuote._id, { infill: p.value })}
+                                                        className={cn(
+                                                            "flex flex-col items-center py-1.5 rounded-lg border text-center transition-all",
+                                                            isActive
+                                                                ? "bg-[#2563eb] border-[#2563eb] text-white"
+                                                                : "bg-white border-slate-100 text-slate-600 hover:border-slate-300"
+                                                        )}
+                                                    >
+                                                        <span className="text-[11px] font-black">{p.label}</span>
+                                                        <span className={cn("text-[9px]", isActive ? "text-white/70" : "text-slate-400")}>{p.desc}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Label */}
+                                        <p className="text-[10px] text-slate-400 mt-2">
+                                            {currentInfill <= 15 ? "เหมาะกับชิ้นงานที่ไม่ต้องรับแรง" :
+                                             currentInfill <= 30 ? "มาตรฐานทั่วไป สมดุลน้ำหนัก-ความแข็งแรง" :
+                                             currentInfill <= 60 ? "แข็งแรง เหมาะกับชิ้นงานใช้งานจริง" :
+                                             "แข็งแรงสูงสุด น้ำหนักมากขึ้น ใช้เวลาพิมพ์นานขึ้น"}
+                                        </p>
+                                    </div>
+                                );
+                            })()}
+
                             {/* Section 5: Quantity & Delivery */}
                             <div>
                                 <div className="text-[12px] font-black mb-4 flex items-center gap-2 text-slate-900 uppercase tracking-tight">
@@ -760,29 +879,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                     </div>
                                 </div>
 
-                                {/* Delivery Speed */}
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { id: 'economy', label: t.quote.deliveryEconomy, days: t.quote.deliveryDays710, extra: '' },
-                                        { id: 'standard', label: t.quote.deliveryStandard, days: t.quote.deliveryDays45, extra: '' },
-                                        { id: 'express', label: t.quote.deliveryExpress, days: t.quote.deliveryDays2, extra: '+฿200' },
-                                    ].map(d => (
-                                        <button
-                                            key={d.id}
-                                            onClick={() => patchQuote(activeQuote._id, { deliverySpeed: d.id })}
-                                            className={cn(
-                                                "flex flex-col items-center py-3 px-2 rounded-xl border text-center transition-all",
-                                                (activeQuote.deliverySpeed || 'standard') === d.id
-                                                    ? "bg-[#2563eb] text-white border-[#2563eb] shadow-lg shadow-blue-100"
-                                                    : "bg-white text-slate-600 border-slate-100 hover:border-slate-200"
-                                            )}
-                                        >
-                                            <span className="text-[12px] font-black">{d.label}</span>
-                                            <span className={cn("text-[10px] font-bold mt-0.5", (activeQuote.deliverySpeed || 'standard') === d.id ? "text-white/70" : "text-slate-400")}>{d.days}</span>
-                                            {d.extra && <span className={cn("text-[9px] font-black mt-1 px-1.5 py-0.5 rounded-full", (activeQuote.deliverySpeed || 'standard') === d.id ? "bg-white/20 text-white" : "bg-orange-50 text-orange-500")}>{d.extra}</span>}
-                                        </button>
-                                    ))}
-                                </div>
+
                             </div>
 
                         </div>
@@ -950,56 +1047,80 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 <Truck className="w-4 h-4 shrink-0 text-blue-600" />
                                 <div className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{t.quote.shippingChannel}</div>
                             </div>
-                            
-                            <div className="relative">
-                                <button 
-                                    onClick={() => setShowDeliveryDropdown(!showDeliveryDropdown)}
-                                    className="w-full flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-3.5 py-3 text-[12px] font-black text-slate-700 hover:bg-slate-100 transition-all shadow-sm active:scale-[0.98]"
-                                >
-                                    <div className="flex flex-col items-start gap-0.5">
-                                        <span className="text-blue-600 font-black">Kerry Express</span>
-                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
-                                            {currentDelivery.label} ({currentDelivery.days})
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="font-mono text-slate-900">฿{deliveryCost.toFixed(2)}</span>
-                                        <ChevronDown className={cn("w-4 h-4 text-slate-300 transition-transform duration-300", showDeliveryDropdown && "rotate-180")} />
-                                    </div>
-                                </button>
 
-                                {showDeliveryDropdown && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setShowDeliveryDropdown(false)}></div>
-                                        <div className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-white border border-slate-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                            <div className="p-2 space-y-1">
-                                                {Object.entries(deliveryConfig).map(([key, config]) => (
-                                                    <button
-                                                        key={key}
-                                                        onClick={() => {
-                                                            patchQuote(activeQuote?._id, { deliverySpeed: key });
-                                                            setShowDeliveryDropdown(false);
-                                                        }}
-                                                        className={cn(
-                                                            "w-full flex items-center justify-between p-3 rounded-xl transition-all group",
-                                                            activeQuote?.deliverySpeed === key ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50 text-slate-600"
-                                                        )}
-                                                    >
-                                                        <div className="flex flex-col items-start">
-                                                            <div className="text-[12px] font-black flex items-center gap-2">
-                                                                {config.label}
-                                                                {key === 'express' && <span className="text-[8px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full uppercase">Recommend</span>}
-                                                            </div>
-                                                            <div className="text-[10px] font-bold opacity-60 uppercase tracking-tighter">จัดส่งใน {config.days} · Kerry</div>
-                                                        </div>
-                                                        <div className="text-[12px] font-mono font-black">฿{config.price.toFixed(2)}</div>
-                                                    </button>
-                                                ))}
+                            {loadingShippingRates ? (
+                                <div className="flex items-center gap-2 text-[11px] text-slate-400 py-2.5 px-3.5 bg-slate-50 rounded-xl">
+                                    <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                    กำลังโหลดราคาขนส่ง...
+                                </div>
+                            ) : !selectedAddressId ? (
+                                <div className="text-[11px] text-slate-400 py-2.5 px-3.5 bg-slate-50 rounded-xl">
+                                    เลือกที่อยู่จัดส่งก่อนเพื่อดูค่าขนส่ง
+                                </div>
+                            ) : shippingRates.length === 0 ? (
+                                <div className="text-[11px] text-slate-400 py-2.5 px-3.5 bg-slate-50 rounded-xl">
+                                    ไม่พบราคาขนส่งสำหรับที่อยู่นี้
+                                </div>
+                            ) : (
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowDeliveryDropdown(!showDeliveryDropdown)}
+                                        className="w-full flex items-center justify-between bg-slate-50 border border-slate-100 rounded-xl px-3.5 py-3 text-[12px] font-black text-slate-700 hover:bg-slate-100 transition-all shadow-sm active:scale-[0.98]"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {selectedRate?.logo && (
+                                                <img src={selectedRate.logo} alt={selectedRate.courier_name}
+                                                    className="w-8 h-6 object-contain rounded border border-slate-100 bg-white p-0.5 shrink-0"
+                                                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                            )}
+                                            <div className="flex flex-col items-start gap-0.5">
+                                                <span className="text-blue-600 font-black">{selectedRate?.courier_name || "-"}</span>
+                                                <span className="text-[10px] text-slate-400 font-bold">~{selectedRate?.estimate_days} วัน</span>
                                             </div>
                                         </div>
-                                    </>
-                                )}
-                            </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-mono text-slate-900">฿{(selectedRate?.total_price || 0).toFixed(2)}</span>
+                                            <ChevronDown className={cn("w-4 h-4 text-slate-300 transition-transform duration-300", showDeliveryDropdown && "rotate-180")} />
+                                        </div>
+                                    </button>
+
+                                    {showDeliveryDropdown && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setShowDeliveryDropdown(false)}></div>
+                                            <div className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-white border border-slate-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                                <div className="p-2 space-y-1">
+                                                    {shippingRates.map(r => (
+                                                        <button
+                                                            key={r.courier_code}
+                                                            onClick={() => {
+                                                                setSelectedCourierCode(r.courier_code);
+                                                                setShowDeliveryDropdown(false);
+                                                            }}
+                                                            className={cn(
+                                                                "w-full flex items-center justify-between p-3 rounded-xl transition-all",
+                                                                selectedCourierCode === r.courier_code ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50 text-slate-600"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                {r.logo && (
+                                                                    <img src={r.logo} alt={r.courier_name}
+                                                                        className="w-8 h-6 object-contain rounded border border-slate-100 bg-white p-0.5 shrink-0"
+                                                                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                                                )}
+                                                                <div className="flex flex-col items-start">
+                                                                    <div className="text-[12px] font-black">{r.courier_name}</div>
+                                                                    <div className="text-[10px] font-bold opacity-60">~{r.estimate_days} วัน</div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-[12px] font-mono font-black">฿{r.total_price.toFixed(2)}</div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
