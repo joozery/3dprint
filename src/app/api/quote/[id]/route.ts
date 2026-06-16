@@ -66,13 +66,21 @@ export async function PATCH(
 
         let newFilamentCm3: number;
         if (shellVolumeCm3 > 0 || infillSlopeCm3PerPct > 0) {
-            newFilamentCm3 = shellVolumeCm3 + supportVolumeCm3 + infillSlopeCm3PerPct * pricingInfill;
+            // ไม่บวก supportVolumeCm3 ที่นี่ — calculatePrice() จะบวกให้เองเป็น chargeableVolumeCm3
+            newFilamentCm3 = shellVolumeCm3 + infillSlopeCm3PerPct * pricingInfill;
         } else {
             // fallback สำหรับ quote เก่าก่อนมี double-slice (ประมาณจาก geometry volume)
-            const baseFilamentCm3 = (quote as any).baseFilamentCm3 || (quote as any).filamentCm3 || quote.volumeCm3 || 0;
+            // ห้ามใช้ quote.filamentCm3 เป็น base เด็ดขาด — มันคือผลลัพธ์ที่คำนวณไปแล้วจาก patch ครั้งก่อน
+            // ถ้าใช้เป็น base จะเกิดการพอกพูนค่าซ้อนกันไปเรื่อยๆทุกครั้งที่ลาก slider (บั๊กที่ทำให้ราคาพุ่งจาก 700 เป็น 70,000)
+            const baseFilamentCm3 = (quote as any).baseFilamentCm3 || quote.volumeCm3 || 0;
             const volumeCm3       = quote.volumeCm3 || 0;
             const approxShell     = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
             newFilamentCm3 = approxShell + volumeCm3 * (pricingInfill / 100);
+
+            // self-heal: เซฟ baseFilamentCm3 ไว้ถ้ายังไม่มี กัน fallback คำนวณผิดซ้ำในรอบถัดไป
+            if (!(quote as any).baseFilamentCm3) {
+                await Quote.findByIdAndUpdate(id, { baseFilamentCm3 });
+            }
         }
 
         // print time: ใช้ shellPrintTimeMinutes + timeSlopePerPercent จาก double-slice (เช่นกัน)

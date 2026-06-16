@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
+import Order from "@/models/Order";
+import MaterialConfig from "@/models/MaterialConfig";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, MapPin, Phone, Mail, Building2, User, Hash, Box } from "lucide-react";
@@ -40,26 +42,42 @@ export default async function QuoteViewPage({
   const rawItems = await Quote.find({ quoteNumber: quote.quoteNumber }).lean();
   const allItems = JSON.parse(JSON.stringify(rawItems));
 
+  // วัสดุที่เก็บใน quote เป็น MaterialConfig._id (string) — ต้อง resolve เป็นชื่อที่อ่านได้
+  const materialIds = [...new Set(allItems.map((item: any) => item.material).filter(Boolean))]
+    .filter((mid: any) => /^[0-9a-fA-F]{24}$/.test(mid));
+  const materialDocs = materialIds.length ? await MaterialConfig.find({ _id: { $in: materialIds } }).lean() : [];
+  const materialNameMap: Record<string, string> = {};
+  materialDocs.forEach((m: any) => { materialNameMap[m._id.toString()] = m.name; });
+
+  // ถ้า quote นี้ถูกสั่งซื้อไปแล้ว (status=ordered) ดึงค่าจัดส่ง/ยอดรวมจริงจาก Order
+  // เพื่อให้ตัวเลขในใบเสนอราคาตรงกับที่ลูกค้าจ่ายจริงตอน checkout (ไม่ใช่ค่าประมาณ)
+  const rawOrder = await Order.findOne({ quotes: { $in: rawItems.map((i: any) => i._id) } }).lean();
+  const order = rawOrder ? JSON.parse(JSON.stringify(rawOrder)) : null;
+
   const { billing, shipping: quoteShipping, userId } = quote;
   const isCompany = billing?.type === "company";
   const shipping = quoteShipping || userId?.shippingAddress;
-  
+
   const formatCur = (num: number) => num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  
+
   const subtotal = allItems.reduce((sum: number, item: any) => sum + (item.priceDetail?.totalPrice || 0), 0);
-  const vat = subtotal * 0.07;
-  
+
+  // กรณีมี Order จริง: ใช้ shippingFee/totalAmount จาก Order ตรงๆ (ไม่มี VAT/WHT ในขั้นตอน checkout จริง)
+  // กรณียังเป็น draft (ยังไม่สั่งซื้อ): ใช้ตัวเลขประมาณการแบบเดิมเป็น quotation เบื้องต้น
+  const hasRealOrder = !!order;
+
   const deliveryConfig: Record<string, { label: string; days: string; price: number }> = {
       economy:  { label: 'ประหยัด',  days: '7-10 วัน', price: 60 },
       standard: { label: 'ปกติ',    days: '4-5 วัน',  price: 85 },
       express:  { label: 'ด่วน',    days: '2 วัน',    price: 285 },
   };
   const currentDelivery = deliveryConfig[quote.deliverySpeed || 'standard'];
-  const deliveryCost = currentDelivery.price;
 
-  const grandTotal = subtotal + vat + deliveryCost;
-  const wht = subtotal * 0.03;
-  const netPayable = grandTotal - wht;
+  const deliveryCost = hasRealOrder ? (order.pricing?.shippingFee || 0) : currentDelivery.price;
+  const vat          = hasRealOrder ? 0 : subtotal * 0.07;
+  const wht           = hasRealOrder ? 0 : subtotal * 0.03;
+  const grandTotal    = hasRealOrder ? (order.pricing?.totalAmount ?? (subtotal + deliveryCost)) : (subtotal + vat + deliveryCost);
+  const netPayable    = hasRealOrder ? grandTotal : (grandTotal - wht);
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 font-sans">
@@ -187,7 +205,7 @@ export default async function QuoteViewPage({
                                 <p className="text-xs font-bold text-slate-900 mb-1">{item.originalName || item.fileName}</p>
                                 <div className="text-[10px] text-slate-500 space-y-0.5 leading-snug">
                                     <p>• {isEng ? 'Technology' : 'เทคโนโลยี'}: <span className="font-semibold">{item.technology?.toUpperCase()}</span></p>
-                                    <p>• {isEng ? 'Material' : 'วัสดุ'}: <span className="font-semibold">{item.material}</span> / {isEng ? 'Color' : 'สี'}: {item.color}</p>
+                                    <p>• {isEng ? 'Material' : 'วัสดุ'}: <span className="font-semibold">{materialNameMap[item.material] || item.material}</span> / {isEng ? 'Color' : 'สี'}: {item.color}</p>
                                     <p>• {isEng ? 'Finish' : 'ผิวงาน'}: <span className="font-semibold text-blue-600">{item.finish === 'sanded' ? 'ขัดเรียบ (Sanded)' : item.finish || 'มาตรฐาน'}</span></p>
                                     <p>• {isEng ? 'Volume' : 'ปริมาตร'}: {item.volumeCm3?.toFixed(2)} cm³</p>
                                     <p>• {isEng ? 'Dimensions (X,Y,Z)' : 'ขนาด (X,Y,Z)'}: {item.dimensions?.x?.toFixed(1)} x {item.dimensions?.y?.toFixed(1)} x {item.dimensions?.z?.toFixed(1)} mm</p>
@@ -209,30 +227,40 @@ export default async function QuoteViewPage({
                         <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Subtotal' : 'มูลค่าสินค้า (Subtotal)'}</span>
                         <span className="font-bold text-slate-800">฿{formatCur(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1.5 text-xs">
-                        <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'VAT (7%)' : 'ภาษีมูลค่าเพิ่ม 7% (VAT)'}</span>
-                        <span className="font-bold text-slate-800">฿{formatCur(vat)}</span>
-                    </div>
+                    {!hasRealOrder && (
+                        <div className="flex justify-between items-center py-1.5 text-xs">
+                            <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'VAT (7%)' : 'ภาษีมูลค่าเพิ่ม 7% (VAT)'}</span>
+                            <span className="font-bold text-slate-800">฿{formatCur(vat)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between items-center py-1.5 text-xs">
                         <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Delivery Fee' : 'ค่าจัดส่ง (Delivery)'}</span>
                         <span className="font-bold text-slate-800">
-                            {quote.deliverySpeed === 'express' ? <span className="text-orange-500 mr-2">[ด่วน]</span> : null}
+                            {!hasRealOrder && quote.deliverySpeed === 'express' ? <span className="text-orange-500 mr-2">[ด่วน]</span> : null}
                             ฿{formatCur(deliveryCost)}
                         </span>
                     </div>
-                    <div className="flex justify-between items-center py-2.5 mt-1.5 border-t border-slate-200">
-                        <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Grand Total' : 'ยอดรวมสุทธิ (Total)'}</span>
-                        <span className="text-lg font-black leading-none text-slate-800">฿{formatCur(grandTotal)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-1.5 text-xs text-red-600 mt-1">
-                        <span className="font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Withholding Tax (3%)' : 'หัก ณ ที่จ่าย (3%)'}</span>
-                        <span className="font-bold">-฿{formatCur(wht)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2.5 mt-1.5 border-t-2 border-slate-900">
-                        <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Net Payable' : 'ยอดชำระสุทธิ'}</span>
-                        <span className="text-xl font-black text-blue-600 leading-none">฿{formatCur(netPayable)}</span>
-                    </div>
+                    {hasRealOrder ? (
+                        <div className="flex justify-between items-center py-2.5 mt-1.5 border-t-2 border-slate-900">
+                            <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Net Payable' : 'ยอดชำระสุทธิ'}</span>
+                            <span className="text-xl font-black text-blue-600 leading-none">฿{formatCur(netPayable)}</span>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-center py-2.5 mt-1.5 border-t border-slate-200">
+                                <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Grand Total' : 'ยอดรวมสุทธิ (Total)'}</span>
+                                <span className="text-lg font-black leading-none text-slate-800">฿{formatCur(grandTotal)}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-1.5 text-xs text-red-600 mt-1">
+                                <span className="font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Withholding Tax (3%)' : 'หัก ณ ที่จ่าย (3%)'}</span>
+                                <span className="font-bold">-฿{formatCur(wht)}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2.5 mt-1.5 border-t-2 border-slate-900">
+                                <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Net Payable' : 'ยอดชำระสุทธิ'}</span>
+                                <span className="text-xl font-black text-blue-600 leading-none">฿{formatCur(netPayable)}</span>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 

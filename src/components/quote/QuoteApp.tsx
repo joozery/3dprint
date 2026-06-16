@@ -226,7 +226,9 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         }
     };
 
-    const patchQuote = async (id: string, updates: any) => {
+    const patchTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+    const patchQuote = async (id: string, updates: any, opts?: { debounceMs?: number }) => {
         try {
             // Update local state first for responsiveness
             const current = quotes.find(q => q._id === id);
@@ -257,10 +259,13 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
                     let filamentCm3: number;
                     if (shellVolumeCm3 > 0 || infillSlopeCm3PerPct > 0) {
-                        filamentCm3 = shellVolumeCm3 + supportCm3 + infillSlopeCm3PerPct * pricingInfill;
+                        // ไม่บวก supportCm3 ที่นี่ — chargeableVol ด้านล่างจะบวกให้เอง
+                        filamentCm3 = shellVolumeCm3 + infillSlopeCm3PerPct * pricingInfill;
                     } else {
                         // fallback สำหรับ quote เก่าก่อนมี double-slice
-                        const baseFilamentCm3 = current.baseFilamentCm3 || current.filamentCm3 || current.volumeCm3 || 10;
+                        // ห้ามใช้ current.filamentCm3 เป็น base — มันคือผลลัพธ์จากการคำนวณ infill ครั้งก่อน
+                        // ถ้าใช้จะพอกพูนค่าซ้อนกันทุกครั้งที่ลาก slider (บั๊กราคาพุ่งจาก 700 เป็น 70,000)
+                        const baseFilamentCm3 = current.baseFilamentCm3 || current.volumeCm3 || 10;
                         const volumeCm3       = current.volumeCm3 || 0;
                         const approxShell     = Math.max(0, baseFilamentCm3 - volumeCm3 * (BASE_INFILL / 100));
                         filamentCm3 = approxShell + volumeCm3 * (pricingInfill / 100);
@@ -317,8 +322,20 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             
             onUpdate(updated);
 
-            // Persist to server
-            await axios.patch(`/api/quote/${id}`, updates);
+            // Persist to server. ยกเลิก write รอบก่อนหน้าของ quote เดียวกันเสมอ (ทั้งแบบ debounce และไม่)
+            // เพื่อไม่ให้ request เก่าที่ตอบกลับช้ากว่า ทับค่าล่าสุดในฐานข้อมูล (เคยเกิดตอนลาก infill slider เร็วๆ)
+            if (patchTimers.current[id]) {
+                clearTimeout(patchTimers.current[id]);
+                delete patchTimers.current[id];
+            }
+
+            const sendPatch = () => axios.patch(`/api/quote/${id}`, updates).catch(err => console.error("Failed to update quote", err));
+
+            if (opts?.debounceMs) {
+                patchTimers.current[id] = setTimeout(sendPatch, opts.debounceMs);
+            } else {
+                await sendPatch();
+            }
         } catch (err) {
             console.error("Failed to update quote", err);
         }
@@ -896,7 +913,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                             type="range"
                                             min={5} max={100} step={5}
                                             value={currentInfill}
-                                            onChange={e => patchQuote(activeQuote._id, { infill: Number(e.target.value) })}
+                                            onChange={e => patchQuote(activeQuote._id, { infill: Number(e.target.value) }, { debounceMs: 400 })}
                                             className="w-full accent-blue-600 mb-3 cursor-pointer"
                                         />
 

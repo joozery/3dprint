@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongoose";
 import Quote from "@/models/Quote";
+import MaterialConfig from "@/models/MaterialConfig";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, MapPin, Phone, Mail, Building2, User } from "lucide-react";
@@ -30,6 +31,13 @@ export default async function AdminQuoteViewPage({ params }: { params: Promise<{
   // Fetch all items sharing the same quoteNumber
   const rawItems = await Quote.find({ quoteNumber: quote.quoteNumber }).lean();
   const allItems = JSON.parse(JSON.stringify(rawItems));
+
+  // วัสดุที่เก็บใน quote เป็น MaterialConfig._id (string) — ต้อง resolve เป็นชื่อที่อ่านได้
+  const materialIds = [...new Set(allItems.map((item: any) => item.material).filter(Boolean))]
+    .filter((mid: any) => /^[0-9a-fA-F]{24}$/.test(mid));
+  const materialDocs = materialIds.length ? await MaterialConfig.find({ _id: { $in: materialIds } }).lean() : [];
+  const materialNameMap: Record<string, string> = {};
+  materialDocs.forEach((m: any) => { materialNameMap[m._id.toString()] = m.name; });
 
   const { billing, priceDetail } = quote;
   const isCompany = billing?.type === "company";
@@ -143,7 +151,7 @@ export default async function AdminQuoteViewPage({ params }: { params: Promise<{
                                 <p className="text-xs font-bold text-slate-900 mb-1">{item.originalName || item.fileName}</p>
                                 <div className="text-[10px] text-slate-500 space-y-0.5 leading-snug">
                                     <p>• เทคโนโลยี: <span className="font-semibold">{item.technology?.toUpperCase()}</span></p>
-                                    <p>• วัสดุ: <span className="font-semibold">{item.material}</span> / สี: {item.color}</p>
+                                    <p>• วัสดุ: <span className="font-semibold">{materialNameMap[item.material] || item.material}</span> / สี: {item.color}</p>
                                     <p>• ปริมาตร: {item.volumeCm3?.toFixed(2)} cm³</p>
                                     {item.dimensions && (
                                         <p>• ขนาด (X,Y,Z): {item.dimensions.x?.toFixed(1)} x {item.dimensions.y?.toFixed(1)} x {item.dimensions.z?.toFixed(1)} mm</p>
