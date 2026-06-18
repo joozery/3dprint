@@ -1,99 +1,154 @@
-"use client";
-
 import Navbar from "@/components/layout/Navbar";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { Footer } from "@/components/home/HomeSections";
+import { BookOpen, ArrowRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
-const steps = [
-    {
-        num: "01", color: "bg-blue-600", title: "สมัครสมาชิก",
-        desc: "กรอกอีเมลและรหัสผ่าน จากนั้นยืนยัน OTP ที่ส่งไปยังอีเมลของคุณ ใช้เวลาไม่เกิน 2 นาที",
-        tips: ["ใช้อีเมลจริงที่เข้าถึงได้", "รหัสผ่านอย่างน้อย 8 ตัว", "สามารถสมัครผ่าน Google/LINE ได้"],
-    },
-    {
-        num: "02", color: "bg-purple-600", title: "อัปโหลดไฟล์ 3D",
-        desc: "ไปที่หน้า \"สั่งพิมพ์\" แล้วลากวางหรือเลือกไฟล์ 3D ของคุณ รองรับ STL, STEP, OBJ และ 3MF",
-        tips: ["ขนาดไฟล์สูงสุด 100 MB ต่อไฟล์", "อัปโหลดได้หลายไฟล์พร้อมกัน", "ไฟล์ถูกเข้ารหัส SSL ปลอดภัย 100%"],
-    },
-    {
-        num: "03", color: "bg-pink-600", title: "เลือกวัสดุและ Finish",
-        desc: "เลือกกระบวนการพิมพ์ (FDM/SLA) วัสดุ สี ผิวงาน และจำนวน ระบบจะอัปเดตราคาแบบ Real-time",
-        tips: ["FDM = ราคาประหยัย ชิ้นงานใหญ่", "SLA = ละเอียดสูง พื้นผิวเนียน", "ดูคู่มือวัสดุถ้าไม่แน่ใจ"],
-    },
-    {
-        num: "04", color: "bg-amber-500", title: "รับใบเสนอราคา",
-        desc: "ระบบ AI วิเคราะห์ไฟล์และคำนวณราคาให้ทันทีภายใน 30 วินาที สามารถบันทึกหรือแชร์ใบเสนอราคาได้",
-        tips: ["ราคารวม VAT 7% แล้ว", "บันทึกไว้ใน Cart ได้ก่อนชำระ", "ขอ Formal Quotation ได้"],
-    },
-    {
-        num: "05", color: "bg-green-600", title: "สั่งพิมพ์และรับงาน",
-        desc: "ชำระเงิน → ทีมวิศวกรตรวจสอบไฟล์ → พิมพ์และ QC → จัดส่งถึงมือคุณตรงเวลา",
-        tips: ["ชำระผ่านบัตรเครดิต / พร้อมเพย์", "ติดตามสถานะออเดอร์แบบ Real-time", "จัดส่งทั่วไทยด้วย Kerry / Flash"],
-    },
-];
+interface Article {
+  _id: string;
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  linkUrl?: string;
+  type: string;
+  order: number;
+}
 
-export default function GuidePage() {
-    return (
-        <div className="flex flex-col min-h-screen bg-slate-50">
-            <Navbar />
-            <div className="flex-1">
-                <div className="bg-slate-900 text-white py-20 px-4">
-                    <div className="max-w-5xl mx-auto text-center">
-                        <span className="inline-flex items-center gap-2 text-blue-400 font-bold tracking-widest uppercase text-xs mb-4">
-                            <BookOpen className="w-4 h-4" /> คู่มือการใช้งาน
+async function getGuides(): Promise<Article[]> {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/public/articles?type=guide`, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.articles ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function GuidePage() {
+  const guides = await getGuides();
+
+  return (
+    <div className="flex flex-col min-h-screen bg-white font-sans">
+      <Navbar />
+      <div className="flex-1">
+        {/* Hero */}
+        <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 text-white py-20 px-4">
+          <div className="max-w-5xl mx-auto text-center">
+            <span className="inline-flex items-center gap-2 text-blue-400 font-bold tracking-widest uppercase text-xs mb-4 bg-blue-400/10 px-4 py-1.5 rounded-full border border-blue-400/20">
+              <BookOpen className="w-3.5 h-3.5" /> คู่มือการใช้งาน
+            </span>
+            <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight">
+              คู่มือและบทแนะนำ<br />
+              <span className="text-blue-400">3D Printing</span>
+            </h1>
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+              รวบรวมคู่มือการใช้งานสำหรับลูกค้าใหม่และผู้ที่ต้องการเรียนรู้เพิ่มเติม
+              ตั้งแต่การเตรียมไฟล์ไปจนถึงการรับชิ้นงาน
+            </p>
+          </div>
+        </section>
+
+        <section className="max-w-5xl mx-auto px-4 py-16">
+          {guides.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {guides.map((guide) => {
+                const Wrapper = guide.linkUrl ? Link : "div";
+                const wrapperProps = guide.linkUrl
+                  ? { href: guide.linkUrl, target: guide.linkUrl.startsWith("http") ? "_blank" : undefined, rel: guide.linkUrl.startsWith("http") ? "noopener noreferrer" : undefined }
+                  : {};
+
+                return (
+                  <Wrapper
+                    key={guide._id}
+                    {...(wrapperProps as any)}
+                    className={`group bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-200 ${guide.linkUrl ? "hover:shadow-lg hover:border-blue-200 cursor-pointer" : ""}`}
+                  >
+                    {/* Thumbnail */}
+                    <div className="relative w-full h-48 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
+                      {guide.thumbnail ? (
+                        <Image
+                          src={guide.thumbnail}
+                          alt={guide.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <BookOpen className="w-12 h-12 text-slate-300" />
+                        </div>
+                      )}
+                      {/* overlay gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                      {/* badge */}
+                      <div className="absolute top-3 left-3">
+                        <span className="text-[10px] font-bold px-2.5 py-1 bg-blue-600 text-white rounded-full shadow">
+                          คู่มือการใช้งาน
                         </span>
-                        <h1 className="text-4xl md:text-5xl font-black mb-4">เริ่มต้นใช้งาน PDM</h1>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                            ไม่เคยใช้งานมาก่อน? ไม่เป็นไร ทำตาม 5 ขั้นตอนนี้แล้วคุณจะสั่งพิมพ์งานแรกได้ภายใน 5 นาที
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      <h3 className="font-bold text-slate-900 text-base leading-snug mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                        {guide.title}
+                      </h3>
+                      {guide.description && (
+                        <p className="text-sm text-slate-500 leading-relaxed line-clamp-2 mb-4">
+                          {guide.description}
                         </p>
+                      )}
+                      {guide.linkUrl && (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 group-hover:gap-2.5 transition-all">
+                          {guide.linkUrl.startsWith("http") ? (
+                            <><ExternalLink className="w-3.5 h-3.5" /> เปิดอ่าน</>
+                          ) : (
+                            <><ArrowRight className="w-3.5 h-3.5" /> อ่านต่อ</>
+                          )}
+                        </span>
+                      )}
                     </div>
-                </div>
-
-                <div className="max-w-4xl mx-auto px-4 py-16">
-                    <div className="space-y-6">
-                        {steps.map((s, i) => (
-                            <div key={s.num} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex gap-5">
-                                <div className={`w-14 h-14 rounded-2xl ${s.color} text-white text-xl font-black flex items-center justify-center shrink-0`}>
-                                    {s.num}
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-black text-slate-900 mb-2">{s.title}</h3>
-                                    <p className="text-slate-500 text-sm leading-relaxed mb-4">{s.desc}</p>
-                                    <ul className="space-y-1">
-                                        {s.tips.map((tip) => (
-                                            <li key={tip} className="text-xs text-slate-600 flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" /> {tip}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                {i < steps.length - 1 && (
-                                    <div className="hidden md:flex items-center text-slate-300">
-                                        <ArrowRight className="w-5 h-5" />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-                            <h3 className="font-bold text-blue-900 mb-2">ยังมีคำถาม?</h3>
-                            <p className="text-sm text-blue-700 mb-4">ดูคำถามที่พบบ่อยของเรา</p>
-                            <Link href="/support/faq" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700">
-                                ไปที่หน้า FAQ <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                        <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
-                            <h3 className="font-bold text-green-900 mb-2">ต้องการความช่วยเหลือ?</h3>
-                            <p className="text-sm text-green-700 mb-4">ทีมงานพร้อมช่วยคุณ จ-ศ 9:00-18:00</p>
-                            <Link href="/support/contact" className="inline-flex items-center gap-2 text-sm font-bold text-green-600 hover:text-green-700">
-                                ติดต่อเรา <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                    </div>
-                </div>
+                  </Wrapper>
+                );
+              })}
             </div>
-        </div>
-    );
+          ) : (
+            <div className="text-center py-24 bg-slate-50 rounded-3xl border border-slate-100">
+              <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <BookOpen className="w-10 h-10 text-blue-300" />
+              </div>
+              <h3 className="font-bold text-slate-700 text-lg mb-2">ยังไม่มีคู่มือ</h3>
+              <p className="text-slate-400 text-sm">ทีมงานกำลังจัดทำคู่มือการใช้งาน โปรดกลับมาดูใหม่เร็วๆ นี้</p>
+            </div>
+          )}
+
+          {/* Bottom links */}
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/support/faq" className="group flex items-center gap-4 bg-blue-50 hover:bg-blue-100 border border-blue-100 hover:border-blue-200 rounded-2xl p-5 transition-all">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-blue-900 text-sm">ยังมีคำถาม?</p>
+                <p className="text-xs text-blue-600 mt-0.5">ดูคำถามที่พบบ่อยของเรา</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-blue-400 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link href="/support/contact" className="group flex items-center gap-4 bg-green-50 hover:bg-green-100 border border-green-100 hover:border-green-200 rounded-2xl p-5 transition-all">
+              <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center shrink-0 shadow">
+                <ArrowRight className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-green-900 text-sm">ต้องการความช่วยเหลือ?</p>
+                <p className="text-xs text-green-600 mt-0.5">ทีมงานพร้อมช่วยคุณ</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-green-400 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </section>
+      </div>
+      <Footer />
+    </div>
+  );
 }

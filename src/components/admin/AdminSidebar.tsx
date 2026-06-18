@@ -23,7 +23,11 @@ import {
   Activity,
   X,
   Mail,
-  Link2
+  Link2,
+  HelpCircle,
+  BookOpen,
+  Settings2,
+  Layers
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -33,6 +37,7 @@ const menuItems = [
   { label: "ใบเสนอราคาใหม่", icon: FileText, href: "/admin/quotes", badge: "3", badgeColor: "bg-blue-600" },
   { label: "รายการสั่งซื้อ", icon: ShoppingBag, href: "/admin/orders", badge: "New", badgeColor: "bg-emerald-500" },
   { label: "คลังไฟล์โมเดล", icon: Database, href: "/admin/models", badge: null },
+  { label: "คลังโมเดลฟรี", icon: Layers, href: "/admin/free-models", badge: null },
   { label: "ระบบคูปอง", icon: Ticket, href: "/admin/coupons", badge: null },
   { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
   { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
@@ -41,6 +46,9 @@ const menuItems = [
   { label: "หน้าเกี่ยวกับเรา (About)", icon: FileText, href: "/admin/about", badge: null },
   { label: "จัดการลิ้งค์ Footer", icon: Link2, href: "/admin/footer-links", badge: null },
   { label: "Newsletter", icon: Mail, href: "/admin/subscribers", badge: null },
+  { label: "FAQ", icon: HelpCircle, href: "/admin/faq", badge: null },
+  { label: "บทความ / คู่มือ", icon: BookOpen, href: "/admin/articles", badge: null },
+  { label: "ตั้งค่า Support", icon: Settings2, href: "/admin/support-settings", badge: null },
   { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
   { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },
   { label: "Monitor คิว Slicer", icon: Activity, href: "/admin/slicer-queue", badge: null },

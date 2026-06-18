@@ -8,7 +8,6 @@ import {
     NavigationMenu,
     NavigationMenuContent,
     NavigationMenuItem,
-    NavigationMenuLink,
     NavigationMenuList,
     NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
@@ -16,10 +15,7 @@ import Image from "next/image";
 import {
     Search, ShoppingCart, Menu, X, User as UserIcon, LogOut, ArrowRight,
     ChevronDown, Globe, Printer, Droplets, Palette, ScanLine, Layers,
-    CircuitBoard, Sparkles, Leaf, Flame, Shield, FlaskConical, Zap,
-    Box, BookOpen, HelpCircle, FileText, MessageCircle, Inbox,
-    Building2, Factory, Users, Briefcase, TreePine, Phone,
-    LayoutGrid, Wrench, Gem, Upload, ChevronRight, type LucideProps,
+    CircuitBoard, Sparkles, ChevronRight, type LucideProps,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -165,80 +161,32 @@ export default function Navbar() {
 
                                 {/* ── วัสดุ ── */}
                                 <NavigationMenuItem>
-                                    <NavigationMenuTrigger className="bg-transparent text-slate-600 hover:text-blue-600 text-sm font-medium h-10 px-3">
+                                    <Link
+                                        href="/materials"
+                                        className="inline-flex items-center h-10 px-3 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors rounded-md"
+                                    >
                                         {t.nav.materials}
-                                    </NavigationMenuTrigger>
-                                    <NavigationMenuContent>
-                                        <div className="w-[420px] p-2 flex flex-col gap-0.5 shadow-lg rounded-xl bg-white border border-slate-100">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div className="flex flex-col gap-0.5">
-                                                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                                        {t.materials.filamentLabel}
-                                                    </p>
-                                                    <StandardItem href="/materials/pla" icon={Leaf} label={t.materials.pla} />
-                                                    <StandardItem href="/materials/abs" icon={Flame} label={t.materials.abs} />
-                                                    <StandardItem href="/materials/petg" icon={Shield} label={t.materials.petg} />
-                                                    <StandardItem href="/materials/tpu" icon={Zap} label={t.materials.tpu} />
-                                                </div>
-                                                <div className="flex flex-col gap-0.5">
-                                                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                                        {t.materials.resinLabel}
-                                                    </p>
-                                                    <StandardItem href="/materials/resin" icon={FlaskConical} label={t.materials.resin} />
-                                                    <StandardItem href="/materials/engineering-resin" icon={Box} label={t.materials.engResin} />
-                                                    <StandardItem href="/materials/nylon" icon={Layers} label={t.materials.nylon} />
-                                                </div>
-                                            </div>
-                                            <div className="h-px bg-slate-100 my-1 mx-2" />
-                                            <Link href="/materials" className="flex flex-row items-center justify-between px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg mx-1 transition-colors">
-                                                {t.materials.guideCta} <ChevronRight size={14} />
-                                            </Link>
-                                        </div>
-                                    </NavigationMenuContent>
+                                    </Link>
                                 </NavigationMenuItem>
 
                                 {/* ── โมเดล 3D ฟรี ── */}
                                 <NavigationMenuItem>
-                                    <NavigationMenuTrigger className="bg-transparent text-slate-600 hover:text-blue-600 text-sm font-medium h-10 px-3">
+                                    <Link
+                                        href="/models"
+                                        className="inline-flex items-center h-10 px-3 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors rounded-md"
+                                    >
                                         {t.nav.freeModels}
-                                    </NavigationMenuTrigger>
-                                    <NavigationMenuContent>
-                                        <div className="w-[200px] p-2 flex flex-col gap-0.5 shadow-lg rounded-xl bg-white border border-slate-100">
-                                            <StandardItem href="/models" icon={LayoutGrid} label={t.models.gallery} />
-                                            <StandardItem href="/models/functional" icon={Wrench} label={t.models.functional} />
-                                            <StandardItem href="/models/decorative" icon={Gem} label={t.models.decorative} />
-                                            <StandardItem href="/models/upload" icon={Upload} label={t.models.upload} />
-                                        </div>
-                                    </NavigationMenuContent>
+                                    </Link>
                                 </NavigationMenuItem>
 
                                 {/* ── ช่วยเหลือ ── */}
                                 <NavigationMenuItem>
-                                    <NavigationMenuTrigger className="bg-transparent text-slate-600 hover:text-blue-600 text-sm font-medium h-10 px-3">
+                                    <Link
+                                        href="/support"
+                                        className="inline-flex items-center h-10 px-3 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors rounded-md"
+                                    >
                                         {t.nav.support}
-                                    </NavigationMenuTrigger>
-                                    <NavigationMenuContent>
-                                        <div className="w-[380px] p-2 shadow-lg rounded-xl bg-white border border-slate-100">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div className="flex flex-col gap-0.5">
-                                                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                                        {t.support.resourcesLabel}
-                                                    </p>
-                                                    <StandardItem href="/support/guide" icon={BookOpen} label={t.support.guide} />
-                                                    <StandardItem href="/support/faq" icon={HelpCircle} label={t.support.faq} />
-                                                    <StandardItem href="/support/blog" icon={FileText} label={t.support.blog} />
-                                                </div>
-                                                <div className="flex flex-col gap-0.5">
-                                                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                                                        {t.support.contactLabel}
-                                                    </p>
-                                                    <StandardItem href="/support/chat" icon={MessageCircle} label={t.support.chat} />
-                                                    <StandardItem href="/support/ticket" icon={Inbox} label={t.support.ticket} />
-                                                    <StandardItem href="/support/contact" icon={Phone} label={t.support.contact} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </NavigationMenuContent>
+                                    </Link>
                                 </NavigationMenuItem>
 
                                 {/* ── เกี่ยวกับเรา ── */}
@@ -471,67 +419,36 @@ export default function Navbar() {
                             </MobileSection>
 
                             {/* Materials */}
-                            <MobileSection
-                                label={t.nav.materials}
-                                expanded={mobileExpanded === "materials"}
-                                onToggle={() => setMobileExpanded(mobileExpanded === "materials" ? null : "materials")}
+                            <Link href="/materials" onClick={close}
+                                className="flex items-center justify-between px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
                             >
-                                <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{t.materials.filamentLabel}</p>
-                                <MobileItem href="/materials/pla" icon={Leaf} label={t.materials.pla} desc={t.materials.plaDesc} onClick={close} />
-                                <MobileItem href="/materials/abs" icon={Flame} label={t.materials.abs} desc={t.materials.absDesc} onClick={close} />
-                                <MobileItem href="/materials/petg" icon={Shield} label={t.materials.petg} desc={t.materials.petgDesc} onClick={close} />
-                                <MobileItem href="/materials/tpu" icon={Zap} label={t.materials.tpu} desc={t.materials.tpuDesc} onClick={close} />
-                                <p className="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{t.materials.resinLabel}</p>
-                                <MobileItem href="/materials/resin" icon={FlaskConical} label={t.materials.resin} desc={t.materials.resinDesc} onClick={close} />
-                                <MobileItem href="/materials/engineering-resin" icon={Box} label={t.materials.engResin} desc={t.materials.engResinDesc} onClick={close} />
-                                <MobileItem href="/materials/nylon" icon={Layers} label={t.materials.nylon} desc={t.materials.nylonDesc} onClick={close} />
-                            </MobileSection>
+                                {t.nav.materials}
+                                <ChevronRight size={16} className="text-slate-400" />
+                            </Link>
 
                             {/* Free Models */}
-                            <MobileSection
-                                label={t.nav.freeModels}
-                                expanded={mobileExpanded === "models"}
-                                onToggle={() => setMobileExpanded(mobileExpanded === "models" ? null : "models")}
+                            <Link href="/models" onClick={close}
+                                className="flex items-center justify-between px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
                             >
-                                <div className="pt-1 grid grid-cols-2 gap-1">
-                                    <MobileItem href="/models" icon={LayoutGrid} label={t.models.gallery} desc={t.models.galleryDesc} onClick={close} />
-                                    <MobileItem href="/models/functional" icon={Wrench} label={t.models.functional} desc={t.models.functionalDesc} onClick={close} />
-                                    <MobileItem href="/models/decorative" icon={Gem} label={t.models.decorative} desc={t.models.decorativeDesc} onClick={close} />
-                                    <MobileItem href="/models/upload" icon={Upload} label={t.models.upload} desc={t.models.uploadDesc} onClick={close} />
-                                </div>
-                            </MobileSection>
+                                {t.nav.freeModels}
+                                <ChevronRight size={16} className="text-slate-400" />
+                            </Link>
 
                             {/* Help */}
-                            <MobileSection
-                                label={t.nav.support}
-                                expanded={mobileExpanded === "support"}
-                                onToggle={() => setMobileExpanded(mobileExpanded === "support" ? null : "support")}
+                            <Link href="/support" onClick={close}
+                                className="flex items-center justify-between px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
                             >
-                                <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{t.support.resourcesLabel}</p>
-                                <MobileItem href="/support/guide" icon={BookOpen} label={t.support.guide} desc={t.support.guideDesc} onClick={close} />
-                                <MobileItem href="/support/faq" icon={HelpCircle} label={t.support.faq} desc={t.support.faqDesc} onClick={close} />
-                                <MobileItem href="/support/blog" icon={FileText} label={t.support.blog} desc={t.support.blogDesc} onClick={close} />
-                                <p className="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{t.support.contactLabel}</p>
-                                <MobileItem href="/support/chat" icon={MessageCircle} label={t.support.chat} desc={t.support.chatDesc} onClick={close} />
-                                <MobileItem href="/support/ticket" icon={Inbox} label={t.support.ticket} desc={t.support.ticketDesc} onClick={close} />
-                                <MobileItem href="/support/contact" icon={Phone} label={t.support.contact} desc={t.support.contactDesc} onClick={close} />
-                            </MobileSection>
+                                {t.nav.support}
+                                <ChevronRight size={16} className="text-slate-400" />
+                            </Link>
 
                             {/* About */}
-                            <MobileSection
-                                label={t.nav.about}
-                                expanded={mobileExpanded === "about"}
-                                onToggle={() => setMobileExpanded(mobileExpanded === "about" ? null : "about")}
+                            <Link href="/about" onClick={close}
+                                className="flex items-center justify-between px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
                             >
-                                <div className="pt-1">
-                                    <MobileItem href="/about" icon={Building2} label={t.about.company} desc={t.about.companyDesc} onClick={close} />
-                                    <MobileItem href="/about/factory" icon={Factory} label={t.about.factory} desc={t.about.factoryDesc} onClick={close} />
-                                    <MobileItem href="/about/team" icon={Users} label={t.about.team} desc={t.about.teamDesc} onClick={close} />
-                                    <MobileItem href="/about/careers" icon={Briefcase} label={t.about.careers} desc={t.about.careersDesc} onClick={close} />
-                                    <MobileItem href="/about/sustainability" icon={TreePine} label={t.about.sustainability} desc={t.about.sustainabilityDesc} onClick={close} />
-                                    <MobileItem href="/support/contact" icon={Phone} label={t.about.contact} desc={t.about.contactDesc} onClick={close} />
-                                </div>
-                            </MobileSection>
+                                {t.nav.about}
+                                <ChevronRight size={16} className="text-slate-400" />
+                            </Link>
                         </nav>
 
                         {/* CTA / auth */}

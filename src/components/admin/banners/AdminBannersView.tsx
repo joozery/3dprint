@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Edit2, Trash2, Image as ImageIcon, Video, Youtube, ExternalLink } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Edit2, Trash2, Image as ImageIcon, Video, Youtube, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 
@@ -25,6 +25,8 @@ export default function AdminBannersView({ initialBanners }: { initialBanners: B
   const [banners, setBanners] = useState<Banner[]>(initialBanners);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     type: "image",
@@ -76,6 +78,26 @@ export default function AdminBannersView({ initialBanners }: { initialBanners: B
       });
     }
     setIsModalOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "อัปโหลดไม่สำเร็จ");
+      setFormData(prev => ({ ...prev, src: data.url }));
+      toast.success("อัปโหลดรูปภาพสำเร็จ");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -253,7 +275,45 @@ export default function AdminBannersView({ initialBanners }: { initialBanners: B
                   
                   <div className="col-span-2 sm:col-span-1">
                      <label className="text-xs font-bold text-slate-500 mb-1 block">ซอร์สไฟล์ / ลิงก์ / YouTube ID <span className="text-red-500">*</span></label>
-                     <input required type="text" value={formData.src} onChange={e => setFormData({...formData, src: e.target.value})} placeholder="เช่น /bghero/cover1.png หรือ YT_ID" className="w-full p-2 border rounded border-slate-200 focus:border-blue-500 text-sm" />
+                     {formData.type === "image" ? (
+                       <div className="space-y-2">
+                         <input
+                           ref={fileInputRef}
+                           type="file"
+                           accept="image/*"
+                           onChange={handleImageUpload}
+                           className="hidden"
+                         />
+                         <button
+                           type="button"
+                           onClick={() => fileInputRef.current?.click()}
+                           disabled={isUploading}
+                           className="w-full flex items-center justify-center gap-2 p-2 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm font-bold disabled:opacity-60 transition"
+                         >
+                           {isUploading ? (
+                             <><Loader2 size={15} className="animate-spin" /> กำลังอัปโหลด...</>
+                           ) : (
+                             <><Upload size={15} /> อัปโหลดรูปภาพ</>
+                           )}
+                         </button>
+                         {formData.src && (
+                           <div className="relative w-full h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                             {/* eslint-disable-next-line @next/next/no-img-element */}
+                             <img src={formData.src} alt="preview" className="w-full h-full object-cover" />
+                           </div>
+                         )}
+                         <input
+                           required
+                           type="text"
+                           value={formData.src}
+                           onChange={e => setFormData({...formData, src: e.target.value})}
+                           placeholder="หรือพิมพ์ URL รูปตรงนี้"
+                           className="w-full p-2 border rounded border-slate-200 focus:border-blue-500 text-xs text-slate-500"
+                         />
+                       </div>
+                     ) : (
+                       <input required type="text" value={formData.src} onChange={e => setFormData({...formData, src: e.target.value})} placeholder="เช่น YouTube ID หรือ Video URL" className="w-full p-2 border rounded border-slate-200 focus:border-blue-500 text-sm" />
+                     )}
                   </div>
 
                   <div className="col-span-2">
