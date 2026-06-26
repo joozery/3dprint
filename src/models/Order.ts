@@ -23,8 +23,10 @@ const OrderSchema = new mongoose.Schema(
             address:     { type: String, required: true },
             district:    { type: String },
             subDistrict: { type: String },
-            province:    { type: String, required: true },
-            zipCode:     { type: String, required: true },
+            province:    { type: String },
+            zipCode:     { type: String },
+            city:        { type: String },
+            countryCode: { type: String, default: "TH" },
         },
         paymentDetails: {
             method: { type: String, enum: ["bank_transfer", "promptpay", "credit_card", "paysolutions"], required: true },

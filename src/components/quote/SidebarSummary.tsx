@@ -25,16 +25,20 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
     const hasQuotes  = quotes.length > 0;
 
     // ── Shipping estimate ──────────────────────────────────────────
+    const [country, setCountry]         = useState("TH");
     const [zipcode, setZipcode]         = useState("");
+    const [intlCity, setIntlCity]       = useState("");
+    const [intlPostal, setIntlPostal]   = useState("");
     const [shippingRates, setShippingRates] = useState<any[]>([]);
     const [loadingRates, setLoadingRates]   = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => {
-        if (zipcode.length !== 5 || !hasQuotes) return;
+    const isIntl = country !== "TH";
+
+    const fetchRates = (overrides?: object) => {
+        if (!hasQuotes) return;
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-            // dimensions stored in mm → convert to cm
             const maxW = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
             const maxL = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
             const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
@@ -44,7 +48,9 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    dst_zipcode:  zipcode,
+                    countryCode:  country,
+                    dst_zipcode:  isIntl ? intlPostal : zipcode,
+                    dst_city:     isIntl ? intlCity   : "",
                     dst_province: "",
                     dst_amphure:  "",
                     dst_district: "",
@@ -52,6 +58,7 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                     width:     Math.ceil(maxW),
                     length:    Math.ceil(maxL),
                     height:    Math.ceil(maxH),
+                    ...overrides,
                 }),
             })
                 .then(r => r.json())
@@ -59,7 +66,22 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                 .catch(() => {})
                 .finally(() => setLoadingRates(false));
         }, 600);
+    };
+
+    useEffect(() => {
+        setShippingRates([]);
+        setZipcode("");
+        setIntlCity("");
+        setIntlPostal("");
+    }, [country]);
+
+    useEffect(() => {
+        if (!isIntl && zipcode.length === 5) fetchRates();
     }, [zipcode, weight]);
+
+    useEffect(() => {
+        if (isIntl && intlCity.trim().length >= 2) fetchRates();
+    }, [intlCity, intlPostal, weight]);
 
     // ── ขอใบเสนอราคา ──────────────────────────────────────────────
     const handleRequestQuote = async () => {
@@ -198,18 +220,74 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                     </span>
                 </div>
 
-                {/* Zipcode input */}
+                {/* Country selector */}
                 <div className="mb-2">
-                    <input
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={5}
-                        placeholder="กรอกรหัสไปรษณีย์ปลายทาง"
-                        value={zipcode}
-                        onChange={e => setZipcode(e.target.value.replace(/\D/g, ""))}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors"
-                    />
+                    <select
+                        value={country}
+                        onChange={e => setCountry(e.target.value)}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors bg-white"
+                    >
+                        <option value="TH">🇹🇭 ไทย (ในประเทศ)</option>
+                        <option value="US">🇺🇸 United States</option>
+                        <option value="GB">🇬🇧 United Kingdom</option>
+                        <option value="JP">🇯🇵 Japan</option>
+                        <option value="CN">🇨🇳 China</option>
+                        <option value="SG">🇸🇬 Singapore</option>
+                        <option value="MY">🇲🇾 Malaysia</option>
+                        <option value="AU">🇦🇺 Australia</option>
+                        <option value="DE">🇩🇪 Germany</option>
+                        <option value="FR">🇫🇷 France</option>
+                        <option value="CA">🇨🇦 Canada</option>
+                        <option value="KR">🇰🇷 South Korea</option>
+                        <option value="HK">🇭🇰 Hong Kong</option>
+                        <option value="TW">🇹🇼 Taiwan</option>
+                        <option value="AE">🇦🇪 UAE</option>
+                        <option value="IN">🇮🇳 India</option>
+                        <option value="NL">🇳🇱 Netherlands</option>
+                        <option value="IT">🇮🇹 Italy</option>
+                        <option value="ES">🇪🇸 Spain</option>
+                        <option value="CH">🇨🇭 Switzerland</option>
+                        <option value="ID">🇮🇩 Indonesia</option>
+                        <option value="VN">🇻🇳 Vietnam</option>
+                        <option value="PH">🇵🇭 Philippines</option>
+                    </select>
                 </div>
+
+                {/* Zipcode input (TH) */}
+                {!isIntl && (
+                    <div className="mb-2">
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={5}
+                            placeholder="กรอกรหัสไปรษณีย์ปลายทาง"
+                            value={zipcode}
+                            onChange={e => setZipcode(e.target.value.replace(/\D/g, ""))}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors"
+                        />
+                    </div>
+                )}
+
+                {/* City + Postal (International / DHL) */}
+                {isIntl && (
+                    <div className="space-y-2 mb-2">
+                        <input
+                            type="text"
+                            placeholder="City *"
+                            value={intlCity}
+                            onChange={e => setIntlCity(e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Postal code (optional)"
+                            value={intlPostal}
+                            onChange={e => setIntlPostal(e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors"
+                        />
+                        <p className="text-[10px] text-amber-600">ส่งผ่าน DHL Express</p>
+                    </div>
+                )}
 
                 {/* Rates result */}
                 {loadingRates && (
@@ -230,17 +308,22 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                                     )}
                                     <div>
                                         <p className="text-xs font-bold text-slate-800">{r.courier_name}</p>
-                                        <p className="text-[10px] text-slate-400">~{r.estimate_days} วัน</p>
+                                        <p className="text-[10px] text-slate-400">
+                                            {isIntl ? r.estimate_days : `~${r.estimate_days} วัน`}
+                                        </p>
                                     </div>
                                 </div>
-                                <p className="text-sm font-black text-slate-800">฿{r.total_price}</p>
+                                <p className="text-sm font-black text-slate-800">฿{r.total_price.toLocaleString()}</p>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {!loadingRates && zipcode.length === 5 && shippingRates.length === 0 && (
-                    <p className="text-[10px] text-slate-400 mt-1">ไม่พบราคาขนส่งสำหรับรหัสไปรษณีย์นี้</p>
+                {!loadingRates && (
+                    (!isIntl && zipcode.length === 5) ||
+                    (isIntl && intlCity.trim().length >= 2)
+                ) && shippingRates.length === 0 && (
+                    <p className="text-[10px] text-slate-400 mt-1">ไม่พบราคาขนส่งสำหรับที่อยู่นี้</p>
                 )}
             </div>
 

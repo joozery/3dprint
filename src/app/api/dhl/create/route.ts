@@ -52,7 +52,11 @@ export async function POST(req: NextRequest) {
         console.log("[DHL create_shipment response]", JSON.stringify(result, null, 2));
 
         if (result.status === 400 || result.title || result.detail) {
-            return NextResponse.json({ error: result.detail || result.title || "DHL error", raw: result }, { status: 400 });
+            const details: string[] = result.additionalDetails || [];
+            const errorMsg = details.length > 0
+                ? details.join("\n")
+                : (result.detail || result.title || "DHL error");
+            return NextResponse.json({ error: errorMsg, raw: result }, { status: 400 });
         }
 
         const trackingNumber = result.shipmentTrackingNumber

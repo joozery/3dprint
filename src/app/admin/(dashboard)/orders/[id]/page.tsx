@@ -166,7 +166,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
             {/* Shipping Section */}
             {(() => {
-                const provider = (order as any).shippingProvider || "iship";
+                const isIntlAddress = order.shippingAddress?.countryCode && order.shippingAddress.countryCode !== "TH";
+                const storedProvider = (order as any).shippingProvider || "iship";
+                // ถ้า address เป็น international → บังคับ dhl เสมอ (guard สำหรับ orders เก่าที่ provider อาจ save ผิด)
+                const provider = isIntlAddress ? "dhl" : storedProvider;
                 const quotesDataMapped = (quotes as any[]).map(q => ({
                     weightGrams: q.weightGrams || 0,
                     dimensions: {
@@ -218,6 +221,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                             <DHLPanel
                                 orderId={order._id.toString()}
                                 quotesData={quotesDataMapped}
+                                shippingAddress={{
+                                    countryCode: (order.shippingAddress as any)?.countryCode || "",
+                                    city:        (order.shippingAddress as any)?.city || (order.shippingAddress as any)?.district || "",
+                                    zipCode:     order.shippingAddress?.zipCode || "",
+                                }}
                                 existing={{
                                     trackingNumber:   (order as any).trackingNumber || "",
                                     shippingProvider: "dhl",

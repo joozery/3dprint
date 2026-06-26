@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { quoteIds, shippingAddress, paymentMethod, customerNotes, shippingFee: clientShippingFee, shippingCourierCode, shippingProvider, shippingServiceType } = body;
+        const { quoteIds, shippingAddress, paymentMethod, customerNotes, shippingFee: clientShippingFee, shippingCourierCode, shippingProvider, shippingServiceType, dhlProductCode } = body;
 
         if (!quoteIds || quoteIds.length === 0) {
             return NextResponse.json({ error: "ไม่พบรายการชิ้นงานในตะกร้า" }, { status: 400 });
@@ -93,9 +93,10 @@ export async function POST(req: NextRequest) {
             },
             status: "pending_payment",
             customerNotes,
-            ishipCourierCode: shippingProvider !== "fedex" ? (shippingCourierCode || null) : null,
-            shippingProvider:   shippingProvider   || "iship",
-            fedexServiceType:   shippingServiceType || null,
+            shippingProvider:  shippingProvider || "iship",
+            ishipCourierCode:  shippingProvider === "iship"  ? (shippingCourierCode || null) : null,
+            fedexServiceType:  shippingProvider === "fedex"  ? (shippingServiceType || null) : null,
+            dhlProductCode:    shippingProvider === "dhl"    ? (dhlProductCode || shippingCourierCode?.replace(/^dhl[_:]/, "") || null) : null,
         });
 
         await Quote.updateMany(

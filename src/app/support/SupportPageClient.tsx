@@ -202,34 +202,41 @@ export default function SupportPageClient({ faqs, guides, settings }: Props) {
 
               {filteredGuides.length > 0 ? (
                 <div className="flex flex-col gap-4">
-                  {filteredGuides.map((guide) => (
-                    <div
-                      key={guide._id}
-                      className="bg-white rounded-lg p-4 flex gap-5 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-slate-100 group"
-                    >
-                      <div className="w-32 h-24 bg-slate-200 rounded-lg shrink-0 overflow-hidden relative">
-                        {guide.thumbnail ? (
-                          <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover" />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Box className="w-8 h-8 text-slate-400" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-slate-900 text-lg mb-1">{guide.title}</h3>
-                        {guide.description && (
-                          <p className="text-sm text-slate-500 mb-3">{guide.description}</p>
-                        )}
-                        <div className="inline-flex text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded">
-                          คู่มือการใช้งาน
+                  {filteredGuides.map((guide) => {
+                    const Wrapper = guide.linkUrl ? Link : "div";
+                    const wrapperProps = guide.linkUrl
+                      ? { href: guide.linkUrl, target: guide.linkUrl.startsWith("http") ? "_blank" : undefined, rel: guide.linkUrl.startsWith("http") ? "noopener noreferrer" : undefined }
+                      : {};
+                    return (
+                      <Wrapper
+                        key={guide._id}
+                        {...(wrapperProps as any)}
+                        className={`bg-white rounded-lg p-4 flex gap-5 items-center shadow-sm hover:shadow-md transition-shadow border border-slate-100 group ${guide.linkUrl ? "cursor-pointer" : ""}`}
+                      >
+                        <div className="w-32 h-24 bg-slate-200 rounded-lg shrink-0 overflow-hidden relative">
+                          {guide.thumbnail ? (
+                            <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover" />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Box className="w-8 h-8 text-slate-400" />
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center shrink-0 group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
-                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />
-                      </div>
-                    </div>
-                  ))}
+                        <div className="flex-1">
+                          <h3 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-blue-600 transition-colors">{guide.title}</h3>
+                          {guide.description && (
+                            <p className="text-sm text-slate-500 mb-3">{guide.description}</p>
+                          )}
+                          <div className="inline-flex text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded">
+                            คู่มือการใช้งาน
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center shrink-0 group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
+                          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />
+                        </div>
+                      </Wrapper>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-10 bg-white rounded-2xl border border-slate-100">
@@ -258,8 +265,7 @@ export default function SupportPageClient({ faqs, guides, settings }: Props) {
                 </p>
 
                 <div className="flex flex-col gap-3">
-                  {settings.chatEnabled !== false ? (
-                    settings.lineUrl ? (
+                  {settings.chatEnabled !== false && settings.lineUrl ? (
                       <a
                         href={settings.lineUrl}
                         target="_blank"
@@ -269,15 +275,6 @@ export default function SupportPageClient({ faqs, guides, settings }: Props) {
                         <MessageCircle className="w-5 h-5" />
                         ติดต่อผ่านแชท (LINE)
                       </a>
-                    ) : (
-                      <Link
-                        href="/support/chat"
-                        className="w-full bg-[#00B900] hover:bg-[#009900] text-white font-bold py-3.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                        ติดต่อผ่านแชท (LINE)
-                      </Link>
-                    )
                   ) : null}
 
                   <div className="grid grid-cols-2 gap-3">

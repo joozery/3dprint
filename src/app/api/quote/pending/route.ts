@@ -41,7 +41,22 @@ export async function GET(req: NextRequest) {
         query.$or = orConditions;
 
         const quotes = await Quote.find(query).sort({ createdAt: -1 }).lean();
-        
+
+        // Enrich materialName สำหรับ quotes ที่ยังไม่มีชื่อวัสดุ (quotes เก่า)
+        const missingNameQuotes = quotes.filter((q: any) => !q.materialName && q.material);
+        if (missingNameQuotes.length > 0) {
+            const MaterialConfig = require("@/models/MaterialConfig").default;
+            const matIds = [...new Set(missingNameQuotes.map((q: any) => q.material))];
+            const matDocs = await MaterialConfig.find({ _id: { $in: matIds } }).lean();
+            const matNameMap: Record<string, string> = {};
+            matDocs.forEach((m: any) => { matNameMap[m._id.toString()] = m.name || ""; });
+            quotes.forEach((q: any) => {
+                if (!q.materialName && q.material && matNameMap[q.material]) {
+                    q.materialName = matNameMap[q.material];
+                }
+            });
+        }
+
         return NextResponse.json({ success: true, quotes });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

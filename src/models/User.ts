@@ -44,6 +44,7 @@ export interface IUser extends Document {
     province?: string;
     zipCode?: string;
     isDefault?: boolean;
+    isInternational?: boolean;
   }[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -122,7 +123,8 @@ const UserSchema = new Schema(
       subDistrict: String,
       province: String,
       zipCode: String,
-      isDefault: { type: Boolean, default: false }
+      isDefault: { type: Boolean, default: false },
+      isInternational: { type: Boolean, default: false }
     }],
   },
   { timestamps: true }

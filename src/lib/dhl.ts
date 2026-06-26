@@ -63,11 +63,18 @@ export interface DHLRate {
     estimatedDays: string;
 }
 
+function nextBusinessDay(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    // skip weekend
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Sun → Mon
+    if (d.getDay() === 6) d.setDate(d.getDate() + 2); // Sat → Mon
+    const ymd = d.toISOString().split("T")[0];
+    return `${ymd}T10:00:00 GMT+07:00`;
+}
+
 export async function getDHLRates(params: DHLRateParams): Promise<DHLRate[]> {
-    const now = new Date();
-    const dateStr = now.toISOString().split("T")[0];
-    const timeStr = now.toTimeString().slice(0, 8);
-    const plannedDate = `${dateStr}T${timeStr}GMT+07:00`;
+    const plannedDate = nextBusinessDay();
 
     const raw = await dhlPost("rates", {
         customerDetails: {
@@ -133,33 +140,47 @@ export interface DHLCreateParams {
     remark?:      string;
 }
 
-export async function createDHLShipment(params: DHLCreateParams) {
-    const now = new Date();
-    const dateStr = now.toISOString().split("T")[0];
-    const timeStr = now.toTimeString().slice(0, 8);
-    const plannedDate = `${dateStr}T${timeStr}GMT+07:00`;
+function normalizePhone(raw: string): string {
+    const digits = raw.replace(/\D/g, "");
+    // ถ้าขึ้นต้นด้วย 0 (เบอร์ไทย local) → เติม 66 แทน 0
+    if (digits.startsWith("0") && digits.length <= 10) return "66" + digits.slice(1);
+    return digits;
+}
 
-    return dhlPost("shipments", {
+export async function createDHLShipment(params: DHLCreateParams) {
+    const plannedDate = nextBusinessDay();
+
+    const payload = {
         plannedShippingDateAndTime: plannedDate,
         pickup: { isRequested: false },
         productCode: params.productCode,
         accounts: [{ typeCode: "shipper", number: ACCOUNT }],
         customerDetails: {
             shipperDetails: {
-                postalCode:   DHL_SRC.zipcode,
-                cityName:     DHL_SRC.city,
-                countryCode:  DHL_SRC.countryCode,
-                name:         DHL_SRC.name,
-                phone:        DHL_SRC.phone.replace(/\D/g, ""),
-                addressLine1: DHL_SRC.address,
+                postalAddress: {
+                    postalCode:   DHL_SRC.zipcode,
+                    cityName:     DHL_SRC.city,
+                    countryCode:  DHL_SRC.countryCode,
+                    addressLine1: DHL_SRC.address,
+                },
+                contactInformation: {
+                    companyName: DHL_SRC.name,
+                    fullName:    DHL_SRC.name,
+                    phone:       normalizePhone(DHL_SRC.phone),
+                },
             },
             receiverDetails: {
-                postalCode:   params.dst_zipcode,
-                cityName:     params.dst_city,
-                countryCode:  params.dst_country,
-                name:         params.dst_name,
-                phone:        params.dst_phone.replace(/\D/g, ""),
-                addressLine1: params.dst_address,
+                postalAddress: {
+                    postalCode:   params.dst_zipcode || "",
+                    cityName:     params.dst_city    || "",
+                    countryCode:  params.dst_country,
+                    addressLine1: params.dst_address || params.dst_city || "-",
+                },
+                contactInformation: {
+                    companyName: params.dst_name || "Customer",
+                    fullName:    params.dst_name || "Customer",
+                    phone:       normalizePhone(params.dst_phone),
+                },
             },
         },
         content: {
@@ -189,6 +210,11 @@ export async function createDHLShipment(params: DHLCreateParams) {
                     exportReasonType: "permanent",
                     manufacturerCountry: "TH",
                 }],
+                invoice: {
+                    date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+                    number: params.item_name.slice(0, 35),
+                },
+                exportReason: "permanent",
             },
         },
         outputImageProperties: {
@@ -197,9 +223,12 @@ export async function createDHLShipment(params: DHLCreateParams) {
             imageOptions: [{ typeCode: "label", templateName: "ECOM26_84_001" }],
         },
         customerReferences: [
-            { value: params.remark || params.item_name, typeCode: "CU" },
+            { value: (params.remark || params.item_name || "").slice(0, 50), typeCode: "CU" },
         ],
-    });
+    };
+
+    console.log("[DHL createShipment payload]", JSON.stringify(payload, null, 2));
+    return dhlPost("shipments", payload);
 }
 
 export async function trackDHL(trackingNumber: string) {

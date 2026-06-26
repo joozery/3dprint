@@ -45,7 +45,16 @@ export default function CascadingAddressPicker({ value, onChange, className }: P
                 }
             })
             .finally(() => setLoadingP(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Re-sync province selection when value.province changes (e.g. when edit modal opens)
+    useEffect(() => {
+        if (!value.province || provinces.length === 0) return;
+        const p = provinces.find((x: any) => x.name_th === value.province);
+        if (p && p.id !== selectedProvId) setSelectedProvId(p.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value.province, provinces]);
 
     // Fetch districts when province changes
     useEffect(() => {
@@ -67,7 +76,16 @@ export default function CascadingAddressPicker({ value, onChange, className }: P
                 }
             })
             .finally(() => setLoadingD(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedProvId]);
+
+    // Re-sync district selection when value.amphure changes after districts load
+    useEffect(() => {
+        if (!value.amphure || districts.length === 0) return;
+        const dist = districts.find((x: any) => x.name_th === value.amphure);
+        if (dist && dist.id !== selectedDistId) setSelectedDistId(dist.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value.amphure, districts]);
 
     // Fetch sub-districts when district changes
     useEffect(() => {

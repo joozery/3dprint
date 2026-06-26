@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
 
         const addr = order.shippingAddress;
         if (!addr?.zipCode) {
-            return NextResponse.json({ error: "Order missing shipping address" }, { status: 400 });
+            return NextResponse.json({ error: "Order missing shipping address (zipCode)" }, { status: 400 });
+        }
+        if (addr.countryCode && addr.countryCode !== "TH") {
+            return NextResponse.json({ error: `Order has international address (${addr.countryCode}) — ใช้ DHL Express แทน iShip` }, { status: 400 });
         }
 
         // คำนวณ package dimensions จากทุก quote

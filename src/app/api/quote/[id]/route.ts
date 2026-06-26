@@ -114,6 +114,7 @@ export async function PATCH(
             {
                 technology:    technology    || quote.technology,
                 material:      material      || quote.material,
+                materialName:  material ? (matConfig?.name || "") : (quote.materialName || ""),
                 color:         color         || quote.color,
                 quantity:      finalQuantity,
                 deliverySpeed: deliverySpeed || quote.deliverySpeed,

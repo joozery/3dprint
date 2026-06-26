@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     UploadCloud,
@@ -96,28 +97,36 @@ export function HowItWorks() {
             title: t.howItWorks.step1Title,
             desc: t.howItWorks.step1Desc,
             icon: <UploadCloud className="h-6 w-6 text-blue-600" />,
-            color: "blue",
+            bgLight: "bg-blue-50",
+            bgDark: "bg-blue-600",
+            shadow: "shadow-blue-300",
             delay: "0"
         },
         {
             title: t.howItWorks.step2Title,
             desc: t.howItWorks.step2Desc,
             icon: <Settings2 className="h-6 w-6 text-indigo-600" />,
-            color: "indigo",
+            bgLight: "bg-indigo-50",
+            bgDark: "bg-indigo-600",
+            shadow: "shadow-indigo-300",
             delay: "100"
         },
         {
             title: t.howItWorks.step3Title,
             desc: t.howItWorks.step3Desc,
             icon: <Printer className="h-6 w-6 text-violet-600" />,
-            color: "violet",
+            bgLight: "bg-violet-50",
+            bgDark: "bg-violet-600",
+            shadow: "shadow-violet-300",
             delay: "200"
         },
         {
             title: t.howItWorks.step4Title,
             desc: t.howItWorks.step4Desc,
             icon: <Truck className="h-6 w-6 text-sky-600" />,
-            color: "sky",
+            bgLight: "bg-sky-50",
+            bgDark: "bg-sky-600",
+            shadow: "shadow-sky-300",
             delay: "300"
         }
     ];
@@ -157,13 +166,13 @@ export function HowItWorks() {
                                     {/* Icon Box */}
                                     <div className="relative mb-8">
                                         <div className="w-24 h-24 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col items-center justify-center transform transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:border-blue-100">
-                                            <div className={`w-14 h-14 rounded-2xl bg-${step.color}-50 flex items-center justify-center transition-transform duration-500 group-hover:scale-110`}>
+                                            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110", step.bgLight)}>
                                                 {step.icon}
                                             </div>
                                         </div>
                                         
                                         {/* Step Number Badge */}
-                                        <div className={`absolute -top-3 -right-3 w-8 h-8 rounded-full bg-${step.color}-600 text-white font-black flex items-center justify-center text-sm shadow-md shadow-${step.color}-300 border-2 border-white transform transition-transform duration-300 group-hover:scale-110`}>
+                                        <div className={cn("absolute -top-3 -right-3 w-8 h-8 rounded-full text-white font-black flex items-center justify-center text-sm shadow-md border-2 border-white transform transition-transform duration-300 group-hover:scale-110", step.bgDark, step.shadow)}>
                                             {idx + 1}
                                         </div>
                                     </div>

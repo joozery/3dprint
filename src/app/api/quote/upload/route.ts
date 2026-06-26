@@ -126,10 +126,12 @@ export async function POST(req: NextRequest) {
         const sellPerMinute = defaultMat?.pricing?.sellPerMinute || 0;
         const setupFee      = defaultMat?.pricing?.setupFee      || 0;
 
+        let selMatName = "";
         if (defaultMat) {
-            selTech  = defaultMat.technology;
-            selMat   = defaultMat._id.toString();
-            selColor = defaultMat.colors?.[0] || "ขาวด้าน (Matte White)";
+            selTech    = defaultMat.technology;
+            selMat     = defaultMat._id.toString();
+            selMatName = defaultMat.name || "";
+            selColor   = defaultMat.colors?.[0] || "ขาวด้าน (Matte White)";
         }
 
         const printTimeMinutes = parsePrintTimeToMinutes(analysis.printTime);
@@ -173,9 +175,10 @@ export async function POST(req: NextRequest) {
             fileUrl: r2FileUrl || null,
             cloudinaryId: r2Key || null,
             isStoredInCloud: !!r2FileUrl,
-            technology: selTech,
-            material: selMat,
-            color: selColor,
+            technology:   selTech,
+            material:     selMat,
+            materialName: selMatName,
+            color:        selColor,
             quantity: 1,
             volumeCm3: analysis.volumeCm3,
             filamentCm3: baseFilamentCm3,

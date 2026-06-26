@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
           cloudinaryId: q.cloudinaryId || "",
           technology: q.technology || "sla",
           material: q.material || "9600",
+          materialName: q.materialName || "",
           color: q.color || "Matte White",
           quantity: q.quantity || 1,
           volumeCm3: q.volumeCm3 || 0,

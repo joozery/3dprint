@@ -33,6 +33,10 @@ const QuoteSchema = new mongoose.Schema(
             required: true,
             default: "9600",
         },
+        materialName: {
+            type: String,
+            default: "",
+        },
         color: {
             type: String,
             default: "Matte White",

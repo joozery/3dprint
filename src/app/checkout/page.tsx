@@ -7,12 +7,66 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
     ArrowLeft, MapPin, Truck, CheckCircle2, ChevronRight,
-    Package, Building2, Phone, User, Info, Warehouse
+    Package, Building2, Phone, User, Info, Warehouse, Globe
 } from "lucide-react";
 import Link from "next/link";
 import ThaiAddressPicker from "@/components/ui/ThaiAddressPicker";
 
 import { useEffect } from "react";
+
+const COUNTRIES = [
+    { code: "TH", name: "Thailand (ไทย)" },
+    { code: "US", name: "United States" },
+    { code: "GB", name: "United Kingdom" },
+    { code: "JP", name: "Japan" },
+    { code: "CN", name: "China" },
+    { code: "SG", name: "Singapore" },
+    { code: "MY", name: "Malaysia" },
+    { code: "AU", name: "Australia" },
+    { code: "DE", name: "Germany" },
+    { code: "FR", name: "France" },
+    { code: "CA", name: "Canada" },
+    { code: "KR", name: "South Korea" },
+    { code: "HK", name: "Hong Kong" },
+    { code: "TW", name: "Taiwan" },
+    { code: "IN", name: "India" },
+    { code: "AE", name: "UAE" },
+    { code: "SA", name: "Saudi Arabia" },
+    { code: "NL", name: "Netherlands" },
+    { code: "IT", name: "Italy" },
+    { code: "ES", name: "Spain" },
+    { code: "CH", name: "Switzerland" },
+    { code: "SE", name: "Sweden" },
+    { code: "NO", name: "Norway" },
+    { code: "DK", name: "Denmark" },
+    { code: "FI", name: "Finland" },
+    { code: "NZ", name: "New Zealand" },
+    { code: "PH", name: "Philippines" },
+    { code: "ID", name: "Indonesia" },
+    { code: "VN", name: "Vietnam" },
+    { code: "PK", name: "Pakistan" },
+    { code: "BD", name: "Bangladesh" },
+    { code: "LK", name: "Sri Lanka" },
+    { code: "NP", name: "Nepal" },
+    { code: "MX", name: "Mexico" },
+    { code: "BR", name: "Brazil" },
+    { code: "AR", name: "Argentina" },
+    { code: "ZA", name: "South Africa" },
+    { code: "NG", name: "Nigeria" },
+    { code: "KE", name: "Kenya" },
+    { code: "EG", name: "Egypt" },
+    { code: "IL", name: "Israel" },
+    { code: "TR", name: "Turkey" },
+    { code: "RU", name: "Russia" },
+    { code: "PL", name: "Poland" },
+    { code: "BE", name: "Belgium" },
+    { code: "AT", name: "Austria" },
+    { code: "PT", name: "Portugal" },
+    { code: "GR", name: "Greece" },
+    { code: "IE", name: "Ireland" },
+    { code: "CZ", name: "Czech Republic" },
+    { code: "RO", name: "Romania" },
+];
 
 // ─── Step Indicator ──────────────────────────────────────────────────────────
 function StepHeader({ current }: { current: number }) {
@@ -55,29 +109,42 @@ function StepHeader({ current }: { current: number }) {
 // ─── Step 1: Shipping Address ────────────────────────────────────────────────
 function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
     const [type, setType] = useState<"individual" | "company">("individual");
+    const [destCountry, setDestCountry] = useState("TH");
     const [form, setForm] = useState({
         firstName: "", lastName: "", company: "",
         address: "", building: "",
-        phone: "", countryCode: "+66"
+        phone: "", phoneCode: "+66",
+        intlCity: "", intlState: "", intlPostal: "",
     });
     const [thaiAddr, setThaiAddr] = useState({
         province: "", amphure: "", district: "", zipcode: ""
     });
 
     const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+    const isIntl = destCountry !== "TH";
 
     const handleSave = () => {
-        if (!form.firstName || !form.lastName || !form.address || !thaiAddr.zipcode || !form.phone || !thaiAddr.province) {
-            alert("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (รวมรหัสไปรษณีย์)");
+        if (!form.firstName || !form.lastName || !form.address || !form.phone) {
+            alert("กรุณากรอกชื่อ ที่อยู่ และเบอร์โทรให้ครบถ้วน");
+            return;
+        }
+        if (!isIntl && (!thaiAddr.zipcode || !thaiAddr.province)) {
+            alert("กรุณากรอกรหัสไปรษณีย์และจังหวัด");
+            return;
+        }
+        if (isIntl && !form.intlCity) {
+            alert("กรุณากรอกชื่อเมือง (City)");
             return;
         }
         onNext({
             ...form,
             type,
-            state:       thaiAddr.province,
-            city:        thaiAddr.amphure,
-            subDistrict: thaiAddr.district,
-            postal:      thaiAddr.zipcode,
+            countryCode:  destCountry,
+            countryName:  COUNTRIES.find(c => c.code === destCountry)?.name || destCountry,
+            state:        isIntl ? form.intlState   : thaiAddr.province,
+            city:         isIntl ? form.intlCity    : thaiAddr.amphure,
+            subDistrict:  isIntl ? ""               : thaiAddr.district,
+            postal:       isIntl ? form.intlPostal  : thaiAddr.zipcode,
         });
     };
 
@@ -86,6 +153,28 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
             <div className="flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
                 <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-black">1</div>
                 <h2 className="text-lg font-bold text-slate-900 tracking-wide">ข้อมูลการจัดส่ง</h2>
+            </div>
+
+            {/* Destination Country */}
+            <div className="mb-5">
+                <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider flex items-center gap-1">
+                    <Globe className="w-3.5 h-3.5" /> ประเทศปลายทาง <span className="text-red-500">*</span>
+                </label>
+                <select
+                    value={destCountry}
+                    onChange={e => setDestCountry(e.target.value)}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 bg-white"
+                >
+                    {COUNTRIES.map(c => (
+                        <option key={c.code} value={c.code}>{c.name}</option>
+                    ))}
+                </select>
+                {isIntl && (
+                    <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                        <Info className="w-3.5 h-3.5 shrink-0" />
+                        ส่งไปต่างประเทศผ่าน DHL Express — ราคาค่าส่งจะคำนวณในขั้นตอนถัดไป
+                    </p>
+                )}
             </div>
 
             {/* Type Toggle */}
@@ -156,7 +245,7 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
             <div className="mb-4">
                 <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">ที่อยู่จัดส่ง <span className="text-red-500">*</span></label>
                 <input
-                    placeholder="เลขที่บ้าน / ถนน / ซอย"
+                    placeholder={isIntl ? "House/Street/Road" : "เลขที่บ้าน / ถนน / ซอย"}
                     value={form.address}
                     onChange={e => set("address", e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
@@ -165,30 +254,76 @@ function ShippingAddress({ onNext }: { onNext: (data: any) => void }) {
             <div className="mb-4">
                 <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">อาคาร / หมู่บ้าน</label>
                 <input
-                    placeholder="ชื่ออาคาร / หมู่บ้าน (ถ้ามี)"
+                    placeholder={isIntl ? "Building / Apartment (optional)" : "ชื่ออาคาร / หมู่บ้าน (ถ้ามี)"}
                     value={form.building}
                     onChange={e => set("building", e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
                 />
             </div>
 
-            {/* Thai Address Picker (zipcode → auto-fill) */}
-            <ThaiAddressPicker value={thaiAddr} onChange={setThaiAddr} className="mb-4" />
+            {/* Thai Address Picker or International Fields */}
+            {!isIntl ? (
+                <ThaiAddressPicker value={thaiAddr} onChange={setThaiAddr} className="mb-4" />
+            ) : (
+                <div className="mb-4 grid grid-cols-2 gap-4">
+                    <div className="col-span-2 md:col-span-1">
+                        <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">
+                            City <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            placeholder="City"
+                            value={form.intlCity}
+                            onChange={e => set("intlCity", e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
+                        />
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                        <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">State / Region</label>
+                        <input
+                            placeholder="State / Region (optional)"
+                            value={form.intlState}
+                            onChange={e => set("intlState", e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
+                        />
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                        <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">Postal Code</label>
+                        <input
+                            placeholder="Postal Code (leave blank if none)"
+                            value={form.intlPostal}
+                            onChange={e => set("intlPostal", e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="mb-6">
                 <label className="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">เบอร์โทรศัพท์ <span className="text-red-500">*</span></label>
                 <div className="flex gap-2">
                     <select
-                        value={form.countryCode}
-                        onChange={e => set("countryCode", e.target.value)}
-                        className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-slate-900 w-20 shrink-0 bg-white"
+                        value={form.phoneCode}
+                        onChange={e => set("phoneCode", e.target.value)}
+                        className="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-slate-900 w-24 shrink-0 bg-white"
                     >
-                        <option>+66</option>
-                        <option>+1</option>
-                        <option>+81</option>
+                        <option value="+66">🇹🇭 +66</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+81">🇯🇵 +81</option>
+                        <option value="+86">🇨🇳 +86</option>
+                        <option value="+65">🇸🇬 +65</option>
+                        <option value="+60">🇲🇾 +60</option>
+                        <option value="+61">🇦🇺 +61</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+82">🇰🇷 +82</option>
+                        <option value="+852">🇭🇰 +852</option>
+                        <option value="+886">🇹🇼 +886</option>
+                        <option value="+91">🇮🇳 +91</option>
+                        <option value="+971">🇦🇪 +971</option>
                     </select>
                     <input
-                        placeholder="0xx-xxx-xxxx"
+                        placeholder="Phone number"
                         value={form.phone}
                         onChange={e => set("phone", e.target.value)}
                         className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-slate-900 transition-colors"
@@ -226,9 +361,9 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
         desc: "ถ.ราชพฤกษ์ บางแวก ภาษีเจริญ กทม. (จันทร์–ศุกร์ 09:00–18:00)",
     };
 
-    useEffect(() => {
-        if (!address?.postal) { setLoading(false); return; }
+    const isIntl = address?.countryCode && address.countryCode !== "TH";
 
+    useEffect(() => {
         const totalWeightG = quotes.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0);
         // dimensions stored in mm → convert to cm
         const maxW = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
@@ -241,44 +376,77 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
             height: Math.ceil(maxH),
         };
 
-        const ishipReq = fetch("/api/shipping/rates", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                dst_zipcode:  address.postal,
-                dst_province: address.state       || "",
-                dst_amphure:  address.city        || "",
-                dst_district: address.subDistrict || "",
-                weightKg, ...dims,
-            }),
-        }).then(r => r.json()).catch(() => ({ rates: [] }));
+        if (isIntl) {
+            // International: DHL Express only
+            fetch("/api/dhl/rates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    dst_country: address.countryCode,
+                    dst_zipcode: address.postal   || "",
+                    dst_city:    address.city     || "",
+                    weightKg, ...dims,
+                }),
+            })
+                .then(r => r.json())
+                .then(data => {
+                    const dhlRates = (data.rates || []).map((r: any) => ({
+                        courier_code:  `dhl:${r.productCode}`,
+                        courier_name:  `DHL Express — ${r.productName}`,
+                        logo:          null,
+                        isDHL:         true,
+                        total_price:   r.totalPrice,
+                        estimate_days: r.estimatedDays !== "-" ? r.estimatedDays : null,
+                        provider:      "dhl",
+                        productCode:   r.productCode,
+                    }));
+                    setRates(dhlRates);
+                })
+                .catch(() => setRates([]))
+                .finally(() => setLoading(false));
+        } else {
+            // Domestic TH: iShip + FedEx
+            if (!address?.postal) { setLoading(false); return; }
 
-        const fedexReq = fetch("/api/fedex/rates", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                dst_zipcode:  address.postal,
-                dst_province: address.state || "",
-                weightKg, ...dims,
-            }),
-        }).then(r => r.json()).catch(() => ({ rates: [] }));
+            const ishipReq = fetch("/api/shipping/rates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    dst_zipcode:  address.postal,
+                    dst_province: address.state       || "",
+                    dst_amphure:  address.city        || "",
+                    dst_district: address.subDistrict || "",
+                    weightKg, ...dims,
+                }),
+            }).then(r => r.json()).catch(() => ({ rates: [] }));
 
-        Promise.all([ishipReq, fedexReq]).then(([iship, fedex]) => {
-            const ishipRates = (iship.rates || []).map((r: any) => ({ ...r, provider: "iship" }));
-            const fedexRates = (fedex.rates || []).map((r: any) => ({
-                courier_code:  `fedex:${r.serviceType}`,
-                courier_name:  `FedEx ${r.serviceName}`,
-                logo:          "/shipping/fedex.png",
-                total_price:   r.totalPrice,
-                estimate_days: r.estimatedDays,
-                provider:      "fedex",
-                service_type:  r.serviceType,
-            }));
-            setRates([...ishipRates, ...fedexRates]);
-        }).finally(() => setLoading(false));
+            const fedexReq = fetch("/api/fedex/rates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    dst_zipcode:  address.postal,
+                    dst_province: address.state || "",
+                    weightKg, ...dims,
+                }),
+            }).then(r => r.json()).catch(() => ({ rates: [] }));
+
+            Promise.all([ishipReq, fedexReq]).then(([iship, fedex]) => {
+                const ishipRates = (iship.rates || []).map((r: any) => ({ ...r, provider: "iship" }));
+                const fedexRates = (fedex.rates || []).map((r: any) => ({
+                    courier_code:  `fedex:${r.serviceType}`,
+                    courier_name:  `FedEx ${r.serviceName}`,
+                    logo:          "/shipping/fedex.png",
+                    total_price:   r.totalPrice,
+                    estimate_days: r.estimatedDays,
+                    provider:      "fedex",
+                    service_type:  r.serviceType,
+                }));
+                setRates([...ishipRates, ...fedexRates]);
+            }).finally(() => setLoading(false));
+        }
     }, [address, quotes]);
 
-    const allMethods = [selfPickup, ...rates];
+    const allMethods = isIntl ? rates : [selfPickup, ...rates];
     const selectedMethod = allMethods.find(m => m.courier_code === selected);
 
     return (
@@ -289,10 +457,17 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                     <h2 className="text-lg font-bold text-slate-900 tracking-wide">ช่องทางการจัดส่ง</h2>
                 </div>
 
+                {isIntl && (
+                    <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-xs text-blue-800">
+                        <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-500" />
+                        <span>สำหรับการจัดส่งต่างประเทศ ใช้ <strong>DHL Express</strong> — ราคาจะคำนวณจากน้ำหนักและขนาดชิ้นงานจริง</span>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="flex items-center gap-3 py-8 justify-center text-slate-400">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-400" />
-                        <span className="text-sm">กำลังโหลดราคาค่าส่ง...</span>
+                        <span className="text-sm">{isIntl ? "กำลังคำนวณราคา DHL Express..." : "กำลังโหลดราคาค่าส่ง..."}</span>
                     </div>
                 ) : (
                     <div className="space-y-3">
@@ -319,6 +494,10 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                                                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                                             />
                                         </div>
+                                    ) : m.isDHL ? (
+                                        <div className="w-12 h-10 rounded-lg bg-yellow-400 flex items-center justify-center border border-yellow-300">
+                                            <span className="text-red-700 font-black text-xs tracking-tight">DHL</span>
+                                        </div>
                                     ) : (
                                         <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200">
                                             <Warehouse className="w-5 h-5 text-slate-600" />
@@ -344,7 +523,17 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                             </button>
                         ))}
 
-                        {!loading && rates.length === 0 && (
+                        {!loading && rates.length === 0 && isIntl && (
+                            <div className="border-2 border-dashed border-yellow-200 bg-yellow-50 rounded-xl p-5 text-center">
+                                <div className="w-10 h-8 rounded-lg bg-yellow-400 flex items-center justify-center mx-auto mb-3">
+                                    <span className="text-red-700 font-black text-xs">DHL</span>
+                                </div>
+                                <p className="text-sm font-bold text-slate-700 mb-1">DHL Express</p>
+                                <p className="text-xs text-slate-500 mb-3">ระบบกำลังเชื่อมต่อกับ DHL — กรุณาติดต่อเราเพื่อรับราคาค่าส่งต่างประเทศ</p>
+                                <a href="/support/contact" className="text-xs font-bold text-blue-600 underline">ติดต่อทีมงาน</a>
+                            </div>
+                        )}
+                        {!loading && rates.length === 0 && !isIntl && (
                             <p className="text-sm text-slate-400 text-center py-4">ไม่พบข้อมูลราคาจาก iShip — กรุณากรอกที่อยู่ให้ครบถ้วน</p>
                         )}
                     </div>
@@ -358,10 +547,13 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                 <Button
                     disabled={!selected}
                     onClick={() => onNext({
-                        method: selected,
-                        courier_code: selectedMethod?.courier_code || "",
-                        courier_name: selectedMethod?.courier_name || "",
-                        price: selectedMethod?.total_price ?? 0,
+                        method:        selected,
+                        courier_code:  selectedMethod?.courier_code || "",
+                        courier_name:  selectedMethod?.courier_name || "",
+                        price:         selectedMethod?.total_price ?? 0,
+                        provider:      selectedMethod?.provider     || "iship",
+                        service_type:  selectedMethod?.service_type || "",
+                        productCode:   selectedMethod?.productCode  || "",
                     })}
                     className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 font-bold shadow-md shadow-slate-200 flex-1 h-11 disabled:opacity-50"
                 >
@@ -400,17 +592,20 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
                     quoteIds,
                     shippingAddress: {
                         fullName:    `${address.firstName} ${address.lastName}`,
-                        phone:       `${address.countryCode} ${address.phone}`,
+                        phone:       `${address.phoneCode} ${address.phone}`,
                         address:     `${address.address} ${address.building || ""}`.trim(),
                         district:    address.city        || "",
                         subDistrict: address.subDistrict || "",
                         province:    address.state       || "",
                         zipCode:     address.postal      || "",
+                        city:        address.city        || "",
+                        countryCode: address.countryCode || "TH",
                     },
                     shippingFee:         shipping?.price ?? 0,
                     shippingCourierCode: shipping?.courier_code || "",
                     shippingProvider:    shipping?.provider || "iship",
                     shippingServiceType: shipping?.service_type || "",
+                    dhlProductCode:      shipping?.productCode || "",
                     paymentMethod: "paysolutions",
                     customerNotes: ""
                 })
@@ -478,8 +673,9 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
                     </div>
                     <p className="text-sm font-bold text-slate-900">{address.firstName} {address.lastName}</p>
                     <p className="text-sm text-slate-600 mt-1">{address.address}{address.building ? `, ${address.building}` : ""}</p>
-                    <p className="text-sm text-slate-600">{address.city}, {address.state} {address.postal}</p>
-                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-1"><Phone className="w-3 h-3" /> {address.countryCode} {address.phone}</p>
+                    <p className="text-sm text-slate-600">{address.city}{address.state ? `, ${address.state}` : ""} {address.postal}</p>
+                    <p className="text-sm text-slate-600 flex items-center gap-1"><Globe className="w-3 h-3" /> {address.countryName || address.countryCode}</p>
+                    <p className="text-sm text-slate-500 mt-1 flex items-center gap-1"><Phone className="w-3 h-3" /> {address.phoneCode} {address.phone}</p>
                 </div>
 
                 {/* Shipping Summary */}
@@ -530,7 +726,7 @@ function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
             {/* Item list */}
             <div className="space-y-2 mb-4">
                 {quotes.map((q, i) => {
-                    const name     = q.originalFileName || q.fileName || `ชิ้นงาน ${i + 1}`;
+                    const name     = q.originalName || q.fileName || `ชิ้นงาน ${i + 1}`;
                     const material = q.material || "";
                     const price    = q.priceDetail?.totalPrice || 0;
                     return (
@@ -615,7 +811,7 @@ export default function CheckoutPage() {
                     if (dataProfile.user?.shippingAddresses?.length > 0) {
                         const addrs = dataProfile.user.shippingAddresses;
                         if (addressId) {
-                            targetAddress = addrs.find((a: any) => a._id === addressId);
+                            targetAddress = addrs.find((a: any) => String(a._id) === addressId);
                         }
                         if (!targetAddress) {
                             targetAddress = addrs.find((a: any) => a.isDefault) || addrs[0];
@@ -623,19 +819,37 @@ export default function CheckoutPage() {
                     }
 
                     if (targetAddress) {
+                        const isIntl = !!targetAddress.isInternational;
+                        // province = country name for intl addresses
+                        const countryNameToCode: Record<string, string> = {
+                            "United States":"US","United Kingdom":"GB","Japan":"JP","China":"CN",
+                            "Singapore":"SG","Malaysia":"MY","Australia":"AU","Germany":"DE",
+                            "France":"FR","Canada":"CA","South Korea":"KR","Hong Kong":"HK",
+                            "Taiwan":"TW","India":"IN","United Arab Emirates":"AE","Netherlands":"NL",
+                            "Italy":"IT","Spain":"ES","Switzerland":"CH","Indonesia":"ID",
+                            "Vietnam":"VN","Philippines":"PH","Thailand":"TH",
+                        };
+                        const countryCode = isIntl
+                            ? (countryNameToCode[targetAddress.province] || targetAddress.province || "US")
+                            : "TH";
+
                         setAddress({
                             firstName:   targetAddress.receiverName || targetAddress.fullName || targetAddress.label || "Customer",
                             lastName:    "",
                             company:     "",
-                            country:     "Thailand",
-                            state:       targetAddress.province    || "",
-                            city:        targetAddress.district    || "",
-                            subDistrict: targetAddress.subDistrict || "",
-                            address:     targetAddress.address     || "",
+                            countryCode,
+                            countryName: isIntl ? (targetAddress.province || countryCode) : "Thailand (ไทย)",
+                            isInternational: isIntl,
+                            // domestic TH fields
+                            state:       isIntl ? (targetAddress.district   || "") : (targetAddress.province    || ""),
+                            city:        isIntl ? (targetAddress.subDistrict|| "") : (targetAddress.district    || ""),
+                            subDistrict: isIntl ? ""                               : (targetAddress.subDistrict || ""),
+                            // intl city stored in subDistrict field
+                            address:     targetAddress.address  || "",
                             building:    "",
                             postal:      targetAddress.zipCode || targetAddress.postalCode || "",
                             phone:       targetAddress.phone   || "0000000000",
-                            countryCode: "+66",
+                            phoneCode:   isIntl ? "+" : "+66",
                         });
                         // ไปที่ step 2 เพื่อเลือกขนส่ง
                         setStep(2);

@@ -57,66 +57,20 @@ function CountryCombobox({ value, onChange, inputClass }: {
   onChange: (v: string) => void;
   inputClass: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  const filtered = query.trim()
-    ? COUNTRIES.filter(c => c.toLowerCase().includes(query.toLowerCase()))
-    : COUNTRIES;
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const handleSelect = (country: string) => {
-    onChange(country);
-    setQuery("");
-    setOpen(false);
-  };
-
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
       <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-      <input
-        type="text"
-        className={cn(inputClass, "pl-9 pr-8 cursor-pointer")}
-        placeholder="Search country..."
-        value={open ? query : value}
-        onFocus={() => { setOpen(true); setQuery(""); }}
-        onChange={e => { setQuery(e.target.value); setOpen(true); }}
-      />
-      {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100">
-            <Search size={13} className="text-slate-400 shrink-0" />
-            <span className="text-[11px] text-slate-400 font-bold">
-              {filtered.length} countries
-            </span>
-          </div>
-          <ul className="max-h-52 overflow-y-auto">
-            {filtered.length === 0 ? (
-              <li className="px-4 py-3 text-[13px] text-slate-400 text-center">No results</li>
-            ) : filtered.map(c => (
-              <li
-                key={c}
-                onMouseDown={() => handleSelect(c)}
-                className={cn(
-                  "px-4 py-2.5 text-[13px] font-bold cursor-pointer transition-colors",
-                  c === value ? "bg-blue-50 text-blue-600" : "text-slate-700 hover:bg-slate-50"
-                )}
-              >
-                {c}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <select
+        className={cn(inputClass, "pl-9 pr-8 cursor-pointer appearance-none bg-white")}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      >
+        <option value="" disabled>Select country...</option>
+        {COUNTRIES.map(c => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -338,9 +292,9 @@ export default function UnifiedProfileForm() {
     );
   }
 
-  const inputClass = "w-full h-11 px-4 rounded-xl border border-slate-200 text-[14px] font-bold text-slate-700 placeholder:text-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none transition-all bg-white";
-  const labelClass = "text-slate-400 text-[11px] font-black uppercase tracking-widest mb-2 block";
-  const bentoClass = "bg-white border border-slate-200 rounded-[24px] p-8 shadow-sm mb-6";
+  const inputClass = "w-full h-11 px-4 rounded-lg border border-slate-200 text-[14px] font-medium text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none transition-all bg-white";
+  const labelClass = "text-slate-600 text-sm font-semibold mb-2 block";
+  const bentoClass = "bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-sm mb-6";
 
   return (
     <form onSubmit={handleSubmit} className="max-w-[1000px] mx-auto w-full pb-20">
@@ -354,7 +308,7 @@ export default function UnifiedProfileForm() {
         <button 
           type="submit"
           disabled={loading}
-          className="px-8 py-3 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-[0.98] flex items-center gap-2"
+          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm active:scale-[0.98] flex items-center gap-2"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> {p.save}</>}
         </button>
@@ -372,7 +326,7 @@ export default function UnifiedProfileForm() {
         <h3 className={labelClass}>{p.accountType}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className={cn(
-            "relative flex items-center gap-4 p-5 rounded-[20px] border-2 cursor-pointer transition-all",
+            "relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all",
             form.billingType === 'individual' ? "bg-slate-50 border-blue-600" : "bg-white border-slate-100 hover:border-slate-200"
           )}>
             <input type="radio" className="hidden" checked={form.billingType === 'individual'} onChange={() => set("billingType", "individual")} />
@@ -385,7 +339,7 @@ export default function UnifiedProfileForm() {
             </div>
           </label>
           <label className={cn(
-            "relative flex items-center gap-4 p-5 rounded-[20px] border-2 cursor-pointer transition-all",
+            "relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all",
             form.billingType === 'company' ? "bg-slate-50 border-blue-600" : "bg-white border-slate-100 hover:border-slate-200"
           )}>
             <input type="radio" className="hidden" checked={form.billingType === 'company'} onChange={() => set("billingType", "company")} />
@@ -423,7 +377,7 @@ export default function UnifiedProfileForm() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <button type="button" className="px-6 h-11 bg-white border border-slate-200 rounded-xl font-black text-[13px] text-slate-600 hover:bg-slate-50 transition-all">{p.changePassword}</button>
+            <button type="button" className="px-6 h-11 bg-white border border-slate-200 rounded-lg font-semibold text-[13px] text-slate-600 hover:bg-slate-50 transition-all">{p.changePassword}</button>
           </div>
         </div>
       </div>
@@ -444,7 +398,7 @@ export default function UnifiedProfileForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" checked={form.isVatRegistered} onChange={e => set("isVatRegistered", e.target.checked)} className="sr-only peer" />
+                <input type="checkbox" checked={form.isVatRegistered || false} onChange={e => set("isVatRegistered", e.target.checked)} className="sr-only peer" />
                 <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
               <div className="text-[12px] font-bold text-slate-600">{p.vatRegistered}</div>
@@ -468,8 +422,8 @@ export default function UnifiedProfileForm() {
                   type="button"
                   onClick={() => set("companySize", size)}
                   className={cn(
-                    "py-3 rounded-xl font-black text-[12px] transition-all border",
-                    form.companySize === size ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100" : "bg-white text-slate-400 border-slate-100 hover:border-slate-200"
+                    "py-2.5 rounded-lg font-semibold text-[13px] transition-all border",
+                    form.companySize === size ? "bg-blue-50 text-blue-700 border-blue-600 shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                   )}
                 >
                   {size}
@@ -490,7 +444,7 @@ export default function UnifiedProfileForm() {
             <button 
                 type="button"
                 onClick={() => { setEditingAddress(null); setShowAddressModal(true); }}
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-black text-xs hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
+                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm"
             >
                 <Plus size={14} /> {p.addAddress}
             </button>
@@ -501,8 +455,8 @@ export default function UnifiedProfileForm() {
                 <div 
                     key={addr._id || idx}
                     className={cn(
-                        "relative bg-white border-2 rounded-[24px] p-6 shadow-sm transition-all",
-                        addr.isDefault ? "border-blue-600 ring-4 ring-blue-50/50" : "border-slate-100 hover:border-slate-200"
+                        "relative bg-white border rounded-xl p-6 shadow-sm transition-all",
+                        addr.isDefault ? "border-blue-600 ring-1 ring-blue-600" : "border-slate-200 hover:border-slate-300"
                     )}
                 >
                     <div className="flex justify-between items-start mb-4">
@@ -557,8 +511,8 @@ export default function UnifiedProfileForm() {
                     </div>
                 </div>
             )) : (
-                <div className="md:col-span-2 py-16 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center justify-center text-center">
-                    <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-300 mb-4">
+                <div className="md:col-span-2 py-16 bg-slate-50 border border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400 mb-4 border border-slate-100">
                         <MapPin size={32} />
                     </div>
                     <p className="text-[15px] font-bold text-slate-800">{p.noAddresses}</p>
@@ -570,8 +524,8 @@ export default function UnifiedProfileForm() {
 
       {/* Simplified Address Modal / Form Overlay */}
       {showAddressModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-[24px] w-full max-w-[480px] shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl w-full max-w-[500px] shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 {/* Modal Header */}
                 <div className="flex justify-between items-center px-7 pt-7 pb-4 shrink-0">
                     <div>
@@ -593,7 +547,7 @@ export default function UnifiedProfileForm() {
                       <input 
                         type="checkbox" 
                         id="isInternational"
-                        checked={addressForm.isInternational} 
+                        checked={addressForm.isInternational || false} 
                         onChange={e => setAddressForm({...addressForm, isInternational: e.target.checked})} 
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                       />
@@ -673,7 +627,7 @@ export default function UnifiedProfileForm() {
                         type="button"
                         onClick={handleSaveAddress}
                         disabled={savingAddress}
-                        className="flex-[2] h-11 px-8 bg-blue-600 text-white rounded-xl font-black text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2 disabled:opacity-70"
+                        className="flex-[2] h-11 px-8 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
                       >
                         {savingAddress
                           ? <><Loader2 size={14} className="animate-spin" /> {p.savingAddress}</>

@@ -40,6 +40,7 @@ const menuItems = [
   { label: "คลังโมเดลฟรี", icon: Layers, href: "/admin/free-models", badge: null },
   { label: "ระบบคูปอง", icon: Ticket, href: "/admin/coupons", badge: null },
   { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
+  { label: "หน้า Materials (Content)", icon: Layers, href: "/admin/material-pages", badge: null },
   { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
   { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
   { label: "จัดการหน้าบริการ", icon: FileText, href: "/admin/services-content", badge: null },

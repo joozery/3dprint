@@ -52,12 +52,6 @@ export default async function FAQPage() {
             <p className="text-blue-700 text-sm mb-6">ทีมงานพร้อมตอบทุกคำถามของคุณ</p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
-                href="/support/chat"
-                className="inline-flex items-center gap-2 bg-blue-600 text-white font-bold px-6 py-2.5 rounded-full hover:bg-blue-700 transition-colors text-sm"
-              >
-                Live Chat <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
                 href="/support/contact"
                 className="inline-flex items-center gap-2 border border-blue-300 text-blue-700 font-bold px-6 py-2.5 rounded-full hover:bg-blue-100 transition-colors text-sm"
               >

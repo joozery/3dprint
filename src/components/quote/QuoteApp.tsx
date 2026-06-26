@@ -3,6 +3,32 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+
+const COUNTRY_CODES: Record<string, string> = {
+    "Afghanistan":"AF","Albania":"AL","Algeria":"DZ","Argentina":"AR","Armenia":"AM",
+    "Australia":"AU","Austria":"AT","Azerbaijan":"AZ","Bahrain":"BH","Bangladesh":"BD",
+    "Belgium":"BE","Brazil":"BR","Bulgaria":"BG","Cambodia":"KH","Canada":"CA",
+    "Chile":"CL","China":"CN","Colombia":"CO","Croatia":"HR","Cyprus":"CY",
+    "Czechia":"CZ","Denmark":"DK","Egypt":"EG","Estonia":"EE","Ethiopia":"ET",
+    "Finland":"FI","France":"FR","Georgia":"GE","Germany":"DE","Ghana":"GH",
+    "Greece":"GR","Hong Kong":"HK","Hungary":"HU","Iceland":"IS","India":"IN",
+    "Indonesia":"ID","Iran":"IR","Iraq":"IQ","Ireland":"IE","Israel":"IL",
+    "Italy":"IT","Jamaica":"JM","Japan":"JP","Jordan":"JO","Kazakhstan":"KZ",
+    "Kenya":"KE","Kuwait":"KW","Laos":"LA","Latvia":"LV","Lebanon":"LB",
+    "Lithuania":"LT","Luxembourg":"LU","Malaysia":"MY","Maldives":"MV",
+    "Malta":"MT","Mexico":"MX","Moldova":"MD","Mongolia":"MN","Morocco":"MA",
+    "Myanmar":"MM","Nepal":"NP","Netherlands":"NL","New Zealand":"NZ",
+    "Nigeria":"NG","North Korea":"KP","Norway":"NO","Oman":"OM","Pakistan":"PK",
+    "Palestine":"PS","Peru":"PE","Philippines":"PH","Poland":"PL","Portugal":"PT",
+    "Qatar":"QA","Romania":"RO","Russia":"RU","Saudi Arabia":"SA","Serbia":"RS",
+    "Singapore":"SG","Slovakia":"SK","Slovenia":"SI","Somalia":"SO",
+    "South Africa":"ZA","South Korea":"KR","Spain":"ES","Sri Lanka":"LK",
+    "Sweden":"SE","Switzerland":"CH","Syria":"SY","Taiwan":"TW","Thailand":"TH",
+    "Tunisia":"TN","Turkey":"TR","Uganda":"UG","Ukraine":"UA",
+    "United Arab Emirates":"AE","United Kingdom":"GB","United States":"US",
+    "Uruguay":"UY","Uzbekistan":"UZ","Venezuela":"VE","Vietnam":"VN",
+    "Yemen":"YE","Zambia":"ZM","Zimbabwe":"ZW",
+};
 import { Upload, Info, Trash2, ChevronDown, CheckCircle2, AlertCircle, Layers, Plus, Lock, History, User, ShoppingCart, ChevronRight, RotateCcw, ZoomIn, ZoomOut, Move, Check, Truck, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -92,8 +118,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         const addrs = profileData.user.shippingAddresses;
                         setUserAddresses(addrs);
                         const def = addrs.find((a: any) => a.isDefault);
-                        if (def) setSelectedAddressId(def._id);
-                        else if (addrs.length > 0) setSelectedAddressId(addrs[0]._id);
+                        if (def) setSelectedAddressId(String(def._id));
+                        else if (addrs.length > 0) setSelectedAddressId(String(addrs[0]._id));
                     }
                 }
             } catch (err) {
@@ -105,32 +131,43 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
     // Fetch real shipping rates when address or quotes change
     useEffect(() => {
-        const addr = userAddresses.find(a => a._id === selectedAddressId);
-        const zipCode = addr?.zipCode || "";
+        const addr = userAddresses.find(a => String(a._id) === String(selectedAddressId));
         const sel = quotes.filter(q => selectedIds.has(q._id));
-        if (!zipCode || zipCode.length !== 5 || sel.length === 0) {
-            setShippingRates([]);
-            return;
-        }
+        if (!addr || sel.length === 0) { setShippingRates([]); return; }
+
+        const isIntl = !!addr.isInternational;
+        const zipCode = addr.zipCode || "";
+
+        if (!isIntl && zipCode.length !== 5) { setShippingRates([]); return; }
+        if (isIntl && !addr.subDistrict?.trim()) { setShippingRates([]); return; }
+
         const weight = sel.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0);
         const maxW = Math.max(...sel.map((q: any) => (q.dimensions?.x || 10) / 10));
         const maxL = Math.max(...sel.map((q: any) => (q.dimensions?.y || 10) / 10));
         const maxH = sel.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
+
+        const body = isIntl ? {
+            countryCode: COUNTRY_CODES[addr.province] || "US",
+            dst_city:    addr.subDistrict,
+            dst_zipcode: zipCode,
+            weightKg: Math.max(weight / 1000, 0.1),
+            width: Math.ceil(maxW), length: Math.ceil(maxL), height: Math.ceil(maxH),
+        } : {
+            countryCode:  "TH",
+            dst_zipcode:  zipCode,
+            dst_province: addr.province || "",
+            dst_amphure:  addr.district || "",
+            dst_district: addr.subDistrict || "",
+            weightKg: Math.max(weight / 1000, 0.1),
+            width: Math.ceil(maxW), length: Math.ceil(maxL), height: Math.ceil(maxH),
+        };
+
         setLoadingShippingRates(true);
         setShippingRates([]);
         fetch("/api/shipping/rates", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                dst_zipcode:  zipCode,
-                dst_province: addr?.province || "",
-                dst_amphure:  addr?.district || "",
-                dst_district: addr?.subDistrict || "",
-                weightKg:  Math.max(weight / 1000, 0.1),
-                width:     Math.ceil(maxW),
-                length:    Math.ceil(maxL),
-                height:    Math.ceil(maxH),
-            }),
+            body: JSON.stringify(body),
         })
             .then(r => r.json())
             .then(d => {
@@ -317,6 +354,10 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                     };
                     updated.filamentCm3 = filamentCm3;
                     if (updates.infill !== undefined) updated.infill = finalInfill;
+                    // อัพเดต materialName ทุกครั้งที่มีการเปลี่ยนวัสดุ
+                    if (updates.material || updates.technology) {
+                        updated.materialName = mat.name || "";
+                    }
                 }
             }
             
@@ -364,7 +405,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             return;
         }
         const ids = selected.map(q => q._id).join(',');
-        const url = `/checkout?addressId=${selectedAddressId || ""}&ids=${ids}&courier=${selectedCourierCode}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`;
+        const addrId = selectedAddressId && selectedAddressId !== "undefined" ? selectedAddressId : "";
+        const url = `/checkout?addressId=${addrId}&ids=${ids}&courier=${selectedCourierCode}${appliedCoupon ? `&coupon=${appliedCoupon.code}` : ''}`;
         router.push(url);
     };
 
@@ -484,14 +526,13 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
     const selectedQuotes = quotes.filter(q => selectedIds.has(q._id));
     const totalPrice = selectedQuotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
-    const vat = totalPrice * 0.07;
-
-    const selectedRate = shippingRates.find(r => r.courier_code === selectedCourierCode) || shippingRates[0] || null;
-    const deliveryCost = selectedRate ? selectedRate.total_price : 0;
-
     const SETUP_FEE = 150;
     const COUPON_DISCOUNT = appliedCoupon ? appliedCoupon.discountValue : 0;
-    const finalPrice = Math.max(0, totalPrice + SETUP_FEE - COUPON_DISCOUNT + vat + deliveryCost);
+    const taxableAmount = totalPrice + SETUP_FEE - COUPON_DISCOUNT;
+    const vat = taxableAmount * 0.07;
+    const selectedRate = shippingRates.find(r => r.courier_code === selectedCourierCode) || shippingRates[0] || null;
+    const deliveryCost = selectedRate ? selectedRate.total_price : 0;
+    const finalPrice = Math.max(0, taxableAmount + vat + deliveryCost);
 
     const brandPrimary = "#2563eb";
     const brandPrimaryDeep = "#1d4ed8";
@@ -1006,6 +1047,12 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                             <div className="text-[11px] font-black truncate text-slate-800">{q.originalName}</div>
                                             <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter leading-none">
                                                 {q.technology} · {q.materialName || 'Nylon PA12'} · {q.color} · ×{q.quantity || 1}
+                                                {(q.technology || '').toLowerCase() === 'fdm' && q.infill != null && (
+                                                    <> · Infill {q.infill}%</>
+                                                )}
+                                                {q.finish && q.finish !== 'standard' && (
+                                                    <> · {q.finish}</>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="text-[12px] font-mono font-black text-slate-800">฿{q.priceDetail?.totalPrice?.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
@@ -1095,11 +1142,11 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                                 <div className="fixed inset-0 z-[60]" onClick={() => setShowAddressDropdown(false)}></div>
                                                 <div className="absolute bottom-full left-0 right-0 mb-2 z-[70] bg-white border border-slate-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
                                                     <div className="p-2 space-y-1 max-h-[250px] overflow-y-auto no-scrollbar">
-                                                        {userAddresses.map((addr) => (
+                                                        {userAddresses.map((addr, idx) => (
                                                             <button
-                                                                key={addr._id}
+                                                                key={addr._id ? String(addr._id) : idx}
                                                                 onClick={() => {
-                                                                    setSelectedAddressId(addr._id);
+                                                                    setSelectedAddressId(String(addr._id));
                                                                     setShowAddressDropdown(false);
                                                                     patchQuote(activeQuote?._id, { shipping: addr });
                                                                 }}
@@ -1208,7 +1255,9 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                                                 )}
                                                                 <div className="flex flex-col items-start">
                                                                     <div className="text-[12px] font-black">{r.courier_name}</div>
-                                                                    <div className="text-[10px] font-bold opacity-60">~{r.estimate_days} วัน</div>
+                                                                    <div className="text-[10px] font-bold opacity-60">
+                                                                        {r.estimate_days?.includes("-") ? `ถึง ${r.estimate_days}` : `~${r.estimate_days} วัน`}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <div className="text-[12px] font-mono font-black">฿{r.total_price.toFixed(2)}</div>

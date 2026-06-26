@@ -97,7 +97,7 @@ export default function QuotesContent({ quotes, totalItems, totalPages, pageNum 
                           <p className="text-slate-900 font-bold text-[14px] truncate">{q.originalName || q.fileName}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase">{q.technology}</span>
-                            <span className="text-slate-500 text-[12px] truncate">{q.material} · {q.quantity} ชิ้น</span>
+                            <span className="text-slate-500 text-[12px] truncate">{q.materialName || (q.material?.length === 24 ? "วัสดุ 3D Print" : q.material)} · {q.quantity} ชิ้น</span>
                             {q.groupedItemsCount > 1 && (
                               <span className="text-[10px] font-bold text-blue-500 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">{p.moreItems} {q.groupedItemsCount - 1} รายการ</span>
                             )}

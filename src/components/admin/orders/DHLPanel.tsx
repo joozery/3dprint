@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Globe, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { Globe, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, Zap } from "lucide-react";
 
 const COUNTRY_PRESETS = [
     { code: "US", name: "สหรัฐอเมริกา" },
@@ -22,6 +22,11 @@ interface Props {
         weightGrams: number;
         dimensions:  { x: number; y: number; z: number };
     }[];
+    shippingAddress?: {
+        countryCode?: string;
+        city?:        string;
+        zipCode?:     string;
+    };
     existing: {
         trackingNumber?:  string;
         shippingProvider?: string;
@@ -30,16 +35,18 @@ interface Props {
     };
 }
 
-export default function DHLPanel({ orderId, quotesData, existing }: Props) {
-    const alreadyDHL = existing.shippingProvider === "dhl" && !!existing.trackingNumber;
+export default function DHLPanel({ orderId, quotesData, shippingAddress, existing }: Props) {
+    const alreadyDHL     = existing.shippingProvider === "dhl" && !!existing.trackingNumber;
+    const customerPicked = !!existing.dhlProductCode; // ลูกค้าเลือก service มาแล้ว
 
-    const [dstCountry, setDstCountry] = useState("US");
-    const [dstCity,    setDstCity]    = useState("");
-    const [dstZip,     setDstZip]     = useState("");
+    const [dstCountry, setDstCountry] = useState(shippingAddress?.countryCode || "US");
+    const [dstCity,    setDstCity]    = useState(shippingAddress?.city        || "");
+    const [dstZip,     setDstZip]     = useState(shippingAddress?.zipCode     || "");
 
-    const [rates,        setRates]        = useState<any[]>([]);
-    const [loadingRates, setLoadingRates] = useState(false);
-    const [ratesFetched, setRatesFetched] = useState(false);
+    // สำหรับ manual mode (ลูกค้าไม่ได้เลือก service)
+    const [rates,         setRates]         = useState<any[]>([]);
+    const [loadingRates,  setLoadingRates]  = useState(false);
+    const [ratesFetched,  setRatesFetched]  = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(existing.dhlProductCode || "");
 
     const [creating, setCreating] = useState(false);
@@ -86,16 +93,25 @@ export default function DHLPanel({ orderId, quotesData, existing }: Props) {
         }
     };
 
+    // Auto-fetch rates เฉพาะ manual mode (ลูกค้าไม่ได้เลือก service)
+    useEffect(() => {
+        if (!alreadyDHL && !customerPicked && shippingAddress?.countryCode) {
+            fetchRates();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleCreate = async () => {
-        if (!selectedProduct) { setError("กรุณาเลือกบริการ DHL ก่อน"); return; }
-        if (!dstCountry)      { setError("กรุณาระบุประเทศปลายทาง"); return; }
+        const productCode = customerPicked ? existing.dhlProductCode! : selectedProduct;
+        if (!productCode)  { setError("กรุณาเลือกบริการ DHL ก่อน"); return; }
+        if (!dstCountry)   { setError("กรุณาระบุประเทศปลายทาง"); return; }
         setCreating(true);
         setError("");
         try {
-            const res  = await fetch("/api/dhl/create", {
+            const res = await fetch("/api/dhl/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderId, productCode: selectedProduct, dst_country: dstCountry, dst_city: dstCity }),
+                body: JSON.stringify({ orderId, productCode, dst_country: dstCountry, dst_city: dstCity }),
             });
             const data = await res.json();
             if (data.success) {
@@ -119,7 +135,7 @@ export default function DHLPanel({ orderId, quotesData, existing }: Props) {
         const blob = new Blob([ab], { type: "application/pdf" });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement("a");
-        a.href     = url;
+        a.href = url;
         a.download = `dhl-label-${result.trackingNumber}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
@@ -137,6 +153,7 @@ export default function DHLPanel({ orderId, quotesData, existing }: Props) {
                 <span>ขนาด: <b className="text-slate-700">{Math.ceil(maxW)} × {Math.ceil(maxL)} × {Math.ceil(maxH)} cm</b></span>
             </div>
 
+            {/* ─── ส่งแล้ว: แสดง tracking + label ─── */}
             {result ? (
                 <div className="space-y-3">
                     <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 flex items-start gap-3">
@@ -157,9 +174,18 @@ export default function DHLPanel({ orderId, quotesData, existing }: Props) {
                             onClick={downloadLabel}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors"
                         >
-                            <Printer size={14} /> ดาวน์โหลด label DHL
+                            <Printer size={14} /> ดาวน์โหลด label DHL (PDF)
                         </button>
-                    ) : null}
+                    ) : (
+                        <a
+                            href={`https://mydhl.express.dhl/th/en/shipment-tracking.html#/results?id=${result.trackingNumber}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors border border-slate-200"
+                        >
+                            <Printer size={14} /> พิมพ์ Label บน MyDHL+
+                        </a>
+                    )}
 
                     <a
                         href={`https://www.dhl.com/th-th/home/tracking.html?tracking-id=${result.trackingNumber}`}
@@ -170,9 +196,74 @@ export default function DHLPanel({ orderId, quotesData, existing }: Props) {
                         <ExternalLink size={12} /> ติดตามพัสดุบน DHL.com
                     </a>
                 </div>
-            ) : (
+
+            ) : customerPicked ? (
+                /* ─── ลูกค้าเลือก service มาแล้ว: fast-create mode ─── */
                 <div className="space-y-4">
-                    {/* Destination inputs */}
+                    {/* แสดง service ที่ลูกค้าเลือก */}
+                    <div className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
+                        <Zap size={16} className="text-yellow-500 shrink-0" />
+                        <div className="flex-1">
+                            <p className="text-[10px] text-yellow-600 font-bold uppercase tracking-widest">บริการที่ลูกค้าเลือก</p>
+                            <p className="text-sm font-black text-slate-800 mt-0.5">DHL Express — {existing.dhlProductCode}</p>
+                        </div>
+                    </div>
+
+                    {/* Address fields (แก้ได้ถ้าจำเป็น) */}
+                    <div className="space-y-2">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">ปลายทาง</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div>
+                                <label className="text-[10px] text-slate-400 font-semibold block mb-1">ประเทศ (ISO)</label>
+                                <input
+                                    type="text"
+                                    maxLength={2}
+                                    value={dstCountry}
+                                    onChange={e => setDstCountry(e.target.value.toUpperCase())}
+                                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-400 uppercase font-bold"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] text-slate-400 font-semibold block mb-1">เมือง</label>
+                                <input
+                                    type="text"
+                                    value={dstCity}
+                                    onChange={e => setDstCity(e.target.value)}
+                                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-400"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] text-slate-400 font-semibold block mb-1">รหัสไปรษณีย์</label>
+                                <input
+                                    type="text"
+                                    value={dstZip}
+                                    onChange={e => setDstZip(e.target.value)}
+                                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-400"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">
+                            <AlertCircle size={14} className="shrink-0" /> {error}
+                        </div>
+                    )}
+
+                    <button
+                        onClick={handleCreate}
+                        disabled={creating || !dstCountry}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                    >
+                        {creating
+                            ? <><RefreshCw size={14} className="animate-spin" /> กำลังสร้างพัสดุ DHL...</>
+                            : <><Package size={14} /> สร้างพัสดุ DHL Express — {existing.dhlProductCode}</>}
+                    </button>
+                </div>
+
+            ) : (
+                /* ─── Manual mode: admin เลือก service เอง ─── */
+                <div className="space-y-4">
                     <div className="space-y-2">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">ปลายทาง</p>
                         <div className="grid grid-cols-2 gap-2">
@@ -235,7 +326,6 @@ export default function DHLPanel({ orderId, quotesData, existing }: Props) {
                         </button>
                     </div>
 
-                    {/* Rate selection */}
                     {ratesFetched && (
                         <div className="space-y-2">
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">เลือกบริการ DHL</p>
