@@ -27,7 +27,8 @@ import {
   HelpCircle,
   BookOpen,
   Settings2,
-  Layers
+  Layers,
+  ScrollText
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -45,6 +46,7 @@ const menuItems = [
   { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
   { label: "จัดการหน้าบริการ", icon: FileText, href: "/admin/services-content", badge: null },
   { label: "หน้าเกี่ยวกับเรา (About)", icon: FileText, href: "/admin/about", badge: null },
+  { label: "นโยบาย / ข้อกำหนด", icon: ScrollText, href: "/admin/legal-pages", badge: null },
   { label: "จัดการลิ้งค์ Footer", icon: Link2, href: "/admin/footer-links", badge: null },
   { label: "Newsletter", icon: Mail, href: "/admin/subscribers", badge: null },
   { label: "FAQ", icon: HelpCircle, href: "/admin/faq", badge: null },

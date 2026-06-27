@@ -276,12 +276,14 @@ function NewsletterForm({ t }: { t: { footer: { newsletterTitle: string; newslet
 }
 
 type FooterLinkItem = { _id: string; label: string; url: string; openInNewTab: boolean };
+type ContactSettings = { phone: string; email: string };
 
 // --- Section 3: Footer ---
 export function Footer() {
     const { t } = useLanguage();
     const currentYear = new Date().getFullYear();
     const [dbLinks, setDbLinks] = useState<Record<string, FooterLinkItem[]>>({});
+    const [contact, setContact] = useState<ContactSettings>({ phone: "", email: "" });
 
     useEffect(() => {
         fetch("/api/admin/footer-links")
@@ -295,6 +297,15 @@ export function Footer() {
                         grouped[link.category].push(link);
                     }
                     setDbLinks(grouped);
+                }
+            })
+            .catch(() => {});
+
+        fetch("/api/public/support-settings")
+            .then(r => r.json())
+            .then(data => {
+                if (data.settings) {
+                    setContact({ phone: data.settings.phone || "", email: data.settings.email || "" });
                 }
             })
             .catch(() => {});
@@ -343,12 +354,16 @@ export function Footer() {
                         </div>
                         <div className="space-y-3 mt-8">
                             <h4 className="text-white font-bold tracking-wide text-sm uppercase mb-4">Contact</h4>
-                            <a href="mailto:services@printmydesign.net" className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
-                                <Mail className="w-4 h-4" /> services@printmydesign.net
-                            </a>
-                            <a href="tel:+6620287445" className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
-                                <Phone className="w-4 h-4" /> +66 2 028 7445
-                            </a>
+                            {contact.email && (
+                                <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                                    <Mail className="w-4 h-4" /> {contact.email}
+                                </a>
+                            )}
+                            {contact.phone && (
+                                <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors">
+                                    <Phone className="w-4 h-4" /> {contact.phone}
+                                </a>
+                            )}
                         </div>
                     </div>
 
