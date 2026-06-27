@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { quoteIds, shippingAddress, paymentMethod, customerNotes, shippingFee: clientShippingFee, shippingCourierCode, shippingProvider, shippingServiceType, dhlProductCode } = body;
+        const { quoteIds, shippingAddress, paymentMethod, customerNotes, shippingFee: clientShippingFee, shippingCourierCode, shippingProvider, shippingServiceType, dhlProductCode, billingType } = body;
 
         if (!quoteIds || quoteIds.length === 0) {
             return NextResponse.json({ error: "ไม่พบรายการชิ้นงานในตะกร้า" }, { status: 400 });
@@ -66,30 +66,39 @@ export async function POST(req: NextRequest) {
         const quotes = await Quote.find({
             _id: { $in: quoteIds },
             userId: userId,
-            status: "draft" 
+            status: "draft"
         });
 
         if (quotes.length !== quoteIds.length) {
             return NextResponse.json({ error: "เกิดข้อผิดพลาด: ชิ้นงานบางรายการถูกสั่งซื้อไปแล้ว หรือคุณไม่มีสิทธิ์เข้าถึง" }, { status: 400 });
         }
 
-        const subtotal = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
+        const subtotal    = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
+        const vat         = Math.round(subtotal * 0.07 * 100) / 100;
         const shippingFee = clientShippingFee ?? (subtotal > 1500 ? 0 : 50);
-        const totalAmount = subtotal + shippingFee;
+        const discount    = 0;
+        const isCompany   = billingType === "company";
+        const wht         = (isCompany && subtotal >= 1000) ? Math.round(subtotal * 0.03 * 100) / 100 : 0;
+        const totalAmount = Math.round((subtotal + vat + shippingFee - discount) * 100) / 100;
+        const netPayable  = Math.round((totalAmount - wht) * 100) / 100;
 
         const newOrder = await Order.create({
             userId: userId,
             quotes: quotes.map(q => q._id),
             shippingAddress,
+            billingType: isCompany ? "company" : "individual",
             paymentDetails: {
                 method: paymentMethod || "bank_transfer",
                 status: "pending"
             },
             pricing: {
                 subtotal,
+                vat,
                 shippingFee,
-                discount: 0,
-                totalAmount
+                discount,
+                wht,
+                totalAmount,
+                netPayable,
             },
             status: "pending_payment",
             customerNotes,
@@ -108,9 +117,10 @@ export async function POST(req: NextRequest) {
             success: true,
             message: "สร้างคำสั่งซื้อสำเร็จ กรุณาชำระเงิน",
             data: {
-                orderId: newOrder._id,
+                orderId:     newOrder._id,
                 orderNumber: newOrder.orderNumber,
-                totalAmount: newOrder.pricing.totalAmount
+                totalAmount: newOrder.pricing.totalAmount,
+                netPayable:  newOrder.pricing.netPayable,
             }
         });
 

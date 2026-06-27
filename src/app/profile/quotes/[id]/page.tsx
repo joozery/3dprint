@@ -62,8 +62,8 @@ export default async function QuoteViewPage({
 
   const subtotal = allItems.reduce((sum: number, item: any) => sum + (item.priceDetail?.totalPrice || 0), 0);
 
-  // กรณีมี Order จริง: ใช้ shippingFee/totalAmount จาก Order ตรงๆ (ไม่มี VAT/WHT ในขั้นตอน checkout จริง)
-  // กรณียังเป็น draft (ยังไม่สั่งซื้อ): ใช้ตัวเลขประมาณการแบบเดิมเป็น quotation เบื้องต้น
+  // Real order: ใช้ตัวเลข VAT/WHT/netPayable ที่บันทึกไว้จาก checkout API
+  // Draft: ประมาณการ VAT 7% + WHT 3% (เฉพาะนิติบุคคล ยอด ≥ 1,000)
   const hasRealOrder = !!order;
 
   const deliveryConfig: Record<string, { label: string; days: string; price: number }> = {
@@ -74,10 +74,19 @@ export default async function QuoteViewPage({
   const currentDelivery = deliveryConfig[quote.deliverySpeed || 'standard'];
 
   const deliveryCost = hasRealOrder ? (order.pricing?.shippingFee || 0) : currentDelivery.price;
-  const vat          = hasRealOrder ? 0 : subtotal * 0.07;
-  const wht           = hasRealOrder ? 0 : subtotal * 0.03;
-  const grandTotal    = hasRealOrder ? (order.pricing?.totalAmount ?? (subtotal + deliveryCost)) : (subtotal + vat + deliveryCost);
-  const netPayable    = hasRealOrder ? grandTotal : (grandTotal - wht);
+  const vat          = hasRealOrder ? (order.pricing?.vat ?? 0) : subtotal * 0.07;
+  const whtApplies   = hasRealOrder
+      ? (order.pricing?.wht ?? 0) > 0
+      : isCompany && subtotal >= 1000;
+  const wht          = hasRealOrder
+      ? (order.pricing?.wht ?? 0)
+      : (whtApplies ? subtotal * 0.03 : 0);
+  const grandTotal   = hasRealOrder
+      ? (order.pricing?.totalAmount ?? (subtotal + vat + deliveryCost))
+      : (subtotal + vat + deliveryCost);
+  const netPayable   = hasRealOrder
+      ? (order.pricing?.netPayable ?? grandTotal - wht)
+      : grandTotal - wht;
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 font-sans">
@@ -251,10 +260,12 @@ export default async function QuoteViewPage({
                                 <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Grand Total' : 'ยอดรวมสุทธิ (Total)'}</span>
                                 <span className="text-lg font-black leading-none text-slate-800">฿{formatCur(grandTotal)}</span>
                             </div>
-                            <div className="flex justify-between items-center py-1.5 text-xs text-red-600 mt-1">
-                                <span className="font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Withholding Tax (3%)' : 'หัก ณ ที่จ่าย (3%)'}</span>
-                                <span className="font-bold">-฿{formatCur(wht)}</span>
-                            </div>
+                            {whtApplies && (
+                                <div className="flex justify-between items-center py-1.5 text-xs text-red-600 mt-1">
+                                    <span className="font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Withholding Tax (3%)' : 'หัก ณ ที่จ่าย 3% (WHT)'}</span>
+                                    <span className="font-bold">-฿{formatCur(wht)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between items-center py-2.5 mt-1.5 border-t-2 border-slate-900">
                                 <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Net Payable' : 'ยอดชำระสุทธิ'}</span>
                                 <span className="text-xl font-black text-blue-600 leading-none">฿{formatCur(netPayable)}</span>

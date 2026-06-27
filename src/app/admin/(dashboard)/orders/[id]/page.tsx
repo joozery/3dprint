@@ -147,6 +147,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                         <span>ยอดรวมค่าสินค้า (Subtotal)</span>
                         <span className="font-semibold">฿{formatCur(order.pricing?.subtotal || 0)}</span>
                     </div>
+                    {(order.pricing?.vat ?? 0) > 0 && (
+                        <div className="flex justify-between text-sm text-slate-600">
+                            <span>VAT 7%</span>
+                            <span className="font-semibold">฿{formatCur(order.pricing.vat)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between text-sm text-slate-600">
                         <span>ค่าจัดส่ง (Shipping)</span>
                         <span className="font-semibold">฿{formatCur(order.pricing?.shippingFee || 0)}</span>
@@ -157,9 +163,19 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                             <span className="font-semibold">-฿{formatCur(order.pricing.discount)}</span>
                         </div>
                     )}
-                    <div className="flex justify-between text-base border-t border-slate-100 pt-3 mt-3">
-                        <span className="font-bold text-slate-800">ยอดสุทธิ (Total)</span>
-                        <span className="font-black text-blue-600 text-lg">฿{formatCur(order.pricing?.totalAmount || 0)}</span>
+                    <div className="flex justify-between text-sm border-t border-slate-100 pt-3 mt-3 text-slate-700">
+                        <span className="font-semibold">ยอดรวมก่อนหัก WHT</span>
+                        <span className="font-semibold">฿{formatCur(order.pricing?.totalAmount || 0)}</span>
+                    </div>
+                    {(order.pricing?.wht ?? 0) > 0 && (
+                        <div className="flex justify-between text-sm text-red-600">
+                            <span className="font-semibold">หัก ณ ที่จ่าย 3% (WHT)</span>
+                            <span className="font-semibold">-฿{formatCur(order.pricing.wht)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between text-base border-t-2 border-slate-800 pt-3 mt-1">
+                        <span className="font-bold text-slate-800">ยอดชำระสุทธิ</span>
+                        <span className="font-black text-blue-600 text-lg">฿{formatCur(order.pricing?.netPayable ?? order.pricing?.totalAmount ?? 0)}</span>
                     </div>
                 </div>
             </div>

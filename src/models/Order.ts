@@ -34,11 +34,15 @@ const OrderSchema = new mongoose.Schema(
             slipUrl: { type: String },
             transactionId: { type: String },
         },
+        billingType: { type: String, enum: ["individual", "company"], default: "individual" },
         pricing: {
-            subtotal: { type: Number, required: true },
+            subtotal:    { type: Number, required: true },
+            vat:         { type: Number, default: 0 },
             shippingFee: { type: Number, required: true, default: 0 },
-            discount: { type: Number, default: 0 },
+            discount:    { type: Number, default: 0 },
+            wht:         { type: Number, default: 0 },
             totalAmount: { type: Number, required: true },
+            netPayable:  { type: Number, required: true },
         },
         status: {
             type: String,

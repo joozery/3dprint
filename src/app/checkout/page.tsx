@@ -578,18 +578,15 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
                 return;
             }
 
-            // คำนวณยอดรวม (ราคาสินค้า + ค่าจัดส่ง)
-            const subtotal = pendingQuotes.reduce((sum: number, q: any) => sum + (q.priceDetail?.totalPrice || 0), 0);
-            const total = subtotal + (shipping.price || 0);
-
             const quoteIds = pendingQuotes.map((q: any) => q._id);
 
-            // 1. สร้างออเดอร์ในระบบของเรา
+            // 1. สร้างออเดอร์ในระบบของเรา (ให้ server คำนวณ VAT/WHT)
             const res = await fetch("/api/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     quoteIds,
+                    billingType: address?.type || "individual",
                     shippingAddress: {
                         fullName:    `${address.firstName} ${address.lastName}`,
                         phone:       `${address.phoneCode} ${address.phone}`,
@@ -611,26 +608,26 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
                 })
             });
             const data = await res.json();
-            
+
             if (data.success) {
-                // 2. สร้าง Form เพื่อส่งไป Paysolutions
+                // 2. สร้าง Form เพื่อส่งไป Paysolutions — ใช้ netPayable (หลังหัก WHT แล้ว)
                 const form = document.createElement("form");
                 form.method = "POST";
-                // ใช้ endpoint ของ Thaiepay/Paysolutions
                 form.action = "https://www.thaiepay.com/epaylink/payment.aspx";
 
                 const origin = window.location.origin;
 
                 const rawOrderNumber: string = data.data?.orderNumber || "";
-                const refno = rawOrderNumber.replace(/[^0-9]/g, ""); // ตัดตัวอักษร/ขีดออก เหลือแต่ตัวเลข
-                console.log("[Paysolutions] refno:", refno, "total:", total.toFixed(2), "rawOrderNumber:", rawOrderNumber);
+                const refno = rawOrderNumber.replace(/[^0-9]/g, "");
+                const netPayable: number = data.data?.netPayable ?? data.data?.totalAmount ?? 0;
+                console.log("[Paysolutions] refno:", refno, "netPayable:", netPayable.toFixed(2), "rawOrderNumber:", rawOrderNumber);
 
                 const params: Record<string, string> = {
                     merchantid: "77650214",
                     refno: refno,
                     customeremail: "customer@3dprint.com",
                     productdetail: "3D Print Service Order",
-                    total: total.toFixed(2),
+                    total: netPayable.toFixed(2),
                     cardtype: "V,M,J,C,A,B,D,PP,WE,AL,TM,CT,P,X,AT,SHPP,SHPL,SHPD,SHPC",
                     returnurl: `${origin}/profile/orders`,
                     postbackurl: `${origin}/api/webhook/paysolutions`
@@ -711,10 +708,17 @@ function ConfirmOrder({ address, shipping, onBack, quotes }: { address: any; shi
 }
 
 // ─── Summary Panel ───────────────────────────────────────────────────────────
-function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
-    const subtotal = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
-    const shipFee  = shipping?.price ?? null; // null = not yet selected
-    const total    = subtotal + (shipFee ?? 0);
+function SummaryPanel({ shipping, quotes, address }: { shipping: any; quotes: any[]; address: any }) {
+    const subtotal    = quotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
+    const shipFee     = shipping?.price ?? null;
+    const vat         = subtotal * 0.07;
+    const isCompany   = address?.type === "company";
+    const whtApplies  = isCompany && subtotal >= 1000;
+    const wht         = whtApplies ? subtotal * 0.03 : 0;
+    const grandTotal  = subtotal + vat + (shipFee ?? 0);
+    const netPayable  = grandTotal - wht;
+
+    const fmt = (n: number) => n.toLocaleString("th-TH", { minimumFractionDigits: 2 });
 
     return (
         <div className="bg-white border rounded-2xl shadow-sm p-6 sticky top-24">
@@ -735,7 +739,7 @@ function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
                                 <p className="text-slate-800 font-medium truncate">{name}</p>
                                 {material && <p className="text-[11px] text-slate-400">{material}</p>}
                             </div>
-                            <span className="font-bold text-slate-900 shrink-0">฿{price.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span>
+                            <span className="font-bold text-slate-900 shrink-0">฿{fmt(price)}</span>
                         </div>
                     );
                 })}
@@ -743,8 +747,12 @@ function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
 
             <div className="border-t border-dashed pt-4 space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">ราคาชิ้นงาน</span>
-                    <span className="font-bold text-slate-900">฿{subtotal.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span>
+                    <span className="text-slate-500">ราคาชิ้นงาน (ก่อน VAT)</span>
+                    <span className="font-bold text-slate-900">฿{fmt(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">VAT 7%</span>
+                    <span className="font-bold text-slate-900">฿{fmt(vat)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                     <span className="text-slate-500">ค่าจัดส่ง</span>
@@ -753,28 +761,43 @@ function SummaryPanel({ shipping, quotes }: { shipping: any; quotes: any[] }) {
                     ) : shipFee === 0 ? (
                         <span className="font-bold text-emerald-600">ฟรี</span>
                     ) : (
-                        <span className="font-bold text-slate-900">฿{shipFee.toLocaleString("th-TH", { minimumFractionDigits: 2 })}</span>
+                        <span className="font-bold text-slate-900">฿{fmt(shipFee)}</span>
                     )}
                 </div>
                 {shipping?.courier_name && (
                     <p className="text-[11px] text-slate-400 text-right">{shipping.courier_name}</p>
                 )}
+
+                {whtApplies && (
+                    <div className="flex justify-between text-sm text-red-600 pt-1">
+                        <span className="font-medium">หัก ณ ที่จ่าย 3% (WHT)</span>
+                        <span className="font-bold">-฿{fmt(wht)}</span>
+                    </div>
+                )}
+
                 <div className="border-t border-dashed pt-2 flex justify-between items-baseline">
-                    <span className="text-sm font-bold text-slate-900">ยอดชำระทั้งหมด</span>
+                    <span className="text-sm font-bold text-slate-900">ยอดชำระสุทธิ</span>
                     <span className="text-xl font-black text-slate-900">
                         {shipFee === null ? (
-                            <span className="text-base text-slate-400">฿{subtotal.toLocaleString("th-TH", { minimumFractionDigits: 2 })} +ค่าส่ง</span>
+                            <span className="text-base text-slate-400">฿{fmt(subtotal + vat)} +ค่าส่ง</span>
                         ) : (
-                            `฿${total.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`
+                            `฿${fmt(netPayable)}`
                         )}
                     </span>
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 bg-slate-50 rounded-xl p-3">
-                <Package className="w-3.5 h-3.5 shrink-0" />
-                <span>ราคายังไม่รวม VAT 7%</span>
-            </div>
+            {whtApplies ? (
+                <div className="flex items-start gap-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                    <Package className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>นิติบุคคลหัก ณ ที่จ่าย 3% จากยอดก่อน VAT (฿{fmt(wht)}) — ยอดโอนจริง ฿{fmt(netPayable)}</span>
+                </div>
+            ) : (
+                <div className="flex items-center gap-2 text-[11px] text-slate-400 bg-slate-50 rounded-xl p-3">
+                    <Package className="w-3.5 h-3.5 shrink-0" />
+                    <span>ราคารวม VAT 7% แล้ว</span>
+                </div>
+            )}
         </div>
     );
 }
@@ -937,7 +960,7 @@ export default function CheckoutPage() {
 
                     {/* Right */}
                     <div className="col-span-12 lg:col-span-4">
-                        <SummaryPanel shipping={shipping} quotes={quotes} />
+                        <SummaryPanel shipping={shipping} quotes={quotes} address={address} />
                     </div>
                 </div>
             </main>
