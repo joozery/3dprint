@@ -66,22 +66,25 @@ export async function POST(req: NextRequest) {
         }
 
         const trackingNumber = shipment.masterTrackingNumber
-            || shipment.completedShipmentDetail?.completedPackageDetails?.[0]?.trackingIds?.[0]?.trackingNumber
+            || shipment.completedShipmentDetail?.masterTrackingId?.trackingNumber
             || "";
-        const labelUrl = shipment.completedShipmentDetail?.completedPackageDetails?.[0]?.label?.url || "";
+        const labelBase64 =
+            shipment.pieceResponses?.[0]?.packageDocuments?.[0]?.encodedLabel ||
+            shipment.completedShipmentDetail?.completedPackageDetails?.[0]?.label?.encodedLabel ||
+            "";
         const fedexServiceType = shipment.serviceType || serviceType;
 
         await Order.findByIdAndUpdate(orderId, {
             $set: {
                 trackingNumber,
-                shippingProvider:   "fedex",
+                shippingProvider:    "fedex",
                 fedexServiceType,
-                fedexLabelUrl:      labelUrl,
+                fedexLabelBase64:    labelBase64,
                 status: "shipped",
             },
         });
 
-        return NextResponse.json({ success: true, trackingNumber, labelUrl, fedexServiceType });
+        return NextResponse.json({ success: true, trackingNumber, fedexServiceType, hasLabel: !!labelBase64 });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

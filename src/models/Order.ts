@@ -75,6 +75,9 @@ const OrderSchema = new mongoose.Schema(
         fedexLabelUrl: {
             type: String,
         },
+        fedexLabelBase64: {
+            type: String,
+        },
         // DHL Express
         dhlProductCode: {
             type: String,

@@ -184,8 +184,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             {(() => {
                 const isIntlAddress = order.shippingAddress?.countryCode && order.shippingAddress.countryCode !== "TH";
                 const storedProvider = (order as any).shippingProvider || "iship";
-                // ถ้า address เป็น international → บังคับ dhl เสมอ (guard สำหรับ orders เก่าที่ provider อาจ save ผิด)
-                const provider = isIntlAddress ? "dhl" : storedProvider;
+                // ใช้ค่าที่บันทึกจริง — fallback DHL เฉพาะ international ที่ยังไม่มี provider
+                const provider = storedProvider !== "iship" ? storedProvider : (isIntlAddress ? "dhl" : "iship");
                 const quotesDataMapped = (quotes as any[]).map(q => ({
                     weightGrams: q.weightGrams || 0,
                     dimensions: {
@@ -222,15 +222,16 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                             <FedExPanel
                                 orderId={order._id.toString()}
                                 shippingAddress={{
-                                    zipCode:  order.shippingAddress?.zipCode  || "",
-                                    province: order.shippingAddress?.province || "",
+                                    zipCode:     order.shippingAddress?.zipCode  || "",
+                                    province:    order.shippingAddress?.province || "",
+                                    countryCode: (order.shippingAddress as any)?.countryCode || "US",
+                                    city:        (order.shippingAddress as any)?.city || (order.shippingAddress as any)?.district || "",
                                 }}
                                 quotesData={quotesDataMapped}
                                 existing={{
                                     trackingNumber:   (order as any).trackingNumber   || "",
                                     shippingProvider: "fedex",
                                     fedexServiceType: (order as any).fedexServiceType || "",
-                                    fedexLabelUrl:    (order as any).fedexLabelUrl    || "",
                                 }}
                             />
                         ) : provider === "dhl" ? (

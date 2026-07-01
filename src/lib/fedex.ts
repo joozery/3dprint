@@ -57,6 +57,26 @@ export const FEDEX_SRC = {
     zipcode:  process.env.ISHIP_SRC_ZIPCODE    || "10160",
 };
 
+const US_STATE_CODES: Record<string, string> = {
+    "Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA",
+    "Colorado":"CO","Connecticut":"CT","Delaware":"DE","Florida":"FL","Georgia":"GA",
+    "Hawaii":"HI","Idaho":"ID","Illinois":"IL","Indiana":"IN","Iowa":"IA",
+    "Kansas":"KS","Kentucky":"KY","Louisiana":"LA","Maine":"ME","Maryland":"MD",
+    "Massachusetts":"MA","Michigan":"MI","Minnesota":"MN","Mississippi":"MS","Missouri":"MO",
+    "Montana":"MT","Nebraska":"NE","Nevada":"NV","New Hampshire":"NH","New Jersey":"NJ",
+    "New Mexico":"NM","New York":"NY","North Carolina":"NC","North Dakota":"ND","Ohio":"OH",
+    "Oklahoma":"OK","Oregon":"OR","Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC",
+    "South Dakota":"SD","Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT",
+    "Virginia":"VA","Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY",
+    "District of Columbia":"DC","Puerto Rico":"PR","Guam":"GU","American Samoa":"AS",
+};
+
+function toStateCode(province: string): string | undefined {
+    if (!province) return undefined;
+    if (province.length <= 3) return province.toUpperCase();
+    return US_STATE_CODES[province] || province.slice(0, 2).toUpperCase();
+}
+
 export interface FedExRateParams {
     dst_zipcode:  string;
     dst_province: string;
@@ -200,7 +220,7 @@ export async function createFedExShipment(params: FedExCreateParams) {
     } : undefined;
 
     const body: any = {
-        labelResponseOptions: "URL_ONLY",
+        labelResponseOptions: "LABEL",
         requestedShipment: {
             shipper: {
                 contact: {
@@ -223,7 +243,7 @@ export async function createFedExShipment(params: FedExCreateParams) {
                 address: {
                     streetLines:         [params.dst_address],
                     city:                params.dst_city || params.dst_province,
-                    stateOrProvinceCode: (params.dst_province && params.dst_province.length <= 2) ? params.dst_province : undefined,
+                    ...(dstCountry === "US" && { stateOrProvinceCode: toStateCode(params.dst_province) }),
                     postalCode:          params.dst_zipcode,
                     countryCode:         dstCountry,
                     residential:         true,

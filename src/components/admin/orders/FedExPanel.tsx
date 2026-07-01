@@ -6,18 +6,19 @@ import { Plane, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, External
 interface Props {
     orderId: string;
     shippingAddress: {
-        zipCode:  string;
-        province: string;
+        zipCode:     string;
+        province:    string;
+        countryCode?: string;
+        city?:        string;
     };
     quotesData: {
         weightGrams: number;
         dimensions:  { x: number; y: number; z: number };
     }[];
     existing: {
-        trackingNumber?:  string;
+        trackingNumber?:   string;
         shippingProvider?: string;
         fedexServiceType?: string;
-        fedexLabelUrl?:   string;
     };
 }
 
@@ -28,9 +29,9 @@ export default function FedExPanel({ orderId, shippingAddress, quotesData, exist
     const [loadingRates, setLoadingRates] = useState(false);
     const [selectedService, setSelectedService] = useState(existing.fedexServiceType || "");
     const [creating, setCreating]         = useState(false);
-    const [result, setResult]             = useState<{ trackingNumber: string; labelUrl: string; serviceType: string } | null>(
+    const [result, setResult]             = useState<{ trackingNumber: string; serviceType: string } | null>(
         alreadyFedEx
-            ? { trackingNumber: existing.trackingNumber!, labelUrl: existing.fedexLabelUrl || "", serviceType: existing.fedexServiceType || "" }
+            ? { trackingNumber: existing.trackingNumber!, serviceType: existing.fedexServiceType || "" }
             : null
     );
     const [error, setError]               = useState("");
@@ -41,13 +42,16 @@ export default function FedExPanel({ orderId, shippingAddress, quotesData, exist
     const maxH  = quotesData.reduce((s, q) => s + (q.dimensions?.z || 5), 0);
 
     useEffect(() => {
-        if (result || !shippingAddress?.zipCode) return;
+        if (result) return;
+        const country = shippingAddress?.countryCode || "US";
         setLoadingRates(true);
         fetch("/api/fedex/rates", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                dst_zipcode:  shippingAddress.zipCode,
+                dst_country:  country,
+                dst_zipcode:  shippingAddress.zipCode  || "",
+                dst_city:     shippingAddress.city     || "",
                 dst_province: shippingAddress.province || "",
                 weightKg:  Math.max(totalWeightG / 1000, 0.1),
                 width:     Math.ceil(maxW),
@@ -73,7 +77,7 @@ export default function FedExPanel({ orderId, shippingAddress, quotesData, exist
             });
             const data = await res.json();
             if (data.success) {
-                setResult({ trackingNumber: data.trackingNumber, labelUrl: data.labelUrl || "", serviceType: data.fedexServiceType });
+                setResult({ trackingNumber: data.trackingNumber, serviceType: data.fedexServiceType });
             } else {
                 setError(data.error || "สร้างพัสดุ FedEx ไม่สำเร็จ");
             }
@@ -112,25 +116,30 @@ export default function FedExPanel({ orderId, shippingAddress, quotesData, exist
                         </div>
                     </div>
 
-                    {result.labelUrl ? (
-                        <a
-                            href={result.labelUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors"
-                        >
-                            <Printer size={14} /> พิมพ์ label FedEx
-                        </a>
-                    ) : (
+                    <a
+                        href={`/api/fedex/label?orderId=${orderId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors"
+                    >
+                        <Printer size={14} /> พิมพ์ label FedEx (PDF)
+                    </a>
+                    <div className="flex items-center justify-between">
                         <a
                             href={`https://www.fedex.com/fedextrack/?trknbr=${result.trackingNumber}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex items-center gap-1 text-xs text-purple-500 hover:underline justify-center"
+                            className="flex items-center gap-1 text-xs text-purple-500 hover:underline"
                         >
                             <ExternalLink size={12} /> ติดตามพัสดุบน FedEx.com
                         </a>
-                    )}
+                        <button
+                            onClick={() => setResult(null)}
+                            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
+                        >
+                            <RefreshCw size={11} /> ออก label ใหม่
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className="space-y-4">
