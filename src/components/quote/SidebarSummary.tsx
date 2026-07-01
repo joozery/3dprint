@@ -36,35 +36,74 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
     const isIntl = country !== "TH";
 
     const fetchRates = (overrides?: object) => {
-        if (!hasQuotes) return;
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-            const maxW = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
-            const maxL = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
-            const maxH = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
+            // ใช้ default dimensions ถ้ายังไม่มีไฟล์
+            const maxW     = quotes.length > 0 ? Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10)) : 10;
+            const maxL     = quotes.length > 0 ? Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10)) : 10;
+            const maxH     = quotes.length > 0 ? quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0) : 5;
+            const weightKg = Math.max(weight / 1000, 0.1);
+            const dims     = { width: Math.ceil(maxW), length: Math.ceil(maxL), height: Math.ceil(maxH) };
             setLoadingRates(true);
             setShippingRates([]);
-            fetch("/api/shipping/rates", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    countryCode:  country,
-                    dst_zipcode:  isIntl ? intlPostal : zipcode,
-                    dst_city:     isIntl ? intlCity   : "",
-                    dst_province: "",
-                    dst_amphure:  "",
-                    dst_district: "",
-                    weightKg:  Math.max(weight / 1000, 0.1),
-                    width:     Math.ceil(maxW),
-                    length:    Math.ceil(maxL),
-                    height:    Math.ceil(maxH),
-                    ...overrides,
-                }),
-            })
-                .then(r => r.json())
-                .then(d => { if (d.rates) setShippingRates(d.rates); })
-                .catch(() => {})
-                .finally(() => setLoadingRates(false));
+
+            console.log("[SidebarSummary] fetchRates isIntl=", isIntl, "country=", country);
+            if (isIntl) {
+                // International: DHL + FedEx in parallel
+                const dhlReq = fetch("/api/shipping/rates", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        countryCode: country,
+                        dst_zipcode: intlPostal || "",
+                        dst_city:    intlCity   || "",
+                        weightKg, ...dims, ...overrides,
+                    }),
+                }).then(r => r.json()).catch(() => ({ rates: [] }));
+
+                const fedexReq = fetch("/api/fedex/rates", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        dst_country:  country,
+                        dst_zipcode:  intlPostal || "",
+                        dst_city:     intlCity   || "",
+                        dst_province: "",
+                        weightKg, ...dims, ...overrides,
+                    }),
+                }).then(r => r.json()).catch(() => ({ rates: [] }));
+
+                Promise.all([dhlReq, fedexReq]).then(([dhl, fedex]) => {
+                    const dhlRates   = dhl.rates  || [];
+                    const fedexRates = (fedex.rates || []).map((r: any) => ({
+                        courier_code:  `fedex:${r.serviceType}`,
+                        courier_name:  `FedEx ${r.serviceName}`,
+                        logo:          "/shipping/fedex.png",
+                        total_price:   r.totalPrice,
+                        estimate_days: r.estimatedDays,
+                    }));
+                    setShippingRates([...dhlRates, ...fedexRates]);
+                }).finally(() => setLoadingRates(false));
+            } else {
+                // Domestic TH: iShip only
+                fetch("/api/shipping/rates", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        countryCode:  "TH",
+                        dst_zipcode:  zipcode,
+                        dst_city:     "",
+                        dst_province: "",
+                        dst_amphure:  "",
+                        dst_district: "",
+                        weightKg, ...dims, ...overrides,
+                    }),
+                })
+                    .then(r => r.json())
+                    .then(d => { if (d.rates) setShippingRates(d.rates); })
+                    .catch(() => {})
+                    .finally(() => setLoadingRates(false));
+            }
         }, 600);
     };
 
@@ -268,12 +307,12 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                     </div>
                 )}
 
-                {/* City + Postal (International / DHL) */}
+                {/* City + Postal (International) */}
                 {isIntl && (
                     <div className="space-y-2 mb-2">
                         <input
                             type="text"
-                            placeholder="City *"
+                            placeholder="City / เมือง *"
                             value={intlCity}
                             onChange={e => setIntlCity(e.target.value)}
                             className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors"
@@ -285,7 +324,13 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                             onChange={e => setIntlPostal(e.target.value)}
                             className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 transition-colors"
                         />
-                        <p className="text-[10px] text-amber-600">ส่งผ่าน DHL Express</p>
+                        <button
+                            onClick={() => { if (intlCity.trim()) fetchRates(); }}
+                            className="w-full py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-600 transition-colors"
+                        >
+                            คำนวณราคาขนส่ง
+                        </button>
+                        <p className="text-[10px] text-amber-600">ส่งผ่าน DHL Express & FedEx</p>
                     </div>
                 )}
 

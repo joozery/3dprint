@@ -377,45 +377,14 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
         };
 
         if (isIntl) {
-            // International: DHL Express only
-            fetch("/api/dhl/rates", {
+            // International: DHL Express + FedEx
+            const dhlReq = fetch("/api/dhl/rates", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     dst_country: address.countryCode,
-                    dst_zipcode: address.postal   || "",
-                    dst_city:    address.city     || "",
-                    weightKg, ...dims,
-                }),
-            })
-                .then(r => r.json())
-                .then(data => {
-                    const dhlRates = (data.rates || []).map((r: any) => ({
-                        courier_code:  `dhl:${r.productCode}`,
-                        courier_name:  `DHL Express — ${r.productName}`,
-                        logo:          null,
-                        isDHL:         true,
-                        total_price:   r.totalPrice,
-                        estimate_days: r.estimatedDays !== "-" ? r.estimatedDays : null,
-                        provider:      "dhl",
-                        productCode:   r.productCode,
-                    }));
-                    setRates(dhlRates);
-                })
-                .catch(() => setRates([]))
-                .finally(() => setLoading(false));
-        } else {
-            // Domestic TH: iShip + FedEx
-            if (!address?.postal) { setLoading(false); return; }
-
-            const ishipReq = fetch("/api/shipping/rates", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    dst_zipcode:  address.postal,
-                    dst_province: address.state       || "",
-                    dst_amphure:  address.city        || "",
-                    dst_district: address.subDistrict || "",
+                    dst_zipcode: address.postal || "",
+                    dst_city:    address.city   || "",
                     weightKg, ...dims,
                 }),
             }).then(r => r.json()).catch(() => ({ rates: [] }));
@@ -424,14 +393,25 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    dst_zipcode:  address.postal,
-                    dst_province: address.state || "",
+                    dst_country:  address.countryCode,
+                    dst_zipcode:  address.postal   || "",
+                    dst_city:     address.city     || "",
+                    dst_province: address.state    || "",
                     weightKg, ...dims,
                 }),
             }).then(r => r.json()).catch(() => ({ rates: [] }));
 
-            Promise.all([ishipReq, fedexReq]).then(([iship, fedex]) => {
-                const ishipRates = (iship.rates || []).map((r: any) => ({ ...r, provider: "iship" }));
+            Promise.all([dhlReq, fedexReq]).then(([dhl, fedex]) => {
+                const dhlRates = (dhl.rates || []).map((r: any) => ({
+                    courier_code:  `dhl:${r.productCode}`,
+                    courier_name:  `DHL Express — ${r.productName}`,
+                    logo:          null,
+                    isDHL:         true,
+                    total_price:   r.totalPrice,
+                    estimate_days: r.estimatedDays !== "-" ? r.estimatedDays : null,
+                    provider:      "dhl",
+                    productCode:   r.productCode,
+                }));
                 const fedexRates = (fedex.rates || []).map((r: any) => ({
                     courier_code:  `fedex:${r.serviceType}`,
                     courier_name:  `FedEx ${r.serviceName}`,
@@ -441,8 +421,30 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                     provider:      "fedex",
                     service_type:  r.serviceType,
                 }));
-                setRates([...ishipRates, ...fedexRates]);
+                setRates([...dhlRates, ...fedexRates]);
             }).finally(() => setLoading(false));
+        } else {
+            // Domestic TH: iShip only
+            if (!address?.postal) { setLoading(false); return; }
+
+            fetch("/api/shipping/rates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    dst_zipcode:  address.postal,
+                    dst_province: address.state       || "",
+                    dst_amphure:  address.city        || "",
+                    dst_district: address.subDistrict || "",
+                    weightKg, ...dims,
+                }),
+            })
+                .then(r => r.json())
+                .then(data => {
+                    const ishipRates = (data.rates || []).map((r: any) => ({ ...r, provider: "iship" }));
+                    setRates(ishipRates);
+                })
+                .catch(() => setRates([]))
+                .finally(() => setLoading(false));
         }
     }, [address, quotes]);
 
@@ -460,14 +462,14 @@ function ShippingMethod({ onNext, onBack, address, quotes }: {
                 {isIntl && (
                     <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4 text-xs text-blue-800">
                         <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-500" />
-                        <span>สำหรับการจัดส่งต่างประเทศ ใช้ <strong>DHL Express</strong> — ราคาจะคำนวณจากน้ำหนักและขนาดชิ้นงานจริง</span>
+                        <span>สำหรับการจัดส่งต่างประเทศ ใช้ <strong>DHL Express</strong> หรือ <strong>FedEx</strong> — ราคาจะคำนวณจากน้ำหนักและขนาดชิ้นงานจริง</span>
                     </div>
                 )}
 
                 {loading ? (
                     <div className="flex items-center gap-3 py-8 justify-center text-slate-400">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-400" />
-                        <span className="text-sm">{isIntl ? "กำลังคำนวณราคา DHL Express..." : "กำลังโหลดราคาค่าส่ง..."}</span>
+                        <span className="text-sm">{isIntl ? "กำลังคำนวณราคาขนส่งระหว่างประเทศ..." : "กำลังโหลดราคาค่าส่ง..."}</span>
                     </div>
                 ) : (
                     <div className="space-y-3">

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
             const rates = dhlRates.map(r => ({
                 courier_code:       `dhl_${r.productCode}`,
                 courier_name:       `DHL Express — ${r.productName}`,
-                logo:               "/shipping/dhl.png",
+                logo:               "/shipping/dhl.svg",
                 price:              r.totalPrice,
                 fuel_surcharge_fee: 0,
                 remote_area:        0,

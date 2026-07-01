@@ -129,7 +129,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         fetchData();
     }, [session]);
 
-    // Fetch real shipping rates when address or quotes change
+    // Fetch shipping rates when address or quotes change
     useEffect(() => {
         const addr = userAddresses.find(a => String(a._id) === String(selectedAddressId));
         const sel = quotes.filter(q => selectedIds.has(q._id));
@@ -145,39 +145,67 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         const maxW = Math.max(...sel.map((q: any) => (q.dimensions?.x || 10) / 10));
         const maxL = Math.max(...sel.map((q: any) => (q.dimensions?.y || 10) / 10));
         const maxH = sel.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
-
-        const body = isIntl ? {
-            countryCode: COUNTRY_CODES[addr.province] || "US",
-            dst_city:    addr.subDistrict,
-            dst_zipcode: zipCode,
-            weightKg: Math.max(weight / 1000, 0.1),
-            width: Math.ceil(maxW), length: Math.ceil(maxL), height: Math.ceil(maxH),
-        } : {
-            countryCode:  "TH",
-            dst_zipcode:  zipCode,
-            dst_province: addr.province || "",
-            dst_amphure:  addr.district || "",
-            dst_district: addr.subDistrict || "",
-            weightKg: Math.max(weight / 1000, 0.1),
-            width: Math.ceil(maxW), length: Math.ceil(maxL), height: Math.ceil(maxH),
-        };
+        const wKg = Math.max(weight / 1000, 0.1);
+        const dims = { width: Math.ceil(maxW), length: Math.ceil(maxL), height: Math.ceil(maxH) };
 
         setLoadingShippingRates(true);
         setShippingRates([]);
-        fetch("/api/shipping/rates", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        })
-            .then(r => r.json())
-            .then(d => {
-                if (d.rates && d.rates.length > 0) {
-                    setShippingRates(d.rates);
-                    setSelectedCourierCode(prev => d.rates.find((r: any) => r.courier_code === prev) ? prev : d.rates[0].courier_code);
+
+        if (isIntl) {
+            const countryCode = COUNTRY_CODES[addr.province] || "US";
+            const city = addr.subDistrict || "";
+
+            const dhlReq = fetch("/api/shipping/rates", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ countryCode, dst_city: city, dst_zipcode: zipCode, weightKg: wKg, ...dims }),
+            }).then(r => r.json()).catch(() => ({ rates: [] }));
+
+            const fedexReq = fetch("/api/fedex/rates", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ dst_country: countryCode, dst_city: city, dst_zipcode: zipCode, weightKg: wKg, ...dims }),
+            }).then(r => r.json()).catch(() => ({ rates: [] }));
+
+            Promise.all([dhlReq, fedexReq]).then(([dhl, fedex]) => {
+                const dhlRates = (dhl.rates || []);
+                const fedexRates = (fedex.rates || []).map((r: any) => ({
+                    courier_code:       `fedex:${r.serviceType}`,
+                    courier_name:       `FedEx — ${r.serviceName}`,
+                    logo:               "/shipping/fedex.svg",
+                    price:              r.totalPrice,
+                    fuel_surcharge_fee: 0,
+                    remote_area:        0,
+                    total_price:        r.totalPrice,
+                    estimate_days:      r.estimatedDays || "-",
+                }));
+                const combined = [...dhlRates, ...fedexRates];
+                if (combined.length > 0) {
+                    setShippingRates(combined);
+                    setSelectedCourierCode(prev => combined.find(r => r.courier_code === prev) ? prev : combined[0].courier_code);
                 }
+            }).finally(() => setLoadingShippingRates(false));
+        } else {
+            fetch("/api/shipping/rates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    countryCode: "TH",
+                    dst_zipcode: zipCode,
+                    dst_province: addr.province || "",
+                    dst_amphure: addr.district || "",
+                    dst_district: addr.subDistrict || "",
+                    weightKg: wKg, ...dims,
+                }),
             })
-            .catch(() => {})
-            .finally(() => setLoadingShippingRates(false));
+                .then(r => r.json())
+                .then(d => {
+                    if (d.rates && d.rates.length > 0) {
+                        setShippingRates(d.rates);
+                        setSelectedCourierCode(prev => d.rates.find((r: any) => r.courier_code === prev) ? prev : d.rates[0].courier_code);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setLoadingShippingRates(false));
+        }
     }, [selectedAddressId, userAddresses, quotes.length]);
 
     const processFiles = async (files: FileList | File[]) => {
@@ -1234,7 +1262,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setShowDeliveryDropdown(false)}></div>
                                             <div className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-white border border-slate-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                                <div className="p-2 space-y-1">
+                                                <div className="p-2 space-y-1 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
                                                     {shippingRates.map(r => (
                                                         <button
                                                             key={r.courier_code}

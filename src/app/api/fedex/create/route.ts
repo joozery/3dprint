@@ -26,27 +26,32 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Order missing shipping address" }, { status: 400 });
         }
 
-        const quotes   = order.quotes as any[];
-        const weightKg = Math.max(quotes.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0) / 1000, 0.1);
+        const quotes        = order.quotes as any[];
+        const weightKg      = Math.max(quotes.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0) / 1000, 0.1);
         // dimensions stored in mm → convert to cm
-        const maxWidth  = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
-        const maxLength = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
-        const maxHeight = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
+        const maxWidth      = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
+        const maxLength     = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
+        const maxHeight     = quotes.reduce((s: number, q: any) => s + (q.dimensions?.z || 5) / 10, 0);
+        const customsValue  = order.pricing?.subtotal || 0;
 
         const result = await createFedExShipment({
             serviceType,
-            dst_name:     addr.fullName   || "Customer",
-            dst_phone:    addr.phone      || "0000000000",
-            dst_address:  addr.address    || "",
-            dst_city:     addr.district   || addr.province || "",
-            dst_province: addr.province   || "",
-            dst_zipcode:  addr.zipCode    || "",
+            dst_name:         addr.fullName    || "Customer",
+            dst_phone:        addr.phone       || "0000000000",
+            dst_address:      addr.address     || "",
+            dst_city:         addr.district    || addr.province || "",
+            dst_province:     addr.province    || "",
+            dst_zipcode:      addr.zipCode     || "",
+            dst_country:      addr.countryCode || "TH",
             weightKg,
-            width:  Math.ceil(maxWidth),
-            length: Math.ceil(maxLength),
-            height: Math.ceil(maxHeight),
-            item_name: `3D Print - ${order.orderNumber}`,
-            remark: order.customerNotes || "",
+            width:            Math.ceil(maxWidth),
+            length:           Math.ceil(maxLength),
+            height:           Math.ceil(maxHeight),
+            item_name:        `3D Print - ${order.orderNumber}`,
+            remark:           order.customerNotes || "",
+            customsValue,
+            customsCurrency:  "THB",
+            numPieces:        quotes.length,
         });
 
         console.log("[FedEx create_shipment response]", JSON.stringify(result, null, 2));
