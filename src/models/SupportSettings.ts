@@ -12,4 +12,7 @@ const SupportSettingsSchema = new mongoose.Schema({
   instagramUrl: { type: String },
 });
 
-export default mongoose.models.SupportSettings || mongoose.model("SupportSettings", SupportSettingsSchema);
+if (mongoose.models.SupportSettings) {
+  delete mongoose.models.SupportSettings;
+}
+export default mongoose.model("SupportSettings", SupportSettingsSchema);
