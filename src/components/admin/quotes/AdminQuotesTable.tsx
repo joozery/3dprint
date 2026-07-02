@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useRef } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, RefreshCw, FileText, SlidersHorizontal, Loader2, Download, X, Package, Trash2, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, FileText, SlidersHorizontal, Loader2, Download, X, Package, Trash2, AlertTriangle, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuoteFile {
@@ -42,6 +42,7 @@ interface Props {
   page: number;
   totalPages: number;
   currentStatus: string;
+  currentSearch: string;
 }
 
 const statusOptions = [
@@ -59,7 +60,7 @@ const statusDisplay: Record<string, { label: string; color: string; dot: string 
   cancelled: { label: "ยกเลิก",        color: "text-red-500 bg-red-50 border-red-200",           dot: "bg-red-400"     },
 };
 
-export default function AdminQuotesTable({ quotes, total, page, totalPages, currentStatus }: Props) {
+export default function AdminQuotesTable({ quotes, total, page, totalPages, currentStatus, currentSearch }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -68,10 +69,31 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
   const [downloadPopup, setDownloadPopup] = useState<{ quoteNumber: string; files: QuoteFile[] } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; quoteNumber: string; fileCount: number } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState(currentSearch);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(key, value);
+    params.set("page", "1");
+    startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
+  };
+
+  const handleSearch = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchInput.trim()) {
+      params.set("search", searchInput.trim());
+    } else {
+      params.delete("search");
+    }
+    params.set("page", "1");
+    startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
+  };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("search");
     params.set("page", "1");
     startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
   };
@@ -215,12 +237,12 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
 
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="bg-white border border-slate-100 rounded-xl px-5 py-3.5 flex items-center gap-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-        <div className="flex items-center gap-2 text-slate-400 mr-2">
+      <div className="bg-white border border-slate-100 rounded-xl px-5 py-3.5 flex flex-wrap items-center gap-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center gap-2 text-slate-400 mr-2 shrink-0">
           <SlidersHorizontal size={14} />
           <span className="text-[11px] font-semibold uppercase tracking-wider">ฟิลเตอร์</span>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap flex-1">
           {statusOptions.map((opt) => (
             <button
               key={opt.value}
@@ -235,7 +257,39 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
             </button>
           ))}
         </div>
+        {/* Search input */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative flex items-center">
+            <Search size={13} className="absolute left-3 text-slate-400 pointer-events-none" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              placeholder="ค้นหาเลขที่ / ชื่อ / อีเมล"
+              className="pl-8 pr-8 py-1.5 rounded-lg border border-slate-200 text-[12px] text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-blue-400 w-52 bg-slate-50 focus:bg-white transition-colors"
+            />
+            {searchInput && (
+              <button onClick={clearSearch} className="absolute right-2 text-slate-300 hover:text-slate-500 transition-colors">
+                <X size={12} />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={handleSearch}
+            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-colors flex items-center gap-1.5 shadow-sm"
+          >
+            <Search size={11} /> ค้นหา
+          </button>
+        </div>
       </div>
+      {currentSearch && (
+        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+          <span>ผลการค้นหา: <span className="font-bold text-slate-800">"{currentSearch}"</span></span>
+          <button onClick={clearSearch} className="text-blue-500 hover:underline font-semibold">ล้างการค้นหา</button>
+        </div>
+      )}
 
       {/* Table card */}
       <div className="bg-white border border-slate-100 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">

@@ -3,7 +3,7 @@ import Quote from "@/models/Quote";
 import AdminQuotesTable from "@/components/admin/quotes/AdminQuotesTable";
 import { FileText, Clock, CheckCircle, XCircle, FileClock } from "lucide-react";
 
-async function getQuotes(page: number, status: string, userId?: string) {
+async function getQuotes(page: number, status: string, search?: string, userId?: string) {
   await dbConnect();
   const limit = 20;
   const skip = (page - 1) * limit;
@@ -16,6 +16,21 @@ async function getQuotes(page: number, status: string, userId?: string) {
     matchStage.status = { $ne: "draft" };
   }
   if (userId) matchStage.userId = userId;
+
+  if (search) {
+    const User = (await import("@/models/User")).default;
+    const matchingUsers = await User.find({
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    }, "_id").lean();
+    const matchingUserIds = (matchingUsers as any[]).map((u) => u._id);
+    matchStage.$or = [
+      { quoteNumber: { $regex: search, $options: "i" } },
+      ...(matchingUserIds.length > 0 ? [{ userId: { $in: matchingUserIds } }] : []),
+    ];
+  }
 
   // Group by quoteNumber — each "row" = 1 quote batch (may contain multiple files)
   const pipeline: any[] = [
@@ -81,7 +96,7 @@ export default async function AdminQuotesPage({
 }) {
   const params = await searchParams;
   const page = parseInt(params.page || "1");
-  const data = await getQuotes(page, params.status || "all", params.userId);
+  const data = await getQuotes(page, params.status || "all", params.search, params.userId);
 
   const statCards = [
     { label: "ใบเสนอราคาทั้งหมด", sublabel: "Total Quotes", value: data.total,          icon: FileText    },
@@ -154,6 +169,7 @@ export default async function AdminQuotesPage({
         page={data.page}
         totalPages={data.totalPages}
         currentStatus={params.status || "all"}
+        currentSearch={params.search || ""}
       />
     </div>
   );

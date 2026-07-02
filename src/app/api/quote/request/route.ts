@@ -23,9 +23,14 @@ export async function POST(req: NextRequest) {
       const randomStr = Math.floor(1000 + Math.random() * 9000);
       const sharedQuoteNumber = `QT-${dateStr}-${randomStr}`;
 
+      const updateFields: Record<string, any> = { quoteNumber: sharedQuoteNumber, status: "pending" };
+      if (body.shippingCourierCode) updateFields.shippingCourierCode = body.shippingCourierCode;
+      if (body.shippingCourierName) updateFields.shippingCourierName = body.shippingCourierName;
+      if (body.shippingFee != null)  updateFields.shippingFee = body.shippingFee;
+
       await Quote.updateMany(
         { _id: { $in: ids } },
-        { $set: { quoteNumber: sharedQuoteNumber, status: "pending" } }
+        { $set: updateFields }
       );
 
       return NextResponse.json({

@@ -112,6 +112,9 @@ const QuoteSchema = new mongoose.Schema(
             type: String,
             default: "standard",
         },
+        shippingCourierCode: { type: String },
+        shippingCourierName: { type: String },
+        shippingFee:         { type: Number },
         status: {
             type: String,
             enum: ["draft", "pending", "ordered", "cancelled"],

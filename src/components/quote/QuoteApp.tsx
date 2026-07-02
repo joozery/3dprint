@@ -486,11 +486,17 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             const res = await fetch("/api/quote/request", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ids }),
+                body: JSON.stringify({
+                    ids,
+                    shippingCourierCode: selectedRate?.courier_code || null,
+                    shippingCourierName: selectedRate?.courier_name || null,
+                    shippingFee:         selectedRate?.total_price  ?? null,
+                }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
-            router.push(`/quote/request?ids=${data.ids.join(",")}`);
+            const addrParam = selectedAddressId ? `&addressId=${selectedAddressId}` : "";
+            router.push(`/quote/request?ids=${data.ids.join(",")}${addrParam}`);
         } catch (err: any) {
             alert(err.message || "เกิดข้อผิดพลาด");
         }

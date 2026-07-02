@@ -73,7 +73,13 @@ export default async function QuoteViewPage({
   };
   const currentDelivery = deliveryConfig[quote.deliverySpeed || 'standard'];
 
-  const deliveryCost = hasRealOrder ? (order.pricing?.shippingFee || 0) : currentDelivery.price;
+  // ใช้ค่าขนส่งจริงที่ลูกค้าเลือก (quote.shippingFee) ถ้ามี ไม่งั้น fallback hardcode
+  const deliveryCost = hasRealOrder
+      ? (order.pricing?.shippingFee || 0)
+      : (quote.shippingFee != null ? quote.shippingFee : currentDelivery.price);
+  const deliveryLabel = hasRealOrder
+      ? null
+      : (quote.shippingCourierName || currentDelivery.label);
   const vat          = hasRealOrder ? (order.pricing?.vat ?? 0) : subtotal * 0.07;
   const whtApplies   = hasRealOrder
       ? (order.pricing?.wht ?? 0) > 0
@@ -236,42 +242,33 @@ export default async function QuoteViewPage({
                         <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Subtotal' : 'มูลค่าสินค้า (Subtotal)'}</span>
                         <span className="font-bold text-slate-800">฿{formatCur(subtotal)}</span>
                     </div>
-                    {!hasRealOrder && (
+                    {vat > 0 && (
                         <div className="flex justify-between items-center py-1.5 text-xs">
                             <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'VAT (7%)' : 'ภาษีมูลค่าเพิ่ม 7% (VAT)'}</span>
                             <span className="font-bold text-slate-800">฿{formatCur(vat)}</span>
                         </div>
                     )}
                     <div className="flex justify-between items-center py-1.5 text-xs">
-                        <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Delivery Fee' : 'ค่าจัดส่ง (Delivery)'}</span>
-                        <span className="font-bold text-slate-800">
-                            {!hasRealOrder && quote.deliverySpeed === 'express' ? <span className="text-orange-500 mr-2">[ด่วน]</span> : null}
-                            ฿{formatCur(deliveryCost)}
+                        <span className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">
+                            {isEng ? 'Delivery Fee' : 'ค่าจัดส่ง (Delivery)'}
+                            {deliveryLabel && <span className="ml-1 normal-case font-normal text-slate-400">— {deliveryLabel}</span>}
                         </span>
+                        <span className="font-bold text-slate-800">฿{formatCur(deliveryCost)}</span>
                     </div>
-                    {hasRealOrder ? (
-                        <div className="flex justify-between items-center py-2.5 mt-1.5 border-t-2 border-slate-900">
-                            <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Net Payable' : 'ยอดชำระสุทธิ'}</span>
-                            <span className="text-xl font-black text-blue-600 leading-none">฿{formatCur(netPayable)}</span>
+                    <div className="flex justify-between items-center py-2.5 mt-1.5 border-t border-slate-200">
+                        <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Grand Total' : 'ยอดรวมสุทธิ (Total)'}</span>
+                        <span className="text-lg font-black leading-none text-slate-800">฿{formatCur(grandTotal)}</span>
+                    </div>
+                    {whtApplies && (
+                        <div className="flex justify-between items-center py-1.5 text-xs text-red-600 mt-1">
+                            <span className="font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Withholding Tax (3%)' : 'หัก ณ ที่จ่าย 3% (WHT)'}</span>
+                            <span className="font-bold">-฿{formatCur(wht)}</span>
                         </div>
-                    ) : (
-                        <>
-                            <div className="flex justify-between items-center py-2.5 mt-1.5 border-t border-slate-200">
-                                <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Grand Total' : 'ยอดรวมสุทธิ (Total)'}</span>
-                                <span className="text-lg font-black leading-none text-slate-800">฿{formatCur(grandTotal)}</span>
-                            </div>
-                            {whtApplies && (
-                                <div className="flex justify-between items-center py-1.5 text-xs text-red-600 mt-1">
-                                    <span className="font-semibold uppercase tracking-widest text-[9px]">{isEng ? 'Withholding Tax (3%)' : 'หัก ณ ที่จ่าย 3% (WHT)'}</span>
-                                    <span className="font-bold">-฿{formatCur(wht)}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between items-center py-2.5 mt-1.5 border-t-2 border-slate-900">
-                                <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Net Payable' : 'ยอดชำระสุทธิ'}</span>
-                                <span className="text-xl font-black text-blue-600 leading-none">฿{formatCur(netPayable)}</span>
-                            </div>
-                        </>
                     )}
+                    <div className="flex justify-between items-center py-2.5 mt-1.5 border-t-2 border-slate-900">
+                        <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Net Payable' : 'ยอดชำระสุทธิ'}</span>
+                        <span className="text-xl font-black text-blue-600 leading-none">฿{formatCur(netPayable)}</span>
+                    </div>
                 </div>
             </div>
 
