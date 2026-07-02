@@ -34,7 +34,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
       if (!existingOrder) {
         // Fallback addresses if not fully filled in the quote
-        const shippingFallback = quote.shippingAddress || {
+        const shippingFallback = (quote as any).shipping || {
           fullName: "รออัปเดต",
           phone: "รออัปเดต",
           address: "รออัปเดต",
@@ -51,10 +51,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             status: "pending",
           },
           pricing: {
-            subtotal: quote.price || 0,
-            shippingFee: 0,
+            subtotal: (quote as any).priceDetail?.totalPrice || 0,
+            shippingFee: (quote as any).shippingFee || 0,
             discount: 0,
-            totalAmount: quote.price || 0,
+            totalAmount: (quote as any).priceDetail?.totalPrice || 0,
           },
           status: "pending_payment",
         });

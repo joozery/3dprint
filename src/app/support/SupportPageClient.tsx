@@ -20,6 +20,7 @@ interface GuideItem {
   title: string;
   description?: string;
   thumbnail?: string;
+  linkUrl?: string;
 }
 
 interface SupportSettings {

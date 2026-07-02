@@ -23,6 +23,10 @@ const QuoteSchema = new mongoose.Schema(
         cloudinaryId: {
             type: String,
         },
+        isStoredInCloud: {
+            type: Boolean,
+            default: false,
+        },
         technology: {
             type: String,
             required: true,
@@ -99,10 +103,14 @@ const QuoteSchema = new mongoose.Schema(
             y: { type: Number, default: 0 },
             z: { type: Number, default: 0 },
         },
+        needsSupport:  { type: Boolean, default: false },
+        isManifold:    { type: Boolean, default: true },
         priceDetail: {
-            pricePerUnit: { type: Number, default: 0 },
-            totalPrice: { type: Number, default: 0 },
-            setupFee: { type: Number, default: 0 },
+            pricePerUnit:  { type: Number, default: 0 },
+            totalPrice:    { type: Number, default: 0 },
+            setupFee:      { type: Number, default: 0 },
+            materialCost:  { type: Number, default: 0 },
+            timeCost:      { type: Number, default: 0 },
         },
         finish: {
             type: String,

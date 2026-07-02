@@ -1,3 +1,4 @@
+"use client";
 import Navbar from "@/components/layout/Navbar";
 import { Phone, Mail, MapPin, Clock, ArrowRight, MessageCircle } from "lucide-react";
 
