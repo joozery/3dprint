@@ -131,18 +131,22 @@ function QuoteRequestForm() {
         zipCode:  form.postalCode,
       };
 
+      const confirmBody: Record<string, any> = {
+        ids: ids.split(",").filter(Boolean),
+        billing: payload,
+        shipping: shippingForQuote,
+      };
+      // เพิ่ม shipping info จาก URL params เท่านั้นถ้ามีค่าจริง
+      if (shippingCodeParam) confirmBody.shippingCourierCode = shippingCodeParam;
+      if (shippingNameParam) confirmBody.shippingCourierName = shippingNameParam;
+      if (shippingFeeFromUrl != null && !isNaN(shippingFeeFromUrl)) confirmBody.shippingFee = shippingFeeFromUrl;
+
+      console.log("[Quote Request] Sending to confirm:", { shippingFee: shippingFeeFromUrl, shippingCode: shippingCodeParam, shippingName: shippingNameParam });
+
       const res = await fetch("/api/quote/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ids: ids.split(",").filter(Boolean),
-          billing: payload,
-          shipping: shippingForQuote,
-          // pass courier/fee from URL so it's always saved even if /api/quote/request missed it
-          shippingCourierCode: shippingCodeParam || undefined,
-          shippingCourierName: shippingNameParam || undefined,
-          shippingFee: shippingFeeFromUrl ?? undefined,
-        }),
+        body: JSON.stringify(confirmBody),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
