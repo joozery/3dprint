@@ -24,6 +24,9 @@ export async function POST(req: NextRequest) {
     if (shippingCourierCode) setFields.shippingCourierCode = shippingCourierCode;
     if (shippingCourierName) setFields.shippingCourierName = shippingCourierName;
     if (shippingFee != null)  setFields.shippingFee = shippingFee;
+    
+    console.log("[Quote Confirm Debug] Received:", { shippingCourierCode, shippingCourierName, shippingFee });
+    console.log("[Quote Confirm Debug] setFields:", setFields);
 
     // ไม่ filter ด้วย userId เพราะ /api/quote/request ก็ไม่ได้ filter
     // และ ids มาจาก user session เองแล้ว (session check อยู่ด้านบน)

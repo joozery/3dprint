@@ -175,4 +175,7 @@ QuoteSchema.pre("validate", function (next: any) {
     }
 });
 
-export default (mongoose.models.Quote as mongoose.Model<any>) || mongoose.model("Quote", QuoteSchema);
+if (mongoose.models.Quote) {
+    delete mongoose.models.Quote;
+}
+export default mongoose.model("Quote", QuoteSchema);
