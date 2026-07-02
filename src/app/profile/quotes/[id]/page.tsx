@@ -29,7 +29,7 @@ export default async function QuoteViewPage({
   await dbConnect();
   
   // Find quote and ensure it belongs to the active user (or user is admin)
-  const rawQuote = await Quote.findById(id).populate("userId", "shippingAddress").lean();
+  const rawQuote = await Quote.findById(id).lean();
   
   if (!rawQuote) redirect("/profile/quotes");
   
@@ -54,9 +54,9 @@ export default async function QuoteViewPage({
   const rawOrder = await Order.findOne({ quotes: { $in: rawItems.map((i: any) => i._id) } }).lean();
   const order = rawOrder ? JSON.parse(JSON.stringify(rawOrder)) : null;
 
-  const { billing, shipping: quoteShipping, userId } = quote;
+  const { billing, shipping: quoteShipping } = quote;
   const isCompany = billing?.type === "company";
-  const shipping = quoteShipping || userId?.shippingAddress;
+  const shipping = quoteShipping || null;
 
   const formatCur = (num: number) => num.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -76,9 +76,9 @@ export default async function QuoteViewPage({
   // ใช้ค่าขนส่งจริงที่ลูกค้าเลือก (quote.shippingFee) ถ้ามี ไม่งั้น fallback hardcode
   const deliveryCost = hasRealOrder
       ? (order.pricing?.shippingFee || 0)
-      : (quote.shippingFee != null ? quote.shippingFee : currentDelivery.price);
+      : (quote.shippingFee != null ? quote.shippingFee : null);
   const deliveryLabel = hasRealOrder
-      ? null
+      ? (order.shippingProvider || quote.shippingCourierName)
       : (quote.shippingCourierName || currentDelivery.label);
   const vat          = hasRealOrder ? (order.pricing?.vat ?? 0) : subtotal * 0.07;
   const whtApplies   = hasRealOrder
@@ -88,8 +88,8 @@ export default async function QuoteViewPage({
       ? (order.pricing?.wht ?? 0)
       : (whtApplies ? subtotal * 0.03 : 0);
   const grandTotal   = hasRealOrder
-      ? (order.pricing?.totalAmount ?? (subtotal + vat + deliveryCost))
-      : (subtotal + vat + deliveryCost);
+      ? (order.pricing?.totalAmount ?? (subtotal + vat + (deliveryCost || 0)))
+      : (subtotal + vat + (deliveryCost || 0));
   const netPayable   = hasRealOrder
       ? (order.pricing?.netPayable ?? grandTotal - wht)
       : grandTotal - wht;
@@ -253,7 +253,9 @@ export default async function QuoteViewPage({
                             {isEng ? 'Delivery Fee' : 'ค่าจัดส่ง (Delivery)'}
                             {deliveryLabel && <span className="ml-1 normal-case font-normal text-slate-400">— {deliveryLabel}</span>}
                         </span>
-                        <span className="font-bold text-slate-800">฿{formatCur(deliveryCost)}</span>
+                        <span className="font-bold text-slate-800">
+                            {deliveryCost != null ? `฿${formatCur(deliveryCost)}` : (isEng ? 'Pending' : 'รอประเมิน')}
+                        </span>
                     </div>
                     <div className="flex justify-between items-center py-2.5 mt-1.5 border-t border-slate-200">
                         <span className="text-slate-900 font-black uppercase tracking-widest text-[11px]">{isEng ? 'Grand Total' : 'ยอดรวมสุทธิ (Total)'}</span>

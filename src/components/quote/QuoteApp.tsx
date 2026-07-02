@@ -29,8 +29,7 @@ const COUNTRY_CODES: Record<string, string> = {
     "Uruguay":"UY","Uzbekistan":"UZ","Venezuela":"VE","Vietnam":"VN",
     "Yemen":"YE","Zambia":"ZM","Zimbabwe":"ZW",
 };
-import { Upload, Info, Trash2, ChevronDown, CheckCircle2, AlertCircle, Layers, Plus, Lock, History, User, ShoppingCart, ChevronRight, RotateCcw, ZoomIn, ZoomOut, Move, Check, Truck, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Upload, Info, Trash2, ChevronDown, Layers, Plus, Lock, ShoppingCart, RotateCcw, ZoomIn, ZoomOut, Move, Check, Truck, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import axios from "axios";
 import { Viewer3D } from "./Viewer3D";
@@ -54,7 +53,6 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [currentFile, setCurrentFile] = useState("");
     const [uploadPhase, setUploadPhase] = useState<"upload" | "processing">("upload");
     const [isDragging, setIsDragging] = useState(false);
-    const [debugStack, setDebugStack] = useState<string | null>(null);
 
     // Coupon states
     const [couponCode, setCouponCode] = useState("");
@@ -571,8 +569,6 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const deliveryCost = selectedRate ? selectedRate.total_price : 0;
     const finalPrice = Math.max(0, taxableAmount + vat + deliveryCost);
 
-    const brandPrimary = "#2563eb";
-    const brandPrimaryDeep = "#1d4ed8";
     const bgMain = "oklch(0.985 0.004 310)";
     const bgSidebar = "oklch(0.97 0.006 310)";
     const lineBorder = "oklch(0.88 0.012 310)";
@@ -1352,7 +1348,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 {t.quote.placeOrder} · Place order
                             </button>
                             <div className="grid grid-cols-2 gap-2">
-                                <button onClick={handleGetQuotation} className="py-2 text-[10px] font-black border border-slate-100 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5 text-slate-400 transition-all uppercase tracking-widest shadow-sm"><Info className="w-3.5 h-3.5 opacity-50" /> {t.quote.quotation}</button>
+                                <button onClick={handleGetQuotation} disabled={loadingShippingRates} className="py-2 text-[10px] font-black border border-slate-100 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5 text-slate-400 transition-all uppercase tracking-widest shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"><Info className="w-3.5 h-3.5 opacity-50" /> {t.quote.quotation}</button>
                                 <button onClick={handleSaveToCart} className="py-2 text-[10px] font-black border border-slate-100 rounded-lg hover:bg-slate-50 flex items-center justify-center gap-1.5 text-slate-400 transition-all uppercase tracking-widest shadow-sm"><ShoppingCart className="w-3.5 h-3.5 opacity-50" /> {t.quote.saveCart}</button>
                             </div>
                         </div>

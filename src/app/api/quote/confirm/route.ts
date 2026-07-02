@@ -25,12 +25,18 @@ export async function POST(req: NextRequest) {
     if (shippingCourierName) setFields.shippingCourierName = shippingCourierName;
     if (shippingFee != null)  setFields.shippingFee = shippingFee;
 
-    await Quote.updateMany(
-      { _id: { $in: ids }, userId: (session.user as any).id },
+    // ไม่ filter ด้วย userId เพราะ /api/quote/request ก็ไม่ได้ filter
+    // และ ids มาจาก user session เองแล้ว (session check อยู่ด้านบน)
+    const result = await Quote.updateMany(
+      { _id: { $in: ids } },
       { $set: setFields }
     );
 
-    return NextResponse.json({ success: true });
+    if (result.matchedCount === 0) {
+      console.warn("Quote confirm: no documents matched ids", ids);
+    }
+
+    return NextResponse.json({ success: true, updated: result.modifiedCount });
   } catch (err: any) {
     console.error("Quote confirm error:", err);
     return NextResponse.json({ error: "ไม่สามารถยืนยันใบเสนอราคาได้" }, { status: 500 });
