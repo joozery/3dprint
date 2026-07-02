@@ -70,6 +70,10 @@ function QuoteRequestForm() {
   const searchParams = useSearchParams();
   const ids = searchParams.get("ids") || "";
   const addressId = searchParams.get("addressId") || "";
+  const shippingFeeParam   = searchParams.get("shippingFee");
+  const shippingCodeParam  = searchParams.get("shippingCode") || "";
+  const shippingNameParam  = searchParams.get("shippingName") || "";
+  const shippingFeeFromUrl = shippingFeeParam != null ? parseFloat(shippingFeeParam) : null;
 
   const [billingType, setBillingType] = useState<BillingType>("individual");
   const [form, setForm] = useState<BillingForm>(empty);
@@ -134,6 +138,10 @@ function QuoteRequestForm() {
           ids: ids.split(",").filter(Boolean),
           billing: payload,
           shipping: shippingForQuote,
+          // pass courier/fee from URL so it's always saved even if /api/quote/request missed it
+          shippingCourierCode: shippingCodeParam || undefined,
+          shippingCourierName: shippingNameParam || undefined,
+          shippingFee: shippingFeeFromUrl ?? undefined,
         }),
       });
       const data = await res.json();
@@ -250,6 +258,24 @@ function QuoteRequestForm() {
                   </div>
                 )}
               </div>
+
+              {/* ── Shipping Cost Card ── */}
+              {shippingFeeFromUrl != null && (
+                <div className="bg-white border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                      <CheckCircle2 size={15} className="text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">ค่าขนส่งที่เลือก</p>
+                      {shippingNameParam && <p className="text-[11px] text-slate-400 mt-0.5">{shippingNameParam}</p>}
+                    </div>
+                  </div>
+                  <p className="text-base font-black text-slate-900">
+                    ฿{shippingFeeFromUrl.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+              )}
 
               {/* ── Billing Type ── */}
               <div className="bg-white border border-slate-100 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5">

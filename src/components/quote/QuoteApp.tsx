@@ -496,7 +496,10 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
             const addrParam = selectedAddressId ? `&addressId=${selectedAddressId}` : "";
-            router.push(`/quote/request?ids=${data.ids.join(",")}${addrParam}`);
+            const feeParam  = selectedRate?.total_price != null ? `&shippingFee=${selectedRate.total_price}` : "";
+            const codeParam = selectedRate?.courier_code ? `&shippingCode=${encodeURIComponent(selectedRate.courier_code)}` : "";
+            const nameParam = selectedRate?.courier_name ? `&shippingName=${encodeURIComponent(selectedRate.courier_name)}` : "";
+            router.push(`/quote/request?ids=${data.ids.join(",")}${addrParam}${feeParam}${codeParam}${nameParam}`);
         } catch (err: any) {
             alert(err.message || "เกิดข้อผิดพลาด");
         }

@@ -13,23 +13,21 @@ export async function POST(req: NextRequest) {
 
   await dbConnect();
   const body = await req.json();
-  const { ids, billing, shipping } = body;
+  const { ids, billing, shipping, shippingCourierCode, shippingCourierName, shippingFee } = body;
 
   if (!ids || ids.length === 0) {
     return NextResponse.json({ error: "ไม่มีรายการ" }, { status: 400 });
   }
 
   try {
-    // อัปเดตทุก quote ด้วย billing info
+    const setFields: Record<string, any> = { billing, shipping, status: "pending" };
+    if (shippingCourierCode) setFields.shippingCourierCode = shippingCourierCode;
+    if (shippingCourierName) setFields.shippingCourierName = shippingCourierName;
+    if (shippingFee != null)  setFields.shippingFee = shippingFee;
+
     await Quote.updateMany(
       { _id: { $in: ids }, userId: (session.user as any).id },
-      {
-        $set: {
-          billing,
-          shipping,
-          status: "pending",
-        },
-      }
+      { $set: setFields }
     );
 
     return NextResponse.json({ success: true });
