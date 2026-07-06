@@ -4,7 +4,6 @@ export interface TranslationSchema {
   readonly nav: {
     readonly services: string;
     readonly materials: string;
-    readonly freeModels: string;
     readonly support: string;
     readonly about: string;
     readonly orderNow: string;
@@ -432,7 +431,6 @@ export const I18N: Record<Language, TranslationSchema> = {
     nav: {
       services: "บริการ",
       materials: "วัสดุ",
-      freeModels: "โมเดล 3D ฟรี",
       support: "ช่วยเหลือ",
       about: "เกี่ยวกับเรา",
       orderNow: "สั่งพิมพ์เลย",
@@ -858,7 +856,6 @@ export const I18N: Record<Language, TranslationSchema> = {
     nav: {
       services: "Services",
       materials: "Materials",
-      freeModels: "Free 3D Models",
       support: "Help & Support",
       about: "About Us",
       orderNow: "Order Now",

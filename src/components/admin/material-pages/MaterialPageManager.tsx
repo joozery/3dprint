@@ -40,7 +40,7 @@ const COLOR_OPTIONS = [
     { label: "Yellow", color: "text-yellow-500", bg: "bg-yellow-50" },
 ];
 
-function ImageUploadBox({
+export function ImageUploadBox({
     value, onChange, label, uploading, onUpload,
 }: {
     value: string; onChange: (url: string) => void; label: string;
@@ -204,7 +204,7 @@ function PropertyRow({ prop, onChange, onDelete }: { prop: Property; onChange: (
     );
 }
 
-async function uploadImage(file: File): Promise<string> {
+export async function uploadImage(file: File): Promise<string> {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/admin/upload", { method: "POST", body: fd });

@@ -23,7 +23,9 @@ export async function POST(req: NextRequest) {
       const randomStr = Math.floor(1000 + Math.random() * 9000);
       const sharedQuoteNumber = `QT-${dateStr}-${randomStr}`;
 
-      const updateFields: Record<string, any> = { quoteNumber: sharedQuoteNumber, status: "pending" };
+      // ไม่เปลี่ยน status ที่นี่ — ให้คง draft ไว้จนกว่าผู้ใช้จะกดส่งจริงที่หน้า confirm
+      // (ถ้าเปลี่ยนเป็น pending ตรงนี้ ผู้ใช้ที่กดกลับจากหน้าฟอร์มจะไม่เห็นรายการใน /quote อีก)
+      const updateFields: Record<string, any> = { quoteNumber: sharedQuoteNumber };
       if (body.shippingCourierCode) updateFields.shippingCourierCode = body.shippingCourierCode;
       if (body.shippingCourierName) updateFields.shippingCourierName = body.shippingCourierName;
       if (body.shippingFee != null)  updateFields.shippingFee = body.shippingFee;

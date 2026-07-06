@@ -127,7 +127,13 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
         fetchData();
     }, [session]);
 
-    // Fetch shipping rates when address or quotes change
+    // ลายเซ็นของไฟล์ที่เลือก (id + น้ำหนัก) — เปลี่ยนเมื่อไฟล์ถูกเลือก/ลบ/วิเคราะห์น้ำหนักเสร็จ
+    const selectedShippingSignature = quotes
+        .filter(q => selectedIds.has(q._id))
+        .map(q => `${q._id}:${q.weightGrams || 0}`)
+        .join("|");
+
+    // Fetch shipping rates when address or selected quotes change
     useEffect(() => {
         const addr = userAddresses.find(a => String(a._id) === String(selectedAddressId));
         const sel = quotes.filter(q => selectedIds.has(q._id));
@@ -204,7 +210,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                 .catch(() => {})
                 .finally(() => setLoadingShippingRates(false));
         }
-    }, [selectedAddressId, userAddresses, quotes.length]);
+    }, [selectedAddressId, userAddresses, selectedShippingSignature]);
 
     const processFiles = async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;

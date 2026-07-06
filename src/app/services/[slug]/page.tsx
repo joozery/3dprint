@@ -99,13 +99,7 @@ export default async function DynamicServicePage({ params }: { params: Promise<{
                                     <span className="text-[11px] font-medium text-white/80 mt-0.5">ประเมินราคาใน 1 นาที</span>
                                 </div>
                             </Link>
-                            
-                            <Link 
-                                href="/services" 
-                                className="flex items-center justify-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 text-white border border-slate-700/50 font-bold px-8 py-4 rounded-xl transition-colors backdrop-blur-sm"
-                            >
-                                ดูบริการทั้งหมด <ArrowRight size={16} />
-                            </Link>
+
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-sm font-medium text-slate-300">

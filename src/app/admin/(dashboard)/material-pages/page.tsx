@@ -3,8 +3,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import dbConnect from "@/lib/mongoose";
 import MaterialPageContent from "@/models/MaterialPageContent";
+import MaterialUseCase from "@/models/MaterialUseCase";
 import MaterialPageManager from "@/components/admin/material-pages/MaterialPageManager";
-import { Layers } from "lucide-react";
+import UseCaseManager from "@/components/admin/material-pages/UseCaseManager";
+import { Layers, Lightbulb } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +125,13 @@ const SEED_DATA = [
     },
 ];
 
+const USE_CASE_SEED = [
+    { title: "Home Decor", desc: "ของตกแต่งบ้าน", image: "/asset/home.png", order: 1 },
+    { title: "Toys & Figures", desc: "ของเล่น & ฟิกเกอร์", image: "/asset/robot.png", order: 2 },
+    { title: "Functional Parts", desc: "ชิ้นส่วนการใช้งาน", image: "/asset/automotive-parts.png", order: 3 },
+    { title: "Cosplay & Props", desc: "คอสเพลย์ & พร็อพ", image: "/asset/Cosplay.png", order: 4 },
+];
+
 export default async function AdminMaterialPagesPage() {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "admin") redirect("/admin/login");
@@ -135,7 +144,15 @@ export default async function AdminMaterialPagesPage() {
         items = await MaterialPageContent.find().sort({ order: 1 }).lean();
     }
 
+    let useCases = await MaterialUseCase.find().sort({ order: 1, title: 1 }).lean();
+
+    if (useCases.length === 0) {
+        await MaterialUseCase.insertMany(USE_CASE_SEED);
+        useCases = await MaterialUseCase.find().sort({ order: 1 }).lean();
+    }
+
     const data = JSON.parse(JSON.stringify(items));
+    const useCaseData = JSON.parse(JSON.stringify(useCases));
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
@@ -151,6 +168,20 @@ export default async function AdminMaterialPagesPage() {
                 </div>
             </div>
             <MaterialPageManager initialData={data} />
+
+            <div className="flex items-center gap-3 mt-10 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                    <Lightbulb className="w-5 h-5" />
+                </div>
+                <div>
+                    <h2 className="text-xl font-black text-slate-900">ไอเดียการใช้งาน (Use Cases)</h2>
+                    <p className="text-xs text-slate-400">การ์ดในส่วน &quot;ไอเดียการใช้งาน&quot; ของหน้า Materials — {useCaseData.length} รายการ</p>
+                </div>
+            </div>
+            <UseCaseManager
+                initialData={useCaseData}
+                materialOptions={data.map((m: any) => ({ slug: m.slug, name: m.name }))}
+            />
         </div>
     );
 }

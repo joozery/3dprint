@@ -98,7 +98,7 @@ export default function FactoryPage() {
                     <div className="rounded-3xl bg-gradient-to-r from-slate-800 to-slate-700 p-10 text-center text-white">
                         <h2 className="text-2xl font-black mb-3">เห็นผลงานจริงก่อนตัดสินใจ</h2>
                         <p className="text-slate-400 mb-8">ดูโมเดลตัวอย่างที่ผ่านกระบวนการผลิตจริง</p>
-                        <Link href="/models" className="inline-flex items-center gap-2 bg-white text-slate-800 font-bold px-8 py-4 rounded-full hover:bg-slate-50 transition-colors shadow-lg">
+                        <Link href="/quote" className="inline-flex items-center gap-2 bg-white text-slate-800 font-bold px-8 py-4 rounded-full hover:bg-slate-50 transition-colors shadow-lg">
                             ดูตัวอย่างงาน <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>

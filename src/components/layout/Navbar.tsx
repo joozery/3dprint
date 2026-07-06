@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
 import {
-    Search, ShoppingCart, Menu, X, User as UserIcon, LogOut, ArrowRight,
+    ShoppingCart, Menu, X, User as UserIcon, LogOut, ArrowRight,
     ChevronDown, Globe, Printer, Droplets, Palette, ScanLine, Layers,
     CircuitBoard, Sparkles, ChevronRight, type LucideProps,
 } from "lucide-react";
@@ -149,12 +149,6 @@ export default function Navbar() {
                                             <StandardItem href="/services/sheet-metal" icon={Layers} label={t.services.sheetMetal} />
                                             <StandardItem href="/services/pcb" icon={CircuitBoard} label={t.services.pcb} />
                                             <StandardItem href="/services/post-process" icon={Sparkles} label={t.services.postProcess} />
-                                            
-                                            <div className="h-px bg-slate-100 my-1 mx-2" />
-                                            
-                                            <Link href="/services" className="flex flex-row items-center justify-between px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg mx-1 transition-colors">
-                                                ดูบริการทั้งหมด <ArrowRight size={14} />
-                                            </Link>
                                         </div>
                                     </NavigationMenuContent>
                                 </NavigationMenuItem>
@@ -166,16 +160,6 @@ export default function Navbar() {
                                         className="inline-flex items-center h-10 px-3 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors rounded-md"
                                     >
                                         {t.nav.materials}
-                                    </Link>
-                                </NavigationMenuItem>
-
-                                {/* ── โมเดล 3D ฟรี ── */}
-                                <NavigationMenuItem>
-                                    <Link
-                                        href="/models"
-                                        className="inline-flex items-center h-10 px-3 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors rounded-md"
-                                    >
-                                        {t.nav.freeModels}
                                     </Link>
                                 </NavigationMenuItem>
 
@@ -239,10 +223,6 @@ export default function Navbar() {
                             </DropdownMenu>
                         </div>
                     )}
-
-                    <button className="hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-                        <Search size={18} />
-                    </button>
 
                     <Link href="/quote" className="relative hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                         <ShoppingCart size={18} />
@@ -423,14 +403,6 @@ export default function Navbar() {
                                 className="flex items-center justify-between px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
                             >
                                 {t.nav.materials}
-                                <ChevronRight size={16} className="text-slate-400" />
-                            </Link>
-
-                            {/* Free Models */}
-                            <Link href="/models" onClick={close}
-                                className="flex items-center justify-between px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
-                            >
-                                {t.nav.freeModels}
                                 <ChevronRight size={16} className="text-slate-400" />
                             </Link>
 
