@@ -1,8 +1,48 @@
 "use client";
 
-import { Settings, Info, Shield, Layers, LayoutGrid, Database, Cloud } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Settings, Info, Shield, Layers, LayoutGrid, Database, Cloud, Construction } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 export default function AdminSettingsPage() {
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/site-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success) setMaintenanceMode(!!data.settings?.maintenanceMode);
+      })
+      .catch(() => {})
+      .finally(() => setMaintenanceLoading(false));
+  }, []);
+
+  const toggleMaintenance = async (enabled: boolean) => {
+    setMaintenanceMode(enabled);
+    setMaintenanceLoading(true);
+    try {
+      const res = await fetch("/api/admin/site-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maintenanceMode: enabled }),
+      });
+      const data = await res.json();
+      if (!data?.success) throw new Error();
+      toast.success(
+        enabled
+          ? "เปิดโหมดปรับปรุงระบบแล้ว — หน้าเว็บลูกค้าจะแสดงหน้า Under Construction"
+          : "ปิดโหมดปรับปรุงระบบแล้ว — เว็บไซต์กลับมาเปิดให้บริการตามปกติ"
+      );
+    } catch {
+      setMaintenanceMode(!enabled);
+      toast.error("บันทึกการตั้งค่าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  };
+
   const systemInfo = [
     { label: "Platform", value: "PDM 3D Print Thailand", icon: LayoutGrid },
     { label: "Framework", value: "Next.js 16 (Turbopack)", icon: Layers },
@@ -35,6 +75,39 @@ export default function AdminSettingsPage() {
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">ตั้งค่าระบบ</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium italic">System Configuration & Platform Overview</p>
+        </div>
+      </div>
+
+      {/* Maintenance Mode Block */}
+      <div className={`bg-white border rounded-2xl shadow-xl overflow-hidden transition-colors duration-300 ${maintenanceMode ? "border-amber-200 shadow-amber-900/5" : "border-blue-100 shadow-blue-900/5"}`}>
+        <div className={`px-8 py-6 border-b flex items-center gap-3 transition-colors duration-300 ${maintenanceMode ? "border-amber-100 bg-amber-50/40" : "border-blue-50 bg-blue-50/20"}`}>
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${maintenanceMode ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"}`}>
+            <Construction size={16} />
+          </div>
+          <h2 className="text-slate-900 font-black text-sm uppercase tracking-widest">โหมดปรับปรุงระบบ (Under Construction)</h2>
+        </div>
+        <div className="p-8 flex flex-col md:flex-row md:items-center gap-6 justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <p className="text-slate-900 font-bold text-sm">ปิดหน้าเว็บชั่วคราวเพื่อปรับปรุงระบบ</p>
+              <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${maintenanceMode ? "text-amber-600 bg-amber-50 border-amber-100" : "text-emerald-600 bg-emerald-50 border-emerald-100"}`}>
+                {maintenanceMode ? "กำลังปรับปรุง" : "เปิดให้บริการ"}
+              </span>
+            </div>
+            <p className="text-slate-500 text-xs font-medium leading-relaxed max-w-xl">
+              เมื่อเปิดใช้งาน ลูกค้าที่เข้าเว็บไซต์จะเห็นหน้า &quot;กำลังปรับปรุงระบบ&quot; แทนหน้าเว็บปกติ
+              ส่วนหลังบ้าน (/admin) ยังใช้งานได้ตามปกติ
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">{maintenanceMode ? "ON" : "OFF"}</span>
+            <Switch
+              checked={maintenanceMode}
+              disabled={maintenanceLoading}
+              onCheckedChange={toggleMaintenance}
+              className="data-[state=checked]:bg-amber-500"
+            />
+          </div>
         </div>
       </div>
 
