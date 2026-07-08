@@ -28,35 +28,81 @@ import {
   BookOpen,
   Settings2,
   Layers,
-  ScrollText
+  ScrollText,
+  type LucideIcon
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 
-const menuItems = [
-  { label: "แดชบอร์ดหลัก", icon: LayoutDashboard, href: "/admin", badge: null },
-  { label: "ใบเสนอราคาใหม่", icon: FileText, href: "/admin/quotes", badge: "3", badgeColor: "bg-blue-600" },
-  { label: "รายการสั่งซื้อ", icon: ShoppingBag, href: "/admin/orders", badge: "New", badgeColor: "bg-emerald-500" },
-  { label: "คลังไฟล์โมเดล", icon: Database, href: "/admin/models", badge: null },
-  { label: "ระบบคูปอง", icon: Ticket, href: "/admin/coupons", badge: null },
-  { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
-  { label: "หน้า Materials (Content)", icon: Layers, href: "/admin/material-pages", badge: null },
-  { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
-  { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
-  { label: "จัดการหน้าบริการ", icon: FileText, href: "/admin/services-content", badge: null },
-  { label: "หน้าเกี่ยวกับเรา (About)", icon: FileText, href: "/admin/about", badge: null },
-  { label: "นโยบาย / ข้อกำหนด", icon: ScrollText, href: "/admin/legal-pages", badge: null },
-  { label: "จัดการลิ้งค์ Footer", icon: Link2, href: "/admin/footer-links", badge: null },
-  { label: "Newsletter", icon: Mail, href: "/admin/subscribers", badge: null },
-  { label: "FAQ", icon: HelpCircle, href: "/admin/faq", badge: null },
-  { label: "บทความ / คู่มือ", icon: BookOpen, href: "/admin/articles", badge: null },
-  { label: "ตั้งค่า Support", icon: Settings2, href: "/admin/support-settings", badge: null },
-  { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
-  { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },
-  { label: "Monitor คิว Slicer", icon: Activity, href: "/admin/slicer-queue", badge: null },
-  { label: "ประวัติระบบ", icon: ClipboardList, href: "/admin/logs", badge: null },
-  { label: "ตั้งค่าระบบ", icon: Settings, href: "/admin/settings", badge: null },
+type MenuItem = {
+  label: string;
+  icon: LucideIcon;
+  href: string;
+  badge: string | null;
+  badgeColor?: string;
+};
+
+type MenuGroup = {
+  title: string;
+  items: MenuItem[];
+};
+
+const menuGroups: MenuGroup[] = [
+  {
+    title: "ภาพรวม",
+    items: [
+      { label: "แดชบอร์ดหลัก", icon: LayoutDashboard, href: "/admin", badge: null },
+    ],
+  },
+  {
+    title: "งานขายและออเดอร์",
+    items: [
+      { label: "ใบเสนอราคาใหม่", icon: FileText, href: "/admin/quotes", badge: "3", badgeColor: "bg-blue-600" },
+      { label: "รายการสั่งซื้อ", icon: ShoppingBag, href: "/admin/orders", badge: "New", badgeColor: "bg-emerald-500" },
+      { label: "ระบบคูปอง", icon: Ticket, href: "/admin/coupons", badge: null },
+      { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
+    ],
+  },
+  {
+    title: "การผลิตและวัสดุ",
+    items: [
+      { label: "คลังไฟล์โมเดล", icon: Database, href: "/admin/models", badge: null },
+      { label: "ตั้งค่าวัสดุและราคา", icon: Box, href: "/admin/materials", badge: null },
+      { label: "Monitor คิว Slicer", icon: Activity, href: "/admin/slicer-queue", badge: null },
+    ],
+  },
+  {
+    title: "จัดการเนื้อหาเว็บไซต์",
+    items: [
+      { label: "จัดการแบนเนอร์", icon: ImageIcon, href: "/admin/banners", badge: null },
+      { label: "หน้า Materials (Content)", icon: Layers, href: "/admin/material-pages", badge: null },
+      { label: "จัดการหน้าบริการ", icon: FileText, href: "/admin/services-content", badge: null },
+      { label: "หน้าเกี่ยวกับเรา (About)", icon: FileText, href: "/admin/about", badge: null },
+      { label: "บทความ / คู่มือ", icon: BookOpen, href: "/admin/articles", badge: null },
+      { label: "FAQ", icon: HelpCircle, href: "/admin/faq", badge: null },
+      { label: "นโยบาย / ข้อกำหนด", icon: ScrollText, href: "/admin/legal-pages", badge: null },
+      { label: "จัดการลิ้งค์ Footer", icon: Link2, href: "/admin/footer-links", badge: null },
+    ],
+  },
+  {
+    title: "สมาชิกและการตลาด",
+    items: [
+      { label: "จัดการสมาชิก", icon: Users, href: "/admin/users", badge: null },
+      { label: "Newsletter", icon: Mail, href: "/admin/subscribers", badge: null },
+    ],
+  },
+  {
+    title: "ระบบ",
+    items: [
+      { label: "จัดการแอดมิน", icon: ShieldCheck, href: "/admin/admins", badge: null },
+      { label: "ตั้งค่า Support", icon: Settings2, href: "/admin/support-settings", badge: null },
+      { label: "ประวัติระบบ", icon: ClipboardList, href: "/admin/logs", badge: null },
+      { label: "ตั้งค่าระบบ", icon: Settings, href: "/admin/settings", badge: null },
+    ],
+  },
 ];
+
+const menuItems: MenuItem[] = menuGroups.flatMap((group) => group.items);
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -161,12 +207,17 @@ export default function AdminSidebar() {
         )}
 
         {/* Navigation */}
-        <nav className={`flex-1 overflow-y-auto w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isCollapsed ? 'px-3 py-6' : 'px-4 py-3'} space-y-1`}>
-          {!isCollapsed && (
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 pl-3 pt-2">Main Menu</div>
-          )}
-          
-          {menuItems.map((item) => {
+        <nav className={`flex-1 overflow-y-auto w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isCollapsed ? 'px-3 py-6' : 'px-4 py-3'}`}>
+          {menuGroups.map((group, groupIndex) => (
+            <div key={group.title} className={groupIndex > 0 ? "mt-5" : ""}>
+              {!isCollapsed ? (
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 pl-3 pt-1">{group.title}</div>
+              ) : (
+                groupIndex > 0 && <div className="h-[1px] bg-slate-200/80 mx-2 mb-4 -mt-1" />
+              )}
+
+              <div className="space-y-1">
+                {group.items.map((item) => {
             const exactActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`)) || (pathname.startsWith("/admin") && item.href !== "/admin" && pathname.includes(item.href.split("/")[2]));
             const Icon = item.icon;
             
@@ -221,8 +272,11 @@ export default function AdminSidebar() {
                   </div>
                 )}
               </div>
-            );
-          })}
+                );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Action Footer (Collapse Toggle + Logout) */}
