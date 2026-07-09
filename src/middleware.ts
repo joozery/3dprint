@@ -5,7 +5,11 @@ export async function middleware(req: NextRequest) {
 
   let maintenance = false;
   try {
-    const res = await fetch(new URL("/api/public/maintenance", req.url), {
+    // บังคับ http: เสมอ — sub-request นี้ถูกส่งเข้า Next.js server ในเครื่อง
+    // ซึ่งไม่มี TLS (nginx เป็นคนจัดการ SSL) ถ้าปล่อยเป็น https จะ fetch ไม่สำเร็จ
+    const apiUrl = new URL("/api/public/maintenance", req.url);
+    apiUrl.protocol = "http:";
+    const res = await fetch(apiUrl, {
       cache: "no-store",
     });
     const data = await res.json();
