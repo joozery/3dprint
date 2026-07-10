@@ -61,11 +61,13 @@ async function runSlice(
     const tmpDir = path.dirname(tempGcode);
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
+    // --fill-density ต้องมี % ต่อท้าย (เลขเปล่าถูกตีความเป็นสัดส่วน 0-1 ใน PrusaSlicer 2.7.x → "Value out of range")
+    // --support-material-buildplate-only เป็น boolean flag ห้ามมีค่าตามหลัง และ --support-material-density ไม่มีใน CLI
     const supportFlags = withSupport
-        ? `--support-material --support-material-buildplate-only 0 --support-material-threshold ${supportAngle} --support-material-density ${supportDensity}`
+        ? `--support-material --support-material-threshold ${supportAngle}`
         : "";
     await execPromise(
-        `"${PRUSA_SLICER_PATH}" --export-gcode --fill-density ${fillDensity} ${supportFlags} --output "${tempGcode}" "${filePath}" 2>&1`
+        `"${PRUSA_SLICER_PATH}" --export-gcode --fill-density ${fillDensity}% ${supportFlags} --output "${tempGcode}" "${filePath}" 2>&1`
     );
 
     const gcode = await fs.promises.readFile(tempGcode, "utf-8");
@@ -159,8 +161,9 @@ export async function analyzeFile(
         return result;
 
     } catch (error: any) {
+        // ห้าม fallback เป็นค่าสุ่ม — ลูกค้าจะได้ใบเสนอราคามั่วโดยไม่รู้ตัว
         console.error("[SLICER] ❌ Analysis failed:", error.message);
-        return mockAnalyze(densityGPerCm3);
+        throw new Error(`ไม่สามารถวิเคราะห์ไฟล์ได้ กรุณาตรวจสอบว่าไฟล์ 3D ถูกต้อง (${error.message})`);
     }
 }
 
