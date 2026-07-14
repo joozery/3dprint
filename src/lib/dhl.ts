@@ -138,6 +138,8 @@ export interface DHLCreateParams {
     item_name:    string;
     item_value?:  number;
     remark?:      string;
+    /** ใบกำกับสินค้าของบริษัทเอง (PDF base64) — ถ้าส่งมา DHL จะไม่สร้าง invoice ให้ */
+    invoicePdfBase64?: string;
 }
 
 function normalizePhone(raw: string): string {
@@ -149,6 +151,7 @@ function normalizePhone(raw: string): string {
 
 export async function createDHLShipment(params: DHLCreateParams) {
     const plannedDate = nextBusinessDay();
+    const hasOwnInvoice = !!params.invoicePdfBase64;
 
     const payload = {
         plannedShippingDateAndTime: plannedDate,
@@ -220,14 +223,33 @@ export async function createDHLShipment(params: DHLCreateParams) {
         outputImageProperties: {
             printerDPI: 300,
             encodingFormat: "pdf",
-            imageOptions: [{ typeCode: "label", templateName: "ECOM26_84_001" }],
+            imageOptions: [
+                { typeCode: "label", templateName: "ECOM26_84_001" },
+                // ใช้ invoice ของบริษัทเอง → isRequested:false บอก DHL ไม่ต้องสร้าง invoice จากระบบ
+                ...(hasOwnInvoice ? [{
+                    typeCode:     "invoice",
+                    templateName: "COMMERCIAL_INVOICE_P_10",
+                    isRequested:  false,
+                }] : []),
+            ],
         },
+        // อัปโหลดใบกำกับสินค้าของบริษัทแนบไปกับ shipment
+        ...(hasOwnInvoice ? {
+            documentImages: [{
+                typeCode:    "INV",
+                imageFormat: "PDF",
+                content:     params.invoicePdfBase64,
+            }],
+        } : {}),
         customerReferences: [
             { value: (params.remark || params.item_name || "").slice(0, 50), typeCode: "CU" },
         ],
     };
 
-    console.log("[DHL createShipment payload]", JSON.stringify(payload, null, 2));
+    console.log("[DHL createShipment payload]", JSON.stringify({
+        ...payload,
+        ...(hasOwnInvoice ? { documentImages: [{ typeCode: "INV", imageFormat: "PDF", content: `<base64 ${params.invoicePdfBase64!.length} chars>` }] } : {}),
+    }, null, 2));
     return dhlPost("shipments", payload);
 }
 

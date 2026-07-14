@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Globe, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, Zap } from "lucide-react";
+import { Globe, Package, Printer, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, Zap, FileText, X } from "lucide-react";
 
 const COUNTRY_PRESETS = [
     { code: "US", name: "สหรัฐอเมริกา" },
@@ -57,6 +57,25 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
     );
     const [error, setError] = useState("");
 
+    // ใบกำกับสินค้าของบริษัทเอง (Commercial Invoice PDF) — ถ้าแนบ DHL จะไม่สร้าง invoice ให้
+    const [invoiceBase64, setInvoiceBase64] = useState("");
+    const [invoiceName,   setInvoiceName]   = useState("");
+
+    const handleInvoiceFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.type !== "application/pdf") { setError("ใบกำกับสินค้าต้องเป็นไฟล์ PDF เท่านั้น"); return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result as string;
+            setInvoiceBase64(result.split(",")[1] || "");
+            setInvoiceName(file.name);
+            setError("");
+        };
+        reader.readAsDataURL(file);
+        e.target.value = "";
+    };
+
     const totalWeightG = quotesData.reduce((s, q) => s + (q.weightGrams || 0), 0);
     const maxW  = Math.max(...quotesData.map(q => q.dimensions?.x || 10));
     const maxL  = Math.max(...quotesData.map(q => q.dimensions?.y || 10));
@@ -111,7 +130,13 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
             const res = await fetch("/api/dhl/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderId, productCode, dst_country: dstCountry, dst_city: dstCity }),
+                body: JSON.stringify({
+                    orderId,
+                    productCode,
+                    dst_country: dstCountry,
+                    dst_city: dstCity,
+                    invoicePdfBase64: invoiceBase64 || undefined,
+                }),
             });
             const data = await res.json();
             if (data.success) {
@@ -140,6 +165,31 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
         a.click();
         URL.revokeObjectURL(url);
     };
+
+    const invoiceUploadBlock = (
+        <div className="space-y-2">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">ใบกำกับสินค้า (Commercial Invoice)</p>
+            {invoiceName ? (
+                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
+                    <FileText size={14} className="text-emerald-600 shrink-0" />
+                    <p className="text-xs font-bold text-slate-700 truncate flex-1">{invoiceName}</p>
+                    <button
+                        type="button"
+                        onClick={() => { setInvoiceBase64(""); setInvoiceName(""); }}
+                        className="text-slate-400 hover:text-red-500 transition-colors shrink-0"
+                    >
+                        <X size={14} />
+                    </button>
+                </div>
+            ) : (
+                <label className="flex items-center gap-2 border border-dashed border-slate-300 hover:border-yellow-400 rounded-xl px-3 py-2.5 cursor-pointer transition-colors">
+                    <FileText size={14} className="text-slate-400 shrink-0" />
+                    <span className="text-xs text-slate-500">แนบใบกำกับของบริษัท (PDF) — ถ้าไม่แนบ ระบบ DHL จะสร้างให้</span>
+                    <input type="file" accept="application/pdf" onChange={handleInvoiceFile} className="hidden" />
+                </label>
+            )}
+        </div>
+    );
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -243,6 +293,8 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
                             </div>
                         </div>
                     </div>
+
+                    {invoiceUploadBlock}
 
                     {error && (
                         <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">
@@ -361,6 +413,8 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
                             )}
                         </div>
                     )}
+
+                    {invoiceUploadBlock}
 
                     {error && (
                         <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { orderId, productCode, dst_country, dst_city, dst_zipcode } = await req.json();
+        const { orderId, productCode, dst_country, dst_city, dst_zipcode, invoicePdfBase64 } = await req.json();
         if (!orderId || !productCode || !dst_country) {
             return NextResponse.json({ error: "orderId, productCode, and dst_country are required" }, { status: 400 });
         }
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
             height: Math.ceil(maxHeight),
             item_name: `3D Print - ${order.orderNumber}`,
             remark: order.customerNotes || "",
+            invoicePdfBase64: invoicePdfBase64 || undefined,
         });
 
         console.log("[DHL create_shipment response]", JSON.stringify(result, null, 2));
