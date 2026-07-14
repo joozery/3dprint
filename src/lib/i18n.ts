@@ -419,6 +419,10 @@ export interface TranslationSchema {
     readonly ofTotal: string;
     readonly awaitingQuoteLabel: string;
     readonly moreItems: string;
+    readonly quoteItemTitle: string;
+    readonly defaultMaterialLabel: string;
+    readonly pcsUnit: string;
+    readonly itemsUnit: string;
     readonly allRightsReserved: string;
     readonly privacyPolicy: string;
     readonly termsOfService: string;
@@ -846,6 +850,10 @@ export const I18N: Record<Language, TranslationSchema> = {
       ofTotal: "จาก",
       awaitingQuoteLabel: "รอประเมิน",
       moreItems: "+ อีก",
+      quoteItemTitle: "โมเดลพิมพ์ 3 มิติ",
+      defaultMaterialLabel: "วัสดุ 3D Print",
+      pcsUnit: "ชิ้น",
+      itemsUnit: "รายการ",
       allRightsReserved: "สงวนลิขสิทธิ์",
       privacyPolicy: "นโยบายความเป็นส่วนตัว",
       termsOfService: "ข้อกำหนดการให้บริการ",
@@ -1271,6 +1279,10 @@ export const I18N: Record<Language, TranslationSchema> = {
       ofTotal: "of",
       awaitingQuoteLabel: "Awaiting",
       moreItems: "+ More",
+      quoteItemTitle: "3D Printed Model",
+      defaultMaterialLabel: "3D Print Material",
+      pcsUnit: "pcs",
+      itemsUnit: "items",
       allRightsReserved: "All rights reserved.",
       privacyPolicy: "Privacy Policy",
       termsOfService: "Terms of Service",

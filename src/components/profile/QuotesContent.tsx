@@ -82,6 +82,7 @@ export default function QuotesContent({ quotes, totalItems, totalPages, pageNum 
                 : q.billing ? `${q.billing.firstName || ""} ${q.billing.lastName || ""}`.trim() || "บุคคล"
                 : "-";
               const qtNumber = q._id.toString().slice(-6).toUpperCase();
+              const materialLabel = q.materialName || (q.material?.length === 24 ? p.defaultMaterialLabel : q.material);
 
               return (
                 <Link href={`/profile/quotes/${q._id}`} key={q._id} className="block hover:bg-slate-50/70 transition-colors group">
@@ -94,12 +95,12 @@ export default function QuotesContent({ quotes, totalItems, totalPages, pageNum 
                           <Package size={16} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-slate-900 font-bold text-[14px] truncate">{q.originalName || q.fileName}</p>
+                          <p className="text-slate-900 font-bold text-[14px] truncate">{p.quoteItemTitle} · {materialLabel}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase">{q.technology}</span>
-                            <span className="text-slate-500 text-[12px] truncate">{q.materialName || (q.material?.length === 24 ? "วัสดุ 3D Print" : q.material)} · {q.quantity} ชิ้น</span>
+                            <span className="text-slate-500 text-[12px] truncate">{q.quantity} {p.pcsUnit}</span>
                             {q.groupedItemsCount > 1 && (
-                              <span className="text-[10px] font-bold text-blue-500 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">{p.moreItems} {q.groupedItemsCount - 1} รายการ</span>
+                              <span className="text-[10px] font-bold text-blue-500 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">{p.moreItems} {q.groupedItemsCount - 1} {p.itemsUnit}</span>
                             )}
                           </div>
                         </div>

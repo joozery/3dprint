@@ -136,13 +136,16 @@ export default async function QuoteViewPage({
                 {/* From (us) */}
                 <div className="space-y-1">
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{isEng ? 'From' : 'ผู้ออกใบเสนอราคา / From'}</p>
-                    <p className="text-xs font-black text-slate-900">บริษัท เซปทิลเลียน จำกัด</p>
+                    <p className="text-xs font-black text-slate-900">{isEng ? 'Septillion Co., Ltd.' : 'บริษัท เซปทิลเลียน จำกัด'}</p>
                     <p className="text-[11px] text-slate-600 leading-snug max-w-[250px] mt-1">
-                        388/13-14 บีอเวนิว ถ.ราชพฤกษ์<br/>
-                        บางแวก ภาษีเจริญ กทม. 10160
+                        {isEng ? (
+                            <>388/13-14 B Avenue, Ratchaphruek Rd.,<br/>Bang Waek, Phasi Charoen, Bangkok 10160</>
+                        ) : (
+                            <>388/13-14 บีอเวนิว ถ.ราชพฤกษ์<br/>บางแวก ภาษีเจริญ กทม. 10160</>
+                        )}
                     </p>
                     <p className="text-[10px] text-slate-500 mt-1">
-                        เลขประจำตัวผู้เสียภาษี 0105556031281
+                        {isEng ? 'Tax ID: 0105556031281' : 'เลขประจำตัวผู้เสียภาษี 0105556031281'}
                     </p>
                 </div>
 
@@ -213,14 +216,17 @@ export default async function QuoteViewPage({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {allItems.map((item: any, index: number) => (
+                        {allItems.map((item: any, index: number) => {
+                        const materialLabel = materialNameMap[item.material]
+                            || (/^[0-9a-fA-F]{24}$/.test(item.material || "") ? (isEng ? '3D Print Material' : 'วัสดุ 3D Print') : item.material);
+                        return (
                         <tr key={item._id} className="group hover:bg-slate-50/50 transition-colors">
                             <td className="py-3 px-2 text-xs text-slate-600 font-medium text-center align-top">{index + 1}</td>
                             <td className="py-3 px-2 align-top">
-                                <p className="text-xs font-bold text-slate-900 mb-1">{item.originalName || item.fileName}</p>
+                                <p className="text-xs font-bold text-slate-900 mb-1">{isEng ? '3D Printed Model' : 'โมเดลพิมพ์ 3 มิติ'} · {materialLabel}</p>
                                 <div className="text-[10px] text-slate-500 space-y-0.5 leading-snug">
                                     <p>• {isEng ? 'Technology' : 'เทคโนโลยี'}: <span className="font-semibold">{item.technology?.toUpperCase()}</span></p>
-                                    <p>• {isEng ? 'Material' : 'วัสดุ'}: <span className="font-semibold">{materialNameMap[item.material] || item.material}</span> / {isEng ? 'Color' : 'สี'}: {item.color}</p>
+                                    <p>• {isEng ? 'Material' : 'วัสดุ'}: <span className="font-semibold">{materialLabel}</span> / {isEng ? 'Color' : 'สี'}: {item.color}</p>
                                     <p>• {isEng ? 'Finish' : 'ผิวงาน'}: <span className="font-semibold text-blue-600">{item.finish === 'sanded' ? 'ขัดเรียบ (Sanded)' : item.finish || 'มาตรฐาน'}</span></p>
                                     <p>• {isEng ? 'Volume' : 'ปริมาตร'}: {item.volumeCm3?.toFixed(2)} cm³</p>
                                     <p>• {isEng ? 'Dimensions (X,Y,Z)' : 'ขนาด (X,Y,Z)'}: {item.dimensions?.x?.toFixed(1)} x {item.dimensions?.y?.toFixed(1)} x {item.dimensions?.z?.toFixed(1)} mm</p>
@@ -230,7 +236,7 @@ export default async function QuoteViewPage({
                             <td className="py-3 px-2 text-xs text-slate-600 font-medium text-right align-top"> {item.priceDetail?.pricePerUnit ? `฿${formatCur(item.priceDetail.pricePerUnit)}` : (isEng ? 'Pending' : 'รอประเมิน')}</td>
                             <td className="py-3 px-2 text-xs text-slate-800 font-black text-right align-top">{item.priceDetail?.totalPrice ? `฿${formatCur(item.priceDetail.totalPrice)}` : (isEng ? 'Pending' : 'รอประเมิน')}</td>
                         </tr>
-                        ))}
+                        );})}
                     </tbody>
                 </table>
             </div>
