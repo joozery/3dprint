@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { createDHLShipment } from "@/lib/dhl";
+import { createDHLShipment, materialCustomsInfo } from "@/lib/dhl";
 import dbConnect from "@/lib/mongoose";
 import Order from "@/models/Order";
+import MaterialConfig from "@/models/MaterialConfig";
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -28,6 +29,25 @@ export async function POST(req: NextRequest) {
 
         const quotes   = order.quotes as any[];
         const weightKg = Math.max(quotes.reduce((s: number, q: any) => s + (q.weightGrams || 0), 0) / 1000, 0.1);
+
+        // สร้าง line items รายวัสดุ (description + HS code) เพื่อให้เคลียร์ศุลกากรปลายทางง่ายขึ้น
+        const materialIds = [...new Set(quotes.map((q: any) => q.material).filter((m: any) => /^[0-9a-fA-F]{24}$/.test(m || "")))];
+        const materialDocs = materialIds.length ? await MaterialConfig.find({ _id: { $in: materialIds } }).lean() : [];
+        const materialNameMap: Record<string, string> = {};
+        materialDocs.forEach((m: any) => { materialNameMap[m._id.toString()] = m.name; });
+
+        const lineItems = quotes.map((q: any) => {
+            const matName = materialNameMap[q.material]
+                || (/^[0-9a-fA-F]{24}$/.test(q.material || "") ? "" : q.material || "");
+            const { description, hsCode } = materialCustomsInfo(matName);
+            return {
+                description,
+                hsCode,
+                price:    q.priceDetail?.totalPrice || 100, // ศุลกากรไม่รับมูลค่า 0 — ใบที่ยังไม่มีราคาใช้ขั้นต่ำ 100 THB
+                quantity: q.quantity || 1,
+                weightKg: Math.max((q.weightGrams || 0) / 1000, 0.01),
+            };
+        });
         // dimensions stored in mm → convert to cm
         const maxWidth  = Math.max(...quotes.map((q: any) => (q.dimensions?.x || 10) / 10));
         const maxLength = Math.max(...quotes.map((q: any) => (q.dimensions?.y || 10) / 10));
@@ -48,6 +68,7 @@ export async function POST(req: NextRequest) {
             item_name: `3D Print - ${order.orderNumber}`,
             remark: order.customerNotes || "",
             invoicePdfBase64: invoicePdfBase64 || undefined,
+            lineItems,
         });
 
         console.log("[DHL create_shipment response]", JSON.stringify(result, null, 2));

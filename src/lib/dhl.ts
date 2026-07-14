@@ -96,7 +96,7 @@ export async function getDHLRates(params: DHLRateParams): Promise<DHLRate[]> {
         isCustomsDeclarable: true,
         monetaryAmount: [{ typeCode: "declaredValue", value: 100, currency: "USD" }],
         packages: [{
-            weight: Math.max(params.weightKg, 0.1),
+            weight: Math.max(Math.round(params.weightKg * 1000) / 1000, 0.1),
             dimensions: {
                 length: Math.ceil(params.length),
                 width:  Math.ceil(params.width),
@@ -123,6 +123,28 @@ export async function getDHLRates(params: DHLRateParams): Promise<DHLRate[]> {
         .filter(r => r.totalPrice > 0);
 }
 
+// จำแนกวัสดุ → description + HS code สำหรับใบขนศุลกากร
+// พลาสติก/TPU/เรซิน → 3926.90.99, โลหะ/สเตนเลส → 7326.90.99, อลูมิเนียม → 7616.99.90
+export function materialCustomsInfo(materialName: string): { description: string; hsCode: string } {
+    const n = (materialName || "").toLowerCase();
+    let hsCode = "3926.90.99"; // default: ตัวอย่างชิ้นงานทำจากพลาสติก (รวม TPU/เรซิน)
+    if (/alumin|alsi/.test(n)) {
+        hsCode = "7616.99.90"; // อลูมิเนียม
+    } else if (/stainless|steel|316|17-4|maraging|inconel|titanium|metal|โลหะ|สเตนเลส/.test(n)) {
+        hsCode = "7326.90.99"; // โลหะ/สเตนเลส
+    }
+    const label = materialName ? ` - ${materialName}` : "";
+    return { description: `3d printed models prototype${label}`, hsCode };
+}
+
+export interface DHLLineItem {
+    description: string;   // เช่น "3d printed models prototype - Nylon PA12"
+    hsCode:      string;   // commodity code ฝั่งขาออก
+    price:       number;   // ราคาต่อรายการ (THB)
+    quantity:    number;
+    weightKg:    number;
+}
+
 export interface DHLCreateParams {
     productCode:  string;
     dst_name:     string;
@@ -140,6 +162,13 @@ export interface DHLCreateParams {
     remark?:      string;
     /** ใบกำกับสินค้าของบริษัทเอง (PDF base64) — ถ้าส่งมา DHL จะไม่สร้าง invoice ให้ */
     invoicePdfBase64?: string;
+    /** รายการสินค้าพร้อม HS code รายวัสดุ — ถ้าส่งมา จะใช้แทน line item เดี่ยวแบบเดิม (มูลค่าเป็น THB) */
+    lineItems?: DHLLineItem[];
+}
+
+// DHL รับน้ำหนักละเอียดสุด 3 ตำแหน่ง (ต้องเป็นจำนวนเท่าของ 0.001 kg)
+function roundKg(kg: number, minKg = 0.001): number {
+    return Math.max(Math.round(kg * 1000) / 1000, minKg);
 }
 
 function normalizePhone(raw: string): string {
@@ -152,6 +181,37 @@ function normalizePhone(raw: string): string {
 export async function createDHLShipment(params: DHLCreateParams) {
     const plannedDate = nextBusinessDay();
     const hasOwnInvoice = !!params.invoicePdfBase64;
+    const hasLineItems = !!(params.lineItems && params.lineItems.length > 0);
+
+    // มี lineItems → ประกาศมูลค่าจริงเป็น THB พร้อม HS code รายวัสดุ, ไม่มี → พฤติกรรมเดิม (USD)
+    const declaredValue = hasLineItems
+        ? params.lineItems!.reduce((s, li) => s + li.price, 0)
+        : (params.item_value ?? 100);
+    const declaredCurrency = hasLineItems ? "THB" : "USD";
+    const contentDescription = hasLineItems ? params.lineItems![0].description : params.item_name;
+
+    const declarationLineItems = hasLineItems
+        ? params.lineItems!.map((li, i) => ({
+            number:      i + 1,
+            description: li.description.slice(0, 170),
+            price:       li.price,
+            priceCurrency: declaredCurrency,
+            quantity: { value: li.quantity, unitOfMeasurement: "PCS" },
+            weight:   { netValue: roundKg(li.weightKg, 0.01), grossValue: roundKg(li.weightKg, 0.01) },
+            commodityCodes: [{ typeCode: "outbound", value: li.hsCode }],
+            exportReasonType: "permanent",
+            manufacturerCountry: "TH",
+        }))
+        : [{
+            number:      1,
+            description: params.item_name,
+            price:       params.item_value ?? 100,
+            priceCurrency: declaredCurrency,
+            quantity: { value: 1, unitOfMeasurement: "PCS" },
+            weight:   { netValue: roundKg(params.weightKg, 0.1), grossValue: roundKg(params.weightKg, 0.1) },
+            exportReasonType: "permanent",
+            manufacturerCountry: "TH",
+        }];
 
     const payload = {
         plannedShippingDateAndTime: plannedDate,
@@ -188,31 +248,22 @@ export async function createDHLShipment(params: DHLCreateParams) {
         },
         content: {
             packages: [{
-                weight: Math.max(params.weightKg, 0.1),
+                weight: roundKg(params.weightKg, 0.1),
                 dimensions: {
                     length: Math.ceil(params.length),
                     width:  Math.ceil(params.width),
                     height: Math.ceil(params.height),
                 },
-                description: params.item_name,
+                description: contentDescription,
             }],
             isCustomsDeclarable: true,
-            declaredValue:    params.item_value ?? 100,
-            declaredValueCurrency: "USD",
-            description:      params.item_name,
+            declaredValue:    declaredValue,
+            declaredValueCurrency: declaredCurrency,
+            description:      contentDescription,
             incoterm:         "DAP",
             unitOfMeasurement: "metric",
             exportDeclaration: {
-                lineItems: [{
-                    number:      1,
-                    description: params.item_name,
-                    price:       params.item_value ?? 100,
-                    priceCurrency: "USD",
-                    quantity: { value: 1, unitOfMeasurement: "PCS" },
-                    weight:   { netValue: Math.max(params.weightKg, 0.1), grossValue: Math.max(params.weightKg, 0.1) },
-                    exportReasonType: "permanent",
-                    manufacturerCountry: "TH",
-                }],
+                lineItems: declarationLineItems,
                 invoice: {
                     date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
                     number: params.item_name.slice(0, 35),
