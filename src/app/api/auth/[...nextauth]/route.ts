@@ -46,21 +46,26 @@ export const authOptions: NextAuthOptions = {
           throw new Error("รหัสผ่านไม่ถูกต้อง");
         }
 
-        // 2. ถ้าเป็น Admin ต้องเช็ค OTP (ปิดไว้ชั่วคราวเพื่อ DEBUG 401)
+        // 2. ถ้าเป็น Admin ต้องเช็ค OTP
         if (user.role === "admin") {
-          console.log("Auth Node: Admin role detected - [BYPASSING OTP FOR DEBUGGING]");
-          /* 
-          // ปิดชั่วคราวเพื่อให้เข้าใช้งานได้ก่อน
           if (!credentials?.otp) {
             console.log("Auth Error: OTP missing in credentials");
             throw new Error("OTP_REQUIRED");
           }
-          if (user.adminOTP !== credentials.otp) {
-            console.log(`Auth Error: OTP mismatch. Expected ${user.adminOTP} but got ${credentials.otp}`);
+          if (!user.adminOTP || user.adminOTP !== credentials.otp) {
+            console.log("Auth Error: OTP mismatch");
             throw new Error("รหัส OTP ไม่ถูกต้อง");
           }
-          */
-          console.log("Auth Status: Admin Bypass Success");
+          if (!user.adminOTPExpires || new Date() > user.adminOTPExpires) {
+            console.log("Auth Error: OTP expired");
+            throw new Error("รหัส OTP หมดอายุแล้ว โปรดขอใหม่");
+          }
+
+          // ใช้ได้ครั้งเดียว: เคลียร์ OTP ทิ้งหลังยืนยันสำเร็จ
+          user.adminOTP = undefined;
+          user.adminOTPExpires = undefined;
+          await user.save();
+          console.log("Auth Status: Admin OTP verified");
         }
 
         if (!user.isVerified) {
