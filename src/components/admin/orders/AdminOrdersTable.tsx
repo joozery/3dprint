@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, RefreshCw, Filter, ShoppingBag, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, Filter, ShoppingBag, FileText, X } from "lucide-react";
 
 interface Order {
   _id: string;
@@ -23,6 +23,10 @@ interface Props {
   page: number;
   totalPages: number;
   currentStatus: string;
+  techOptions: string[];
+  currentTech: string;
+  currentDateFrom: string;
+  currentDateTo: string;
 }
 
 const statusOptions = [
@@ -50,7 +54,7 @@ const paymentMethodLabel: Record<string, string> = {
   credit_card: "บัตรเครดิต",
 };
 
-export default function AdminOrdersTable({ orders, total, page, totalPages, currentStatus }: Props) {
+export default function AdminOrdersTable({ orders, total, page, totalPages, currentStatus, techOptions, currentTech, currentDateFrom, currentDateTo }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -59,7 +63,20 @@ export default function AdminOrdersTable({ orders, total, page, totalPages, curr
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.set("page", "1");
+    startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
+  };
+
+  const hasDateFilter = !!(currentDateFrom || currentDateTo);
+  const clearDates = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("dateFrom");
+    params.delete("dateTo");
     params.set("page", "1");
     startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
   };
@@ -126,6 +143,42 @@ export default function AdminOrdersTable({ orders, total, page, totalPages, curr
               {opt.label}
             </button>
           ))}
+        </div>
+
+        {/* Technology filter */}
+        <select
+          value={currentTech}
+          onChange={(e) => setFilter("tech", e.target.value)}
+          className="px-3 py-2 rounded-xl border border-blue-50 text-[11px] font-black uppercase tracking-widest text-slate-500 bg-white focus:outline-none focus:border-blue-300 hover:border-blue-100 transition-all cursor-pointer shadow-sm shrink-0"
+        >
+          <option value="all">เทคโนโลยี: ทั้งหมด</option>
+          {techOptions.map((t) => (
+            <option key={t} value={t}>{t.toUpperCase()}</option>
+          ))}
+        </select>
+
+        {/* Date range */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <input
+            type="date"
+            value={currentDateFrom}
+            max={currentDateTo || undefined}
+            onChange={(e) => setFilter("dateFrom", e.target.value)}
+            className="px-2.5 py-2 rounded-xl border border-blue-50 text-[11px] font-bold text-slate-500 bg-white focus:outline-none focus:border-blue-300 hover:border-blue-100 transition-all shadow-sm"
+          />
+          <span className="text-slate-300 text-[11px]">–</span>
+          <input
+            type="date"
+            value={currentDateTo}
+            min={currentDateFrom || undefined}
+            onChange={(e) => setFilter("dateTo", e.target.value)}
+            className="px-2.5 py-2 rounded-xl border border-blue-50 text-[11px] font-bold text-slate-500 bg-white focus:outline-none focus:border-blue-300 hover:border-blue-100 transition-all shadow-sm"
+          />
+          {hasDateFilter && (
+            <button onClick={clearDates} title="ล้างช่วงวันที่" className="text-slate-300 hover:text-red-500 transition-colors">
+              <X size={13} />
+            </button>
+          )}
         </div>
       </div>
 

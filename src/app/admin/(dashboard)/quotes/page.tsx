@@ -3,7 +3,7 @@ import Quote from "@/models/Quote";
 import AdminQuotesTable from "@/components/admin/quotes/AdminQuotesTable";
 import { FileText, Clock, CheckCircle, XCircle, FileClock } from "lucide-react";
 
-async function getQuotes(page: number, status: string, search?: string, userId?: string) {
+async function getQuotes(page: number, status: string, search?: string, userId?: string, tech?: string, dateFrom?: string, dateTo?: string) {
   await dbConnect();
   const limit = 20;
   const skip = (page - 1) * limit;
@@ -16,6 +16,16 @@ async function getQuotes(page: number, status: string, search?: string, userId?:
     matchStage.status = { $ne: "draft" };
   }
   if (userId) matchStage.userId = userId;
+
+  if (tech && tech !== "all") {
+    matchStage.technology = { $regex: `^${tech}$`, $options: "i" };
+  }
+
+  if (dateFrom || dateTo) {
+    matchStage.createdAt = {};
+    if (dateFrom) matchStage.createdAt.$gte = new Date(`${dateFrom}T00:00:00+07:00`);
+    if (dateTo)   matchStage.createdAt.$lte = new Date(`${dateTo}T23:59:59.999+07:00`);
+  }
 
   if (search) {
     const User = (await import("@/models/User")).default;
@@ -43,6 +53,8 @@ async function getQuotes(page: number, status: string, search?: string, userId?:
         representativeId: { $first: "$_id" },
         fileCount: { $sum: 1 },
         totalPrice: { $sum: "$priceDetail.totalPrice" },
+        shippingFee: { $first: "$shippingFee" },
+        shippingCourierName: { $first: "$shippingCourierName" },
         status: { $first: "$status" },
         technology: { $first: "$technology" },
         userId: { $first: "$userId" },
@@ -53,13 +65,14 @@ async function getQuotes(page: number, status: string, search?: string, userId?:
     { $sort: { createdAt: -1 } },
   ];
 
-  const [groups, countResult, pendingCount, orderedCount, cancelledCount, draftCount] = await Promise.all([
+  const [groups, countResult, pendingCount, orderedCount, cancelledCount, draftCount, technologies] = await Promise.all([
     Quote.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]),
     Quote.aggregate([...pipeline, { $count: "total" }]),
     Quote.countDocuments({ status: "pending" }),
     Quote.countDocuments({ status: "ordered" }),
     Quote.countDocuments({ status: "cancelled" }),
     Quote.countDocuments({ status: "draft" }),
+    Quote.distinct("technology"),
   ]);
 
   // Populate userId for each group
@@ -77,6 +90,9 @@ async function getQuotes(page: number, status: string, search?: string, userId?:
 
   const total = countResult[0]?.total || 0;
 
+  // ค่า technology ใน DB เป็น free string — normalize เป็น lowercase กันค่าซ้ำต่างเคส
+  const techOptions = [...new Set((technologies as string[]).filter(Boolean).map(t => t.toLowerCase()))].sort();
+
   return {
     quotes: JSON.parse(JSON.stringify(quotes)),
     total,
@@ -86,17 +102,18 @@ async function getQuotes(page: number, status: string, search?: string, userId?:
     orderedCount,
     cancelledCount,
     draftCount,
+    techOptions,
   };
 }
 
 export default async function AdminQuotesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; search?: string; userId?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; search?: string; userId?: string; tech?: string; dateFrom?: string; dateTo?: string }>;
 }) {
   const params = await searchParams;
   const page = parseInt(params.page || "1");
-  const data = await getQuotes(page, params.status || "all", params.search, params.userId);
+  const data = await getQuotes(page, params.status || "all", params.search, params.userId, params.tech, params.dateFrom, params.dateTo);
 
   const statCards = [
     { label: "ใบเสนอราคาทั้งหมด", sublabel: "Total Quotes", value: data.total,          icon: FileText    },
@@ -170,6 +187,10 @@ export default async function AdminQuotesPage({
         totalPages={data.totalPages}
         currentStatus={params.status || "all"}
         currentSearch={params.search || ""}
+        techOptions={data.techOptions}
+        currentTech={params.tech || "all"}
+        currentDateFrom={params.dateFrom || ""}
+        currentDateTo={params.dateTo || ""}
       />
     </div>
   );

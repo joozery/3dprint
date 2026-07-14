@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/mongoose";
 import Order from "@/models/Order";
+import Quote from "@/models/Quote";
 import AdminOrdersTable from "@/components/admin/orders/AdminOrdersTable";
 
 interface SearchParams {
@@ -7,6 +8,9 @@ interface SearchParams {
   status?: string;
   search?: string;
   userId?: string;
+  tech?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 async function getOrders(searchParams: SearchParams) {
@@ -24,7 +28,21 @@ async function getOrders(searchParams: SearchParams) {
     filter.userId = searchParams.userId;
   }
 
-  const [orders, total] = await Promise.all([
+  // technology อยู่ที่ Quote ไม่ใช่ Order — หา quote ids ของเทคโนโลยีนั้นก่อน แล้วกรอง order ที่มี quote เหล่านั้น
+  if (searchParams.tech && searchParams.tech !== "all") {
+    const techQuoteIds = await Quote.find({
+      technology: { $regex: `^${searchParams.tech}$`, $options: "i" },
+    }).distinct("_id");
+    filter.quotes = { $in: techQuoteIds };
+  }
+
+  if (searchParams.dateFrom || searchParams.dateTo) {
+    filter.createdAt = {};
+    if (searchParams.dateFrom) filter.createdAt.$gte = new Date(`${searchParams.dateFrom}T00:00:00+07:00`);
+    if (searchParams.dateTo)   filter.createdAt.$lte = new Date(`${searchParams.dateTo}T23:59:59.999+07:00`);
+  }
+
+  const [orders, total, technologies] = await Promise.all([
     Order.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -33,13 +51,17 @@ async function getOrders(searchParams: SearchParams) {
       .populate("quotes", "originalName fileName")
       .lean(),
     Order.countDocuments(filter),
+    Quote.distinct("technology"),
   ]);
+
+  const techOptions = [...new Set((technologies as string[]).filter(Boolean).map(t => t.toLowerCase()))].sort();
 
   return {
     orders: JSON.parse(JSON.stringify(orders)),
     total,
     page,
     totalPages: Math.ceil(total / limit),
+    techOptions,
   };
 }
 
@@ -65,6 +87,10 @@ export default async function AdminOrdersPage({
         page={data.page}
         totalPages={data.totalPages}
         currentStatus={params.status || "all"}
+        techOptions={data.techOptions}
+        currentTech={params.tech || "all"}
+        currentDateFrom={params.dateFrom || ""}
+        currentDateTo={params.dateTo || ""}
       />
     </div>
   );

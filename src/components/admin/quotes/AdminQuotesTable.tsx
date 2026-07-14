@@ -26,6 +26,8 @@ interface Quote {
   weightGrams: number;
   priceDetail: { pricePerUnit: number; totalPrice: number };
   totalPrice?: number;
+  shippingFee?: number | null;
+  shippingCourierName?: string;
   fileCount?: number;
   files?: QuoteFile[];
   status: string;
@@ -43,6 +45,10 @@ interface Props {
   totalPages: number;
   currentStatus: string;
   currentSearch: string;
+  techOptions: string[];
+  currentTech: string;
+  currentDateFrom: string;
+  currentDateTo: string;
 }
 
 const statusOptions = [
@@ -60,7 +66,7 @@ const statusDisplay: Record<string, { label: string; color: string; dot: string 
   cancelled: { label: "ยกเลิก",        color: "text-red-500 bg-red-50 border-red-200",           dot: "bg-red-400"     },
 };
 
-export default function AdminQuotesTable({ quotes, total, page, totalPages, currentStatus, currentSearch }: Props) {
+export default function AdminQuotesTable({ quotes, total, page, totalPages, currentStatus, currentSearch, techOptions, currentTech, currentDateFrom, currentDateTo }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -74,7 +80,20 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
 
   const setFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.set("page", "1");
+    startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
+  };
+
+  const hasDateFilter = !!(currentDateFrom || currentDateTo);
+  const clearDates = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("dateFrom");
+    params.delete("dateTo");
     params.set("page", "1");
     startTransition(() => { router.push(`${pathname}?${params.toString()}`); });
   };
@@ -257,6 +276,42 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
             </button>
           ))}
         </div>
+        {/* Technology filter */}
+        <select
+          value={currentTech}
+          onChange={(e) => setFilter("tech", e.target.value)}
+          className="px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-400 transition-colors cursor-pointer shrink-0 uppercase"
+        >
+          <option value="all">เทคโนโลยี: ทั้งหมด</option>
+          {techOptions.map((t) => (
+            <option key={t} value={t}>{t.toUpperCase()}</option>
+          ))}
+        </select>
+
+        {/* Date range */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <input
+            type="date"
+            value={currentDateFrom}
+            max={currentDateTo || undefined}
+            onChange={(e) => setFilter("dateFrom", e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-400 transition-colors"
+          />
+          <span className="text-slate-300 text-[11px]">–</span>
+          <input
+            type="date"
+            value={currentDateTo}
+            min={currentDateFrom || undefined}
+            onChange={(e) => setFilter("dateTo", e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-400 transition-colors"
+          />
+          {hasDateFilter && (
+            <button onClick={clearDates} title="ล้างช่วงวันที่" className="text-slate-300 hover:text-red-500 transition-colors">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+
         {/* Search input */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="relative flex items-center">
@@ -314,6 +369,8 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">ลูกค้า</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">เทคโนโลยี</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">ปริมาณ / น้ำหนัก</th>
+                  <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">ราคาสินค้า</th>
+                  <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">ค่าจัดส่ง</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">ราคารวม</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">สถานะออเดอร์</th>
                   <th className="px-6 py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest text-center">การติดต่อ (Internal)</th>
@@ -379,7 +436,7 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                         <p className="text-slate-400 text-[11px] mt-0.5">{q.weightGrams ? `${q.weightGrams} g` : "—"}</p>
                       </td>
 
-                      {/* Price */}
+                      {/* Item price (products only, as before) */}
                       <td className="px-6 py-4 text-right">
                         <p className="text-slate-800 font-bold text-sm">
                           ฿{(q.totalPrice ?? q.priceDetail?.totalPrice ?? 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
@@ -387,6 +444,32 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                         {(q.fileCount || 0) > 1 && (
                           <p className="text-slate-400 text-[10px] mt-0.5">รวม {q.fileCount} ไฟล์</p>
                         )}
+                      </td>
+
+                      {/* Shipping fee */}
+                      <td className="px-6 py-4 text-right">
+                        {q.shippingFee != null ? (
+                          <>
+                            <p className="text-slate-800 font-bold text-sm">
+                              ฿{q.shippingFee.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                            </p>
+                            {q.shippingCourierName && (
+                              <p className="text-slate-400 text-[10px] mt-0.5 truncate max-w-[110px] ml-auto">{q.shippingCourierName}</p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-slate-400 text-[11px] italic">รอประเมิน</p>
+                        )}
+                      </td>
+
+                      {/* Grand total (items + shipping) */}
+                      <td className="px-6 py-4 text-right">
+                        <p className="text-slate-800 font-black text-sm">
+                          ฿{((q.totalPrice ?? q.priceDetail?.totalPrice ?? 0) + (q.shippingFee || 0)).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-slate-400 text-[10px] mt-0.5">
+                          {q.shippingFee != null ? "รวมค่าจัดส่ง" : "ยังไม่รวมค่าจัดส่ง"}
+                        </p>
                       </td>
 
                       {/* Status */}
