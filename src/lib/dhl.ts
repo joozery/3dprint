@@ -124,14 +124,17 @@ export async function getDHLRates(params: DHLRateParams): Promise<DHLRate[]> {
 }
 
 // จำแนกวัสดุ → description + HS code สำหรับใบขนศุลกากร
-// พลาสติก/TPU/เรซิน → 3926.90.99, โลหะ/สเตนเลส → 7326.90.99, อลูมิเนียม → 7616.99.90
+// พลาสติก/TPU/เรซิน → 3926.90.99, เหล็ก/สเตนเลส → 7326.90.99,
+// อลูมิเนียม → 7616.99.90, ไทเทเนียม → 8108.90.90
 export function materialCustomsInfo(materialName: string): { description: string; hsCode: string } {
     const n = (materialName || "").toLowerCase();
-    let hsCode = "3926.90.99"; // default: ตัวอย่างชิ้นงานทำจากพลาสติก (รวม TPU/เรซิน)
-    if (/alumin|alsi/.test(n)) {
-        hsCode = "7616.99.90"; // อลูมิเนียม
-    } else if (/stainless|steel|316|17-4|maraging|inconel|titanium|metal|โลหะ|สเตนเลส/.test(n)) {
-        hsCode = "7326.90.99"; // โลหะ/สเตนเลส
+    let hsCode = "3926.90.99"; // default: ตัวอย่างชิ้นงานทำจากพลาสติก (รวม TPU/เรซิน/ไนลอน)
+    if (/titanium|tc4|ไทเทเนียม/.test(n)) {
+        hsCode = "8108.90.90"; // ไทเทเนียมและของทำด้วยไทเทเนียม
+    } else if (/alumin|alsi|\bal\b|อลูมิเนียม/.test(n)) {
+        hsCode = "7616.99.90"; // อลูมิเนียม (รวม AL 6061, AlSi10Mg)
+    } else if (/stainless|steel|sus|316|17-4|maraging|mararing|scm|inconel|metal|โลหะ|สเตนเลส|เหล็ก/.test(n)) {
+        hsCode = "7326.90.99"; // เหล็ก/สเตนเลส (SUS316, 17-4PH, maraging SCM439)
     }
     const label = materialName ? ` - ${materialName}` : "";
     return { description: `3d printed models prototype${label}`, hsCode };
@@ -220,7 +223,13 @@ export async function createDHLShipment(params: DHLCreateParams) {
         plannedShippingDateAndTime: plannedDate,
         pickup: { isRequested: false },
         productCode: params.productCode,
-        accounts: [{ typeCode: "shipper", number: ACCOUNT }],
+        // ให้ DHL ตอบกลับพร้อมค่าขนส่งเบื้องต้นตามข้อมูลที่ส่ง
+        getRateEstimates: true,
+        // shipper = ยืนยันบุคคลผู้ส่ง, payer = เรียกเก็บค่าขนส่ง
+        accounts: [
+            { typeCode: "shipper", number: ACCOUNT },
+            { typeCode: "payer",   number: ACCOUNT },
+        ],
         // WY = Paperless Trade (PLT) — ส่งเอกสารศุลกากรแบบอิเล็กทรอนิกส์
         valueAddedServices: [{ serviceCode: "WY" }],
         customerDetails: {

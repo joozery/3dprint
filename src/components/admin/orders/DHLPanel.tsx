@@ -172,7 +172,7 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
 
     const invoiceUploadBlock = (
         <div className="space-y-2">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">ใบกำกับสินค้า (Commercial Invoice)</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">ใบกำกับสินค้า (Commercial Invoice) <span className="text-red-500">*</span></p>
             {invoiceName ? (
                 <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
                     <FileText size={14} className="text-emerald-600 shrink-0" />
@@ -188,7 +188,7 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
             ) : (
                 <label className="flex items-center gap-2 border border-dashed border-slate-300 hover:border-yellow-400 rounded-xl px-3 py-2.5 cursor-pointer transition-colors">
                     <FileText size={14} className="text-slate-400 shrink-0" />
-                    <span className="text-xs text-slate-500">แนบใบกำกับของบริษัท (PDF) — ถ้าไม่แนบ ระบบ DHL จะสร้างให้</span>
+                    <span className="text-xs text-slate-500">แนบใบกำกับของบริษัท (PDF) — ต้องแนบก่อนจึงจะสร้าง label ได้</span>
                     <input type="file" accept="application/pdf" onChange={handleInvoiceFile} className="hidden" />
                 </label>
             )}
@@ -318,7 +318,7 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
 
                     <button
                         onClick={handleCreate}
-                        disabled={creating || !dstCountry}
+                        disabled={creating || !dstCountry || !invoiceBase64}
                         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
                     >
                         {creating
@@ -438,7 +438,7 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
 
                     <button
                         onClick={handleCreate}
-                        disabled={creating || !selectedProduct || !dstCountry}
+                        disabled={creating || !selectedProduct || !dstCountry || !invoiceBase64}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
                     >
                         {creating
