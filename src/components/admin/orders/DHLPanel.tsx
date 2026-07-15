@@ -32,6 +32,7 @@ interface Props {
         shippingProvider?: string;
         dhlProductCode?:  string;
         dhlLabelBase64?:  string;
+        dhlInvoiceBase64?: string;
     };
 }
 
@@ -50,9 +51,9 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
     const [selectedProduct, setSelectedProduct] = useState(existing.dhlProductCode || "");
 
     const [creating, setCreating] = useState(false);
-    const [result,   setResult]   = useState<{ trackingNumber: string; labelBase64: string; productCode: string } | null>(
+    const [result,   setResult]   = useState<{ trackingNumber: string; labelBase64: string; invoiceBase64: string; productCode: string } | null>(
         alreadyDHL
-            ? { trackingNumber: existing.trackingNumber!, labelBase64: existing.dhlLabelBase64 || "", productCode: existing.dhlProductCode || "" }
+            ? { trackingNumber: existing.trackingNumber!, labelBase64: existing.dhlLabelBase64 || "", invoiceBase64: existing.dhlInvoiceBase64 || "", productCode: existing.dhlProductCode || "" }
             : null
     );
     const [error, setError] = useState("");
@@ -140,7 +141,7 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
             });
             const data = await res.json();
             if (data.success) {
-                setResult({ trackingNumber: data.trackingNumber, labelBase64: data.labelBase64 || "", productCode: data.productCode });
+                setResult({ trackingNumber: data.trackingNumber, labelBase64: data.labelBase64 || "", invoiceBase64: data.dhlInvoiceBase64 || "", productCode: data.productCode });
             } else {
                 setError(data.error || "สร้างพัสดุ DHL ไม่สำเร็จ");
             }
@@ -151,9 +152,9 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
         }
     };
 
-    const downloadLabel = () => {
-        if (!result?.labelBase64) return;
-        const byteStr = atob(result.labelBase64);
+    const downloadPdf = (base64: string, filename: string) => {
+        if (!base64) return;
+        const byteStr = atob(base64);
         const ab = new ArrayBuffer(byteStr.length);
         const ia = new Uint8Array(ab);
         for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
@@ -161,10 +162,13 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement("a");
         a.href = url;
-        a.download = `dhl-label-${result.trackingNumber}.pdf`;
+        a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
     };
+
+    const downloadLabel   = () => downloadPdf(result?.labelBase64 || "", `dhl-label-${result?.trackingNumber}.pdf`);
+    const downloadInvoice = () => downloadPdf(result?.invoiceBase64 || "", `dhl-invoice-${result?.trackingNumber}.pdf`);
 
     const invoiceUploadBlock = (
         <div className="space-y-2">
@@ -220,12 +224,22 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
                     </div>
 
                     {result.labelBase64 ? (
+                        <>
                         <button
                             onClick={downloadLabel}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors"
                         >
                             <Printer size={14} /> ดาวน์โหลด label DHL (PDF)
                         </button>
+                        {result.invoiceBase64 && (
+                            <button
+                                onClick={downloadInvoice}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-colors border border-slate-200"
+                            >
+                                <FileText size={14} /> ดาวน์โหลด Commercial Invoice (PDF)
+                            </button>
+                        )}
+                        </>
                     ) : (
                         <a
                             href={`https://mydhl.express.dhl/th/en/shipment-tracking.html#/results?id=${result.trackingNumber}`}

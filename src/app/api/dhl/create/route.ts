@@ -87,6 +87,8 @@ export async function POST(req: NextRequest) {
 
         const labelDoc = result.documents?.find((d: any) => d.typeCode === "label");
         const labelBase64 = labelDoc?.content || "";
+        const invoiceDoc = result.documents?.find((d: any) => d.typeCode === "invoice");
+        const dhlInvoiceBase64 = invoiceDoc?.content || "";
 
         if (!trackingNumber) {
             return NextResponse.json({ error: "No tracking number returned", raw: result }, { status: 400 });
@@ -98,11 +100,12 @@ export async function POST(req: NextRequest) {
                 shippingProvider:  "dhl",
                 dhlProductCode:    productCode,
                 dhlLabelBase64:    labelBase64,
+                dhlInvoiceBase64,
                 status: "shipped",
             },
         });
 
-        return NextResponse.json({ success: true, trackingNumber, labelBase64, productCode });
+        return NextResponse.json({ success: true, trackingNumber, labelBase64, dhlInvoiceBase64, productCode });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

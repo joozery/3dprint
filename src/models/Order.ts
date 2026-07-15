@@ -85,6 +85,9 @@ const OrderSchema = new mongoose.Schema(
         dhlLabelBase64: {
             type: String,
         },
+        dhlInvoiceBase64: {
+            type: String,
+        },
     },
     { timestamps: true }
 );

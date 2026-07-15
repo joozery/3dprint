@@ -248,6 +248,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                                     shippingProvider: "dhl",
                                     dhlProductCode:   (order as any).dhlProductCode || "",
                                     dhlLabelBase64:   (order as any).dhlLabelBase64 || "",
+                                    dhlInvoiceBase64: (order as any).dhlInvoiceBase64 || "",
                                 }}
                             />
                         ) : (

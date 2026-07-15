@@ -198,7 +198,10 @@ export async function createDHLShipment(params: DHLCreateParams) {
             priceCurrency: declaredCurrency,
             quantity: { value: li.quantity, unitOfMeasurement: "PCS" },
             weight:   { netValue: roundKg(li.weightKg, 0.01), grossValue: roundKg(li.weightKg, 0.01) },
-            commodityCodes: [{ typeCode: "outbound", value: li.hsCode }],
+            commodityCodes: [
+                { typeCode: "outbound", value: li.hsCode },
+                { typeCode: "inbound",  value: li.hsCode },
+            ],
             exportReasonType: "permanent",
             manufacturerCountry: "TH",
         }))
@@ -218,6 +221,8 @@ export async function createDHLShipment(params: DHLCreateParams) {
         pickup: { isRequested: false },
         productCode: params.productCode,
         accounts: [{ typeCode: "shipper", number: ACCOUNT }],
+        // WY = Paperless Trade (PLT) — ส่งเอกสารศุลกากรแบบอิเล็กทรอนิกส์
+        valueAddedServices: [{ serviceCode: "WY" }],
         customerDetails: {
             shipperDetails: {
                 postalAddress: {
@@ -274,14 +279,15 @@ export async function createDHLShipment(params: DHLCreateParams) {
         outputImageProperties: {
             printerDPI: 300,
             encodingFormat: "pdf",
+            splitInvoiceAndReceipt: true,
             imageOptions: [
                 { typeCode: "label", templateName: "ECOM26_84_001" },
-                // ใช้ invoice ของบริษัทเอง → isRequested:false บอก DHL ไม่ต้องสร้าง invoice จากระบบ
-                ...(hasOwnInvoice ? [{
-                    typeCode:     "invoice",
-                    templateName: "COMMERCIAL_INVOICE_P_10",
-                    isRequested:  false,
-                }] : []),
+                // Paperless Trade (WY) บังคับให้มี invoice เสมอ:
+                // แนบใบกำกับของบริษัทเอง → isRequested:false (DHL ไม่สร้าง ใช้ documentImages แทน)
+                // ไม่ได้แนบ → ให้ DHL สร้าง commercial invoice จากข้อมูล lineItems
+                hasOwnInvoice
+                    ? { typeCode: "invoice", templateName: "COMMERCIAL_INVOICE_P_10", isRequested: false }
+                    : { typeCode: "invoice", templateName: "COMMERCIAL_INVOICE_P_10", isRequested: true, invoiceType: "commercial", languageCode: "eng" },
             ],
         },
         // อัปโหลดใบกำกับสินค้าของบริษัทแนบไปกับ shipment
