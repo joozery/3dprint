@@ -26,6 +26,8 @@ interface Props {
         countryCode?: string;
         city?:        string;
         zipCode?:     string;
+        fullName?:    string;
+        address?:     string;
     };
     existing: {
         trackingNumber?:  string;
@@ -51,7 +53,7 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
     const [selectedProduct, setSelectedProduct] = useState(existing.dhlProductCode || "");
 
     const [creating, setCreating] = useState(false);
-    const [result,   setResult]   = useState<{ trackingNumber: string; labelBase64: string; invoiceBase64: string; productCode: string } | null>(
+    const [result,   setResult]   = useState<{ trackingNumber: string; labelBase64: string; invoiceBase64: string; productCode: string; pltBypassed?: boolean } | null>(
         alreadyDHL
             ? { trackingNumber: existing.trackingNumber!, labelBase64: existing.dhlLabelBase64 || "", invoiceBase64: existing.dhlInvoiceBase64 || "", productCode: existing.dhlProductCode || "" }
             : null
@@ -141,7 +143,7 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
             });
             const data = await res.json();
             if (data.success) {
-                setResult({ trackingNumber: data.trackingNumber, labelBase64: data.labelBase64 || "", invoiceBase64: data.dhlInvoiceBase64 || "", productCode: data.productCode });
+                setResult({ trackingNumber: data.trackingNumber, labelBase64: data.labelBase64 || "", invoiceBase64: data.dhlInvoiceBase64 || "", productCode: data.productCode, pltBypassed: !!data.pltBypassed });
             } else {
                 setError(data.error || "สร้างพัสดุ DHL ไม่สำเร็จ");
             }
@@ -207,6 +209,14 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
                 <span>ขนาด: <b className="text-slate-700">{Math.ceil(maxW)} × {Math.ceil(maxL)} × {Math.ceil(maxH)} cm</b></span>
             </div>
 
+            {/* DHL รองรับเฉพาะภาษาอังกฤษ — ระบบจะตัดอักษรไทยออกอัตโนมัติ ทำให้ที่อยู่บน label หายได้ */}
+            {!result && new RegExp("[\\u0E00-\\u0E7F]").test(`${shippingAddress?.fullName || ""} ${shippingAddress?.address || ""} ${dstCity}`) && (
+                <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-3 rounded-xl border border-amber-200 mb-4">
+                    <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                    <span>ชื่อ/ที่อยู่ผู้รับมี<b>ภาษาไทย</b> — DHL รองรับเฉพาะภาษาอังกฤษ ระบบจะตัดอักษรไทยออกจากเอกสารอัตโนมัติ ซึ่งอาจทำให้ที่อยู่บน label ไม่ครบ กรุณาแก้ที่อยู่ในออเดอร์เป็นภาษาอังกฤษก่อนสร้างพัสดุ</span>
+                </div>
+            )}
+
             {/* ─── ส่งแล้ว: แสดง tracking + label ─── */}
             {result ? (
                 <div className="space-y-3">
@@ -222,6 +232,13 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
                             )}
                         </div>
                     </div>
+
+                    {result.pltBypassed && (
+                        <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                            <span>ประเทศปลายทางนี้<b>ไม่รองรับ Paperless Trade</b> — ต้อง<b>พิมพ์ Commercial Invoice ตัวจริงแนบไปกับกล่องพัสดุ</b>ด้วย</span>
+                        </div>
+                    )}
 
                     {result.labelBase64 ? (
                         <>
@@ -319,10 +336,12 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
                     <button
                         onClick={handleCreate}
                         disabled={creating || !dstCountry || !invoiceBase64}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-yellow-500"
                     >
                         {creating
                             ? <><RefreshCw size={14} className="animate-spin" /> กำลังสร้างพัสดุ DHL...</>
+                            : !invoiceBase64
+                            ? <><FileText size={14} /> แนบใบกำกับสินค้าก่อนสร้างพัสดุ</>
                             : <><Package size={14} /> สร้างพัสดุ DHL Express — {existing.dhlProductCode}</>}
                     </button>
                 </div>
@@ -439,10 +458,12 @@ export default function DHLPanel({ orderId, quotesData, shippingAddress, existin
                     <button
                         onClick={handleCreate}
                         disabled={creating || !selectedProduct || !dstCountry || !invoiceBase64}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-yellow-500"
                     >
                         {creating
                             ? <><RefreshCw size={14} className="animate-spin" /> กำลังสร้างพัสดุ DHL...</>
+                            : !invoiceBase64
+                            ? <><FileText size={14} /> แนบใบกำกับสินค้าก่อนสร้างพัสดุ</>
                             : <><Package size={14} /> สร้างพัสดุ DHL Express</>}
                     </button>
                 </div>

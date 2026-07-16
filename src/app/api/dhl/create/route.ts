@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        return NextResponse.json({ success: true, trackingNumber, labelBase64, dhlInvoiceBase64, productCode });
+        return NextResponse.json({ success: true, trackingNumber, labelBase64, dhlInvoiceBase64, productCode, pltBypassed: !!result.pltBypassed });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

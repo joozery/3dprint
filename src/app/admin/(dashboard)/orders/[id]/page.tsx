@@ -242,6 +242,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                                     countryCode: (order.shippingAddress as any)?.countryCode || "",
                                     city:        (order.shippingAddress as any)?.city || (order.shippingAddress as any)?.district || "",
                                     zipCode:     order.shippingAddress?.zipCode || "",
+                                    fullName:    order.shippingAddress?.fullName || "",
+                                    address:     order.shippingAddress?.address || "",
                                 }}
                                 existing={{
                                     trackingNumber:   (order as any).trackingNumber || "",

@@ -567,7 +567,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
     const selectedQuotes = quotes.filter(q => selectedIds.has(q._id));
     const totalPrice = selectedQuotes.reduce((sum, q) => sum + (q.priceDetail?.totalPrice || 0), 0);
-    const SETUP_FEE = 150;
+    // คิด setup fee เฉพาะเมื่อมีรายการที่เลือก — ไม่งั้น total ว่างเปล่าจะค้างที่ ฿160.50 (150 + VAT)
+    const SETUP_FEE = selectedQuotes.length > 0 ? 150 : 0;
     const COUPON_DISCOUNT = appliedCoupon ? appliedCoupon.discountValue : 0;
     const taxableAmount = totalPrice + SETUP_FEE - COUPON_DISCOUNT;
     const vat = taxableAmount * 0.07;
@@ -1106,7 +1107,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
 
                         <div className="px-4 space-y-1.5 font-mono text-[11px] font-black">
                             <div className="flex justify-between text-slate-700"><span>Subtotal</span><span>฿{totalPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
-                            <div className="flex justify-between text-slate-300 font-bold"><span>{t.quote.setupFee}</span><span>฿150.00</span></div>
+                            <div className="flex justify-between text-slate-300 font-bold"><span>{t.quote.setupFee}</span><span>฿{SETUP_FEE.toFixed(2)}</span></div>
                             {appliedCoupon && (
                                 <div className="flex justify-between text-[#2563eb]"><span>{appliedCoupon.code} {t.quote.coupon}</span><span>-฿{appliedCoupon.discountValue.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
                             )}
