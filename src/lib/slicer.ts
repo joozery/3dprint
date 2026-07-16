@@ -171,7 +171,17 @@ export async function analyzeFile(
     } catch (error: any) {
         // ห้าม fallback เป็นค่าสุ่ม — ลูกค้าจะได้ใบเสนอราคามั่วโดยไม่รู้ตัว
         console.error("[SLICER] ❌ Analysis failed:", error.message);
-        throw new Error(`ไม่สามารถวิเคราะห์ไฟล์ได้ กรุณาตรวจสอบว่าไฟล์ 3D ถูกต้อง (${error.message})`);
+
+        // ข้อความที่โยนเองเป็นภาษาคนแล้ว (เช่น เช็คขนาดเกิน 1 เมตร) → ส่งต่อตรง ๆ
+        if (!/^Command failed/.test(error.message || "")) throw error;
+
+        // command พัง → ดึงเฉพาะบรรทัด error ที่มีความหมาย ไม่โชว์ path/คำสั่งดิบให้ผู้ใช้
+        const lines = (error.message || "").split("\n").slice(1).map((s: string) => s.trim()).filter(Boolean);
+        const hint = (lines.find((l: string) => /error|failed|invalid/i.test(l)) || "")
+            .replace(/^\[[^\]]*\]\s*\[[^\]]*\]\s*\[error\]\s*/i, "")   // ตัด timestamp prefix ของ PrusaSlicer
+            .replace(/\/[^\s"]*\/(uploads|tmp)\/[^\s"]*/g, "ไฟล์")     // ตัด path ภายในเซิร์ฟเวอร์
+            .slice(0, 180);
+        throw new Error(`ไม่สามารถวิเคราะห์ไฟล์ได้ กรุณาตรวจสอบว่าไฟล์ 3D ถูกต้อง${hint ? ` (${hint})` : ""}`);
     }
 }
 

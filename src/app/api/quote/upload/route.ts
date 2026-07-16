@@ -27,6 +27,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
         }
 
+        // กรองนามสกุลฝั่งเซิร์ฟเวอร์ — accept ใน browser กันคนกดเลือกผิดเท่านั้น กันไฟล์รูป/เอกสารหลุดมาถึง slicer
+        const ALLOWED_EXT = [".stl", ".3mf", ".obj", ".step", ".stp"];
+        const fileExt = path.extname(file.name).toLowerCase();
+        if (!ALLOWED_EXT.includes(fileExt)) {
+            return NextResponse.json({
+                error: `ไฟล์ประเภท ${fileExt || "ไม่ทราบนามสกุล"} ไม่รองรับ — กรุณาอัพโหลดไฟล์โมเดล 3D (.stl, .3mf, .obj, .step, .stp)`,
+            }, { status: 400 });
+        }
+
         console.log("1. Connecting to DB...");
         try {
             await dbConnect();
