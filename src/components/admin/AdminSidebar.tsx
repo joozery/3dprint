@@ -57,8 +57,9 @@ const menuGroups: MenuGroup[] = [
   {
     title: "งานขายและออเดอร์",
     items: [
-      { label: "ใบเสนอราคาใหม่", icon: FileText, href: "/admin/quotes", badge: "3", badgeColor: "bg-blue-600" },
-      { label: "รายการสั่งซื้อ", icon: ShoppingBag, href: "/admin/orders", badge: "New", badgeColor: "bg-emerald-500" },
+      // badge เติมตัวเลขจริงตอน render จาก /api/admin/sidebar-counts
+      { label: "ใบเสนอราคาใหม่", icon: FileText, href: "/admin/quotes", badge: null, badgeColor: "bg-blue-600" },
+      { label: "รายการสั่งซื้อ", icon: ShoppingBag, href: "/admin/orders", badge: null, badgeColor: "bg-emerald-500" },
       { label: "ระบบคูปอง", icon: Ticket, href: "/admin/coupons", badge: null },
       { label: "รายงาน / Excel", icon: FileText, href: "/admin/reports", badge: null },
     ],
@@ -110,6 +111,25 @@ export default function AdminSidebar() {
   
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  // ตัวเลขงานรอจัดการจริงจาก DB (ใบเสนอราคารอตอบ / ออเดอร์รอยืนยันสลิป)
+  const [pendingCounts, setPendingCounts] = useState<{ pendingQuotes: number; pendingOrders: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/sidebar-counts")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && typeof d.pendingQuotes === "number") setPendingCounts(d); })
+      .catch(() => {});
+  }, [pathname]); // อัพเดตทุกครั้งที่เปลี่ยนหน้า
+
+  // แปลงเป็นข้อความ badge — เกิน 99 แสดง 99+, ศูนย์ไม่แสดง
+  const liveBadge = (item: MenuItem): string | null => {
+    if (!pendingCounts) return item.badge;
+    const n = item.href === "/admin/quotes" ? pendingCounts.pendingQuotes
+            : item.href === "/admin/orders" ? pendingCounts.pendingOrders
+            : null;
+    if (n === null) return item.badge;
+    return n > 0 ? (n > 99 ? "99+" : String(n)) : null;
+  };
   
   // Search Modal States
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -236,7 +256,7 @@ export default function AdminSidebar() {
                        <Icon size={isCollapsed ? 20 : 18} strokeWidth={exactActive ? 2.5 : 2} className={!exactActive ? "text-slate-400 group-hover:text-blue-600" : ""} />
                        
                        {/* Mini Status Dot when collapsed */}
-                       {isCollapsed && item.badge && (
+                       {isCollapsed && liveBadge(item) && (
                          <span className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full ${item.badgeColor} border-2 border-white shadow-sm`} />
                        )}
                      </div>
@@ -251,9 +271,9 @@ export default function AdminSidebar() {
                   {/* Badges & Chevrons (Expanded only) */}
                   {!isCollapsed && (
                     <div className="relative z-10 flex items-center gap-2 shrink-0">
-                      {item.badge && (
+                      {liveBadge(item) && (
                         <span className={`text-[10px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm ${item.badgeColor}`}>
-                          {item.badge}
+                          {liveBadge(item)}
                         </span>
                       )}
                       <ChevronRight size={14} className={`transition-all duration-300 ${exactActive ? "opacity-100 text-blue-500" : "opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-slate-400"}`} />
@@ -265,8 +285,8 @@ export default function AdminSidebar() {
                 {isCollapsed && (
                   <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-3 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-md shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 z-50 whitespace-nowrap flex items-center gap-2">
                     {item.label}
-                    {item.badge && (
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>{item.badge}</span>
+                    {liveBadge(item) && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>{liveBadge(item)}</span>
                     )}
                     <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-[5px] border-transparent border-r-slate-800" />
                   </div>
