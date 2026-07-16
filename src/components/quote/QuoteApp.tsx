@@ -249,7 +249,8 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                 }
             } catch (err: any) {
                 console.error("Upload failed", err);
-                alert(err.response?.data?.message || t.quote.uploadError);
+                // API ส่ง field "error" — เดิมอ่าน "message" ทำให้ error จริงไม่เคยแสดง
+                alert(err.response?.data?.error || err.response?.data?.message || t.quote.uploadError);
             }
         }
         setUploading(false);

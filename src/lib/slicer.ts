@@ -104,6 +104,14 @@ export async function analyzeFile(
         const info = await runInfo(filePath);
         const volumeCm3 = info.volumeMm3 / 1000;
 
+        // โมเดลใหญ่เกิน 1 เมตร = หน่วยในไฟล์ผิดเกือบแน่นอน (เช่น export เป็น µm/inch)
+        const maxDim = Math.max(info.dimensions.x, info.dimensions.y, info.dimensions.z);
+        if (maxDim > 1000) {
+            throw new Error(
+                `โมเดลมีขนาด ${(maxDim / 1000).toFixed(1)} เมตร ซึ่งใหญ่ผิดปกติ — กรุณาตรวจสอบหน่วยของไฟล์ (ควรเป็นมิลลิเมตร) แล้ว export ใหม่`
+            );
+        }
+
         // Step 2: Slice ที่ infill 20% ไม่มี support → เวลาพิมพ์ + filament อ้างอิง
         if (jobId) updateJob(jobId, { status: "processing", step: "Slice ไม่มี support (infill 20%)" });
         const sliceNoSupport = await runSlice(filePath, false, 20, supportDensity, supportAngle);
