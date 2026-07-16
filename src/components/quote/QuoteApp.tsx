@@ -65,6 +65,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
     const [viewMode, setViewMode] = useState("shaded");
     const [isTermsAccepted, setIsTermsAccepted] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
+    const [uploadErrorMsg, setUploadErrorMsg] = useState("");
     const [showDeliveryDropdown, setShowDeliveryDropdown] = useState(false);
     const [showAddressDropdown, setShowAddressDropdown] = useState(false);
     const [userAddresses, setUserAddresses] = useState<any[]>([]);
@@ -250,7 +251,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             } catch (err: any) {
                 console.error("Upload failed", err);
                 // API ส่ง field "error" — เดิมอ่าน "message" ทำให้ error จริงไม่เคยแสดง
-                alert(err.response?.data?.error || err.response?.data?.message || t.quote.uploadError);
+                setUploadErrorMsg(err.response?.data?.error || err.response?.data?.message || t.quote.uploadError);
             }
         }
         setUploading(false);
@@ -1366,6 +1367,32 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
             </div>
 
             {/* Terms of Use Modal */}
+            {/* Popup แจ้ง error ตอนอัพโหลด/วิเคราะห์ไฟล์ไม่สำเร็จ */}
+            {uploadErrorMsg && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setUploadErrorMsg("")}></div>
+                    <div className="relative bg-white w-full max-w-md rounded-[24px] shadow-2xl overflow-hidden">
+                        <div className="p-6 flex flex-col items-center text-center">
+                            <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                                <svg className="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-black text-slate-900 mb-2">อัพโหลดไฟล์ไม่สำเร็จ</h3>
+                            <p className="text-[13px] text-slate-500 leading-relaxed whitespace-pre-line">{uploadErrorMsg}</p>
+                        </div>
+                        <div className="p-4 bg-slate-50 border-t border-slate-100">
+                            <button
+                                onClick={() => setUploadErrorMsg("")}
+                                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-colors"
+                            >
+                                ตกลง
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showTermsModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}></div>
