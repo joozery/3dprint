@@ -15,10 +15,8 @@ const sarabun = Sarabun({
 export const metadata: Metadata = {
   title: "PDM 3D Print Thailand | แพลตฟอร์มสั่งพิมพ์ 3 มิติครบวงจร",
   description: "บริการพิมพ์ 3 มิติระดับอุตสาหกรรม รวดเร็ว แม่นยำ และเป็นมืออาชีพที่สุดในไทย",
-  icons: {
-    icon: "/logo/browser.jpg",
-    apple: "/logo/browser.jpg",
-  },
+  // favicon ใช้ file convention ของ Next: src/app/favicon.ico + icon.png (512) + apple-icon.png (180)
+  // อย่าชี้ metadata.icons ไปไฟล์ JPEG — หลาย browser ไม่รองรับ JPEG เป็น favicon
 };
 
 import { CookieConsent } from "@/components/layout/CookieConsent";
