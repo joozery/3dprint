@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { generateUniqueSlug } from "@/lib/slugify";
 
 export async function POST(req: Request) {
   try {
@@ -22,15 +23,18 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    const slug = await generateUniqueSlug(name, User);
+
     // Create new admin
     const newAdmin = await User.create({
       name,
       email,
       password: hashedPassword,
       role: "admin",
-      isVerified: true, // Admin created by another admin is verified by default
+      isVerified: true,
       verificationStatus: "verified",
-      provider: "credentials"
+      provider: "credentials",
+      slug,
     });
 
     return NextResponse.json({ 

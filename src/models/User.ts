@@ -46,6 +46,7 @@ export interface IUser extends Document {
     isDefault?: boolean;
     isInternational?: boolean;
   }[];
+  slug?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -68,6 +69,11 @@ const UserSchema = new Schema(
     },
     image: {
       type: String,
+    },
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     provider: {
       type: String,

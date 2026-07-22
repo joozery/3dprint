@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Search, UploadCloud, Calculator, Box, Clock, Truck, ShieldCheck,
-  ArrowRight, MessageCircle, Mail, Phone, Headset, Info, Lock, HeartHandshake
+  ArrowRight, MessageCircle, Mail, Phone, Headset, Info, Lock, HeartHandshake, ChevronDown
 } from "lucide-react";
 
 interface FaqItem {
@@ -21,6 +21,13 @@ interface GuideItem {
   description?: string;
   thumbnail?: string;
   linkUrl?: string;
+  content?: string;
+}
+
+// มี content → เปิดหน้าอ่านในเว็บ, ไม่มีก็ไปตาม linkUrl เดิม
+function guideHref(guide: GuideItem): string | null {
+  if (guide.content) return `/support/guide/${guide._id}`;
+  return guide.linkUrl || null;
 }
 
 interface SupportSettings {
@@ -61,19 +68,54 @@ function groupFaqsByCategory(faqs: FaqItem[]) {
   return Object.values(map);
 }
 
+function FaqAccordionItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`group bg-white rounded-xl border transition-all duration-300 ${
+      open ? "border-blue-200 shadow-md shadow-blue-900/5 ring-1 ring-blue-50" : "border-slate-200 hover:border-blue-300/60 hover:shadow-sm"
+    }`}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left outline-none"
+      >
+        <span className={`font-semibold text-sm pr-4 transition-colors ${open ? 'text-blue-700' : 'text-slate-800 group-hover:text-blue-600'}`}>
+          {question}
+        </span>
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${open ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500'}`}>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          />
+        </div>
+      </button>
+      {open && (
+        <div className="px-5 pb-5 text-slate-600 leading-relaxed text-sm">
+          <div className="pt-3 border-t border-slate-100/50">
+            {answer}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SupportPageClient({ faqs, guides, settings }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const categories = groupFaqsByCategory(faqs);
 
-  const filteredCategories = categories.filter((cat) =>
-    cat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    cat.items.some(
-      (f) =>
-        f.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.answer.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
+  const q = searchQuery.toLowerCase();
+  const filteredCategories = categories
+    .map((cat) => {
+      // ถ้าชื่อหมวดตรง ให้โชว์ทุกคำถามในหมวด ไม่งั้นกรองเฉพาะคำถามที่ตรง
+      if (cat.title.toLowerCase().includes(q)) return cat;
+      return {
+        ...cat,
+        items: cat.items.filter(
+          (f) => f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q)
+        ),
+      };
+    })
+    .filter((cat) => cat.items.length > 0);
 
   const filteredGuides = guides.filter((g) =>
     g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -139,49 +181,52 @@ export default function SupportPageClient({ faqs, guides, settings }: Props) {
         </div>
       </section>
 
-      {/* 2. FAQ Categories */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">หัวข้อที่พบบ่อย</h2>
-            <Link href="/support/faq" className="flex items-center gap-1 text-blue-600 font-semibold text-sm hover:text-blue-700">
-              ดูคำถามทั้งหมด <ArrowRight className="w-4 h-4" />
-            </Link>
+      {/* 2. FAQ Accordion */}
+      <section className="py-16 bg-white relative">
+        <div className="absolute inset-0 bg-slate-50/50 pointer-events-none"></div>
+        <div className="max-w-6xl mx-auto px-6 lg:px-8 relative z-10">
+          <div className="max-w-3xl mb-10">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
+              คำถามที่พบบ่อย
+            </h2>
+            <p className="text-base text-slate-500">
+              รวบรวมทุกข้อสงสัยเกี่ยวกับการบริการของเรา เพื่อให้คุณเข้าใจกระบวนการทำงานมากยิ่งขึ้น
+            </p>
           </div>
 
           {filteredCategories.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-10 lg:space-y-12">
               {filteredCategories.map((cat) => {
                 const Icon = getCategoryIcon(cat.title);
                 return (
-                  <Link
-                    href="/support/faq"
-                    key={cat.title}
-                    className="bg-white border border-slate-100 rounded-lg p-6 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-blue-100 transition-all group cursor-pointer"
-                  >
-                    <div className="flex gap-5">
-                      <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                        <Icon className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 mb-2">{cat.title}</h3>
-                        <p className="text-sm text-slate-500 leading-relaxed mb-4 line-clamp-2">
-                          {cat.items[0]?.question || `${cat.items.length} คำถาม`}
-                        </p>
-                        <div className="flex items-center gap-1 text-blue-600 font-semibold text-sm group-hover:gap-2 transition-all">
-                          ดูเพิ่มเติม <ArrowRight className="w-3.5 h-3.5" />
+                  <div key={cat.title} className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start">
+                    <div className="md:col-span-4 lg:col-span-4 md:sticky md:top-24">
+                      <div className="flex flex-col">
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 mb-4 border border-blue-100/50 shadow-sm text-blue-600">
+                          <Icon className="w-6 h-6" strokeWidth={1.5} />
                         </div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-1">{cat.title}</h3>
+                        <p className="text-slate-500 text-xs font-medium">
+                          {cat.items.length} คำถามในหมวดหมู่นี้
+                        </p>
                       </div>
                     </div>
-                  </Link>
+                    <div className="md:col-span-8 lg:col-span-8 space-y-3">
+                      {cat.items.map((faq) => (
+                        <FaqAccordionItem key={faq._id} question={faq.question} answer={faq.answer} />
+                      ))}
+                    </div>
+                  </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-100">
-              <Search className="w-10 h-10 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-slate-700">ไม่พบหัวข้อที่ตรงกับ "{searchQuery}"</h3>
-              <p className="text-slate-500 mt-2">ลองค้นหาด้วยคำอื่น หรือติดต่อทีมงานด้านล่างได้เลยครับ</p>
+            <div className="text-center py-12 bg-white rounded-2xl border border-slate-100 shadow-sm">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-6 h-6 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 mb-2">ไม่พบหัวข้อที่ตรงกับ "{searchQuery}"</h3>
+              <p className="text-slate-500 text-sm">ลองค้นหาด้วยคำอื่น หรือติดต่อทีมงานด้านล่างได้เลยครับ</p>
             </div>
           )}
         </div>
@@ -204,15 +249,17 @@ export default function SupportPageClient({ faqs, guides, settings }: Props) {
               {filteredGuides.length > 0 ? (
                 <div className="flex flex-col gap-4">
                   {filteredGuides.map((guide) => {
-                    const Wrapper = guide.linkUrl ? Link : "div";
-                    const wrapperProps = guide.linkUrl
-                      ? { href: guide.linkUrl, target: guide.linkUrl.startsWith("http") ? "_blank" : undefined, rel: guide.linkUrl.startsWith("http") ? "noopener noreferrer" : undefined }
+                    const href = guideHref(guide);
+                    const Wrapper = href ? Link : "div";
+                    const isExternal = !!href && href.startsWith("http");
+                    const wrapperProps = href
+                      ? { href, target: isExternal ? "_blank" : undefined, rel: isExternal ? "noopener noreferrer" : undefined }
                       : {};
                     return (
                       <Wrapper
                         key={guide._id}
                         {...(wrapperProps as any)}
-                        className={`bg-white rounded-lg p-4 flex gap-5 items-center shadow-sm hover:shadow-md transition-shadow border border-slate-100 group ${guide.linkUrl ? "cursor-pointer" : ""}`}
+                        className={`bg-white rounded-lg p-4 flex gap-5 items-center shadow-sm hover:shadow-md transition-shadow border border-slate-100 group ${href ? "cursor-pointer" : ""}`}
                       >
                         <div className="w-32 h-24 bg-slate-200 rounded-lg shrink-0 overflow-hidden relative">
                           {guide.thumbnail ? (

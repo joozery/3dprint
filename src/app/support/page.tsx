@@ -1,49 +1,31 @@
 import Navbar from "@/components/layout/Navbar";
 import { Footer } from "@/components/home/HomeSections";
 import SupportPageClient from "./SupportPageClient";
+import dbConnect from "@/lib/mongoose";
+import Faq from "@/models/Faq";
+import Article from "@/models/Article";
+import SupportSettings from "@/models/SupportSettings";
 
-async function getFaqs() {
+async function getData() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/public/faq`, { cache: "no-store" });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.faqs ?? [];
+    await dbConnect();
+    const [faqs, guides, settings] = await Promise.all([
+      Faq.find({ isActive: true }).sort({ order: 1 }).lean(),
+      Article.find({ type: "guide", isActive: true }).sort({ order: 1, createdAt: -1 }).lean(),
+      SupportSettings.findOne().lean(),
+    ]);
+    return {
+      faqs: JSON.parse(JSON.stringify(faqs)),
+      guides: JSON.parse(JSON.stringify(guides)),
+      settings: JSON.parse(JSON.stringify(settings ?? {})),
+    };
   } catch {
-    return [];
-  }
-}
-
-async function getGuides() {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/public/articles?type=guide`, { cache: "no-store" });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.articles ?? [];
-  } catch {
-    return [];
-  }
-}
-
-async function getSupportSettings() {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/public/support-settings`, { cache: "no-store" });
-    if (!res.ok) return {};
-    const data = await res.json();
-    return data.settings ?? {};
-  } catch {
-    return {};
+    return { faqs: [], guides: [], settings: {} };
   }
 }
 
 export default async function SupportPage() {
-  const [faqs, guides, settings] = await Promise.all([
-    getFaqs(),
-    getGuides(),
-    getSupportSettings(),
-  ]);
+  const { faqs, guides, settings } = await getData();
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans selection:bg-blue-500/30">

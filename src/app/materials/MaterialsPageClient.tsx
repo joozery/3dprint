@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-    ChevronRight, CheckCircle2, ShieldCheck, Layers, Cpu, Settings, Thermometer,
+    ChevronRight, ChevronDown, CheckCircle2, ShieldCheck, Layers, Cpu, Settings, Thermometer,
     Zap, Droplets, Leaf, Shield, Box, Sparkles, AlertCircle, ArrowRight, Truck,
     CreditCard, HeartHandshake, HeadphonesIcon, Home, type LucideProps,
 } from "lucide-react";
@@ -38,6 +38,7 @@ export interface MaterialItem {
 export interface FaqItem {
     _id: string;
     question: string;
+    answer: string;
 }
 
 export interface UseCaseItem {
@@ -66,6 +67,26 @@ function materialIcon(item: MaterialItem): React.FC<LucideProps> {
 
 function detailHref(item: MaterialItem): string {
     return item.detailUrl || `/materials/${item.slug}`;
+}
+
+function FaqAccordionItem({ question, answer }: { question: string; answer: string }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-blue-300 transition-colors">
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full p-5 flex items-center justify-between text-left cursor-pointer"
+            >
+                <span className="font-bold text-slate-700 text-sm pr-4">{question}</span>
+                <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+            </button>
+            {open && (
+                <div className="px-5 pb-5 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
+                    {answer}
+                </div>
+            )}
+        </div>
+    );
 }
 
 export default function MaterialsPageClient({ materials, useCases, faqs }: { materials: MaterialItem[]; useCases: UseCaseItem[]; faqs: FaqItem[] }) {
@@ -396,14 +417,11 @@ export default function MaterialsPageClient({ materials, useCases, faqs }: { mat
                         <div className="w-full lg:w-2/3">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="font-bold text-lg text-slate-900">คำถามที่พบบ่อย</h3>
-                                <Link href="/support/faq" className="text-sm font-bold text-blue-600 hover:underline">ดูทั้งหมด</Link>
+                                <Link href="/support" className="text-sm font-bold text-blue-600 hover:underline">ดูทั้งหมด</Link>
                             </div>
                             <div className="space-y-3">
                                 {faqs.map((faq) => (
-                                    <Link key={faq._id} href="/support/faq" className="bg-white border border-slate-200 rounded-lg p-5 flex items-center justify-between cursor-pointer hover:border-blue-300 transition-colors">
-                                        <span className="font-bold text-slate-700 text-sm">{faq.question}</span>
-                                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                                    </Link>
+                                    <FaqAccordionItem key={faq._id} question={faq.question} answer={faq.answer} />
                                 ))}
                             </div>
                         </div>

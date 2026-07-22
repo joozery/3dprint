@@ -4,31 +4,64 @@ import Quote from "@/models/Quote";
 import Order from "@/models/Order";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, Mail, Phone, MapPin, FileBox, HardDrive, ShoppingBag, Receipt, Building2, User as UserIcon } from "lucide-react";
 import UserFilesTable from "@/components/admin/users/UserFilesTable";
+import { generateUniqueSlug } from "@/lib/slugify";
 
-export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function AdminUserDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   await dbConnect();
 
-  // Fetch full user data
-  const user = await User.findById(id).lean();
+  const isObjectId = /^[a-f\d]{24}$/i.test(slug);
+  let user: any = null;
+
+  if (isObjectId) {
+    user = await User.findById(slug).lean();
+    if (user) {
+      const newSlug = user.slug || await generateUniqueSlug(user.name, User, user._id.toString());
+      if (!user.slug) {
+        // strict:false ensures slug saves even if Mongoose schema cache is stale
+        await User.findByIdAndUpdate(user._id, { $set: { slug: newSlug } }, { strict: false });
+      }
+      redirect(`/admin/users/${newSlug}`);
+    }
+  } else {
+    // Primary: lookup by slug field
+    user = await User.findOne({ slug }).lean();
+
+    // Fallback: slug might not have been saved yet (Mongoose schema cache issue in dev)
+    // Try to find by matching generated slug from name
+    if (!user) {
+      const { toSlug } = await import("@/lib/slugify");
+      const candidates = await User.find({}).select("_id name slug email").lean();
+      const match = candidates.find((u: any) => !u.slug && toSlug(u.name) === slug);
+      if (match) {
+        // Save the slug now and proceed
+        await User.findByIdAndUpdate(match._id, { $set: { slug } }, { strict: false });
+        user = await User.findById(match._id).lean();
+      }
+    }
+  }
+
   if (!user) {
     return <div className="p-10 text-center text-slate-500">ไม่พบผู้ใช้งานนี้</div>;
   }
 
+  const userId = user._id.toString();
+
   // Fetch Quotes
-  const quotes = await Quote.find({ userId: id }).sort({ createdAt: -1 }).lean();
-  
+  const quotes = await Quote.find({ userId }).sort({ createdAt: -1 }).lean();
+
   // Fetch Orders
-  const orders = await Order.find({ userId: id }).sort({ createdAt: -1 }).lean();
+  const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
 
   // Calculate statistics
   const totalOrders = orders.length;
   // @ts-ignore
   const totalSpent = orders.reduce((sum, o) => sum + (o.pricing?.totalAmount || 0), 0);
   const totalQuotes = quotes.length;
-  
+
   // HDD / File statistics
   const totalFiles = quotes.length;
   const fileDetails = quotes.map((q: any) => ({
@@ -37,14 +70,13 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     material: q.material,
     volumeCm3: q.volumeCm3 || 0,
     date: q.createdAt,
-    // Estimate size: Since we don't store exact bytes, we approximate 1cm3 ~ 0.5MB for display, or show N/A
-    estimatedMb: ((q.volumeCm3 || 0) * 0.45).toFixed(2), 
+    estimatedMb: ((q.volumeCm3 || 0) * 0.45).toFixed(2),
   }));
 
   const totalApproxMb = fileDetails.reduce((sum, f) => sum + parseFloat(f.estimatedMb), 0);
   const totalApproxGb = (totalApproxMb / 1024).toFixed(3);
 
-  // Addresses fallback (if user doesn't have it on profile, find from latest order/quote)
+  // Addresses fallback
   const billing = user.billing || quotes.find((q: any) => q.billing?.firstName)?.billing || null;
   const shipping = (user as any).shippingAddress || orders.find((o: any) => o.shippingAddress?.fullName)?.shippingAddress || null;
 
@@ -58,7 +90,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-800">ข้อมูลผู้ใช้งาน</h1>
-          <p className="text-sm text-slate-500">ID: {user._id.toString()}</p>
+          <p className="text-sm text-slate-500">{user.email}</p>
         </div>
       </div>
 
@@ -135,7 +167,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link href={`/admin/orders?userId=${user._id}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center hover:border-blue-400 hover:shadow-lg transition-all group relative overflow-hidden">
+            <Link href={`/admin/orders?userId=${userId}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center hover:border-blue-400 hover:shadow-lg transition-all group relative overflow-hidden">
               <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300"><ShoppingBag size={20}/></div>
               <p className="text-3xl font-black text-slate-800">{totalOrders}</p>
               <div className="flex items-center gap-1.5 mt-1">
@@ -151,7 +183,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">ยอดสั่งซื้อรวม</p>
             </div>
 
-            <Link href={`/admin/quotes?userId=${user._id}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center hover:border-orange-400 hover:shadow-lg transition-all group relative overflow-hidden">
+            <Link href={`/admin/quotes?userId=${userId}`} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center hover:border-orange-400 hover:shadow-lg transition-all group relative overflow-hidden">
               <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mb-2 group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300"><FileBox size={20}/></div>
               <p className="text-3xl font-black text-slate-800">{totalQuotes}</p>
               <div className="flex items-center gap-1.5 mt-1">

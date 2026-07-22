@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Edit2, Trash2, BookOpen, FileText, Upload, Loader2, Link2 } from "lucide-react";
+import { Plus, Edit2, Trash2, BookOpen, FileText, Upload, Loader2, Link2, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 
 interface Article {
@@ -34,7 +34,10 @@ export default function AdminArticlesView({ initialArticles }: { initialArticles
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ ...emptyForm });
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingContentImg, setIsUploadingContentImg] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const contentImgInputRef = useRef<HTMLInputElement>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const filtered = articles.filter((a) => a.type === activeTab);
 
@@ -75,6 +78,32 @@ export default function AdminArticlesView({ initialArticles }: { initialArticles
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  // อัพโหลดรูปแล้วแทรก ![รูป](url) ลงในเนื้อหา ตรงตำแหน่ง cursor
+  const handleContentImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingContentImg(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "อัปโหลดไม่สำเร็จ");
+
+      const tag = `\n![รูปประกอบ](${data.url})\n`;
+      const ta = contentTextareaRef.current;
+      const pos = ta ? ta.selectionStart : formData.content.length;
+      const newContent = formData.content.slice(0, pos) + tag + formData.content.slice(pos);
+      setFormData((prev) => ({ ...prev, content: newContent }));
+      toast.success("แทรกรูปในเนื้อหาแล้ว");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsUploadingContentImg(false);
+      if (contentImgInputRef.current) contentImgInputRef.current.value = "";
     }
   };
 
@@ -351,14 +380,28 @@ export default function AdminArticlesView({ initialArticles }: { initialArticles
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 mb-1 block">เนื้อหา (Content)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-500 block">เนื้อหา (Content)</label>
+                  <input ref={contentImgInputRef} type="file" accept="image/*" onChange={handleContentImageUpload} className="hidden" />
+                  <button
+                    type="button"
+                    onClick={() => contentImgInputRef.current?.click()}
+                    disabled={isUploadingContentImg}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold disabled:opacity-60 transition"
+                  >
+                    {isUploadingContentImg ? <Loader2 size={12} className="animate-spin" /> : <ImagePlus size={12} />}
+                    แทรกรูปในเนื้อหา
+                  </button>
+                </div>
                 <textarea
-                  rows={5}
+                  ref={contentTextareaRef}
+                  rows={8}
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="เนื้อหาบทความ (รองรับ HTML หรือ Markdown)..."
-                  className="w-full p-2.5 border rounded-xl border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm resize-none font-mono"
+                  placeholder={"เนื้อหาบทความ — พิมพ์ข้อความปกติ ขึ้นบรรทัดใหม่ได้เลย\nแทรกรูปด้วยปุ่มด้านบน หรือพิมพ์ ![คำอธิบายรูป](URL รูป) เอง"}
+                  className="w-full p-2.5 border rounded-xl border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm resize-y font-mono leading-relaxed"
                 />
+                <p className="text-[11px] text-slate-400 mt-1">รูปจะแสดงเต็มความกว้างตรงตำแหน่งที่แทรกในหน้าอ่านคู่มือ</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

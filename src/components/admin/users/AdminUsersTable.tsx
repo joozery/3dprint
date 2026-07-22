@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ShieldCheck, ShieldOff, Search, RefreshCw, Mail, AlertCircle, CheckCircle2, X, ExternalLink, Trash2 } from "lucide-react";
@@ -16,6 +16,7 @@ interface User {
   role: string;
   isVerified: boolean;
   createdAt: string;
+  slug?: string;
 }
 
 interface Props {
@@ -25,37 +26,59 @@ interface Props {
   totalPages: number;
 }
 
+function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="relative group/tip flex items-center justify-center">
+      {children}
+      <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150">
+        <div className="bg-slate-800 text-white text-[10px] font-medium whitespace-nowrap px-2.5 py-1.5 rounded-lg shadow-lg">
+          {label}
+        </div>
+        <div className="w-2 h-2 bg-slate-800 rotate-45 mx-auto -mt-1 rounded-sm" />
+      </div>
+    </div>
+  );
+}
+
 function ProviderIcon({ provider }: { provider: string }) {
   const base = "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border";
   if (provider === "google") return (
-    <div className={`${base} bg-white border-slate-200`} title="Google">
-      <svg viewBox="0 0 24 24" className="w-4 h-4">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-    </div>
+    <Tooltip label="เข้าสู่ระบบด้วย Google">
+      <div className={`${base} bg-white border-slate-200`}>
+        <svg viewBox="0 0 24 24" className="w-4 h-4">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+      </div>
+    </Tooltip>
   );
   if (provider === "facebook") return (
-    <div className={`${base} bg-[#1877F2] border-[#1877F2]`} title="Facebook">
-      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-      </svg>
-    </div>
+    <Tooltip label="เข้าสู่ระบบด้วย Facebook">
+      <div className={`${base} bg-[#1877F2] border-[#1877F2]`}>
+        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+      </div>
+    </Tooltip>
   );
   if (provider === "line") return (
-    <div className={`${base} bg-[#06C755] border-[#06C755]`} title="LINE">
-      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white">
-        <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
-      </svg>
-    </div>
+    <Tooltip label="เข้าสู่ระบบด้วย LINE">
+      <div className={`${base} bg-[#06C755] border-[#06C755]`}>
+        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="white">
+          <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+        </svg>
+      </div>
+    </Tooltip>
   );
   // credentials / email
   return (
-    <div className={`${base} bg-slate-100 border-slate-200`} title="อีเมล">
-      <Mail size={14} className="text-slate-500" />
-    </div>
+    <Tooltip label="เข้าสู่ระบบด้วยอีเมล">
+      <div className={`${base} bg-slate-100 border-slate-200`}>
+        <Mail size={14} className="text-slate-500" />
+      </div>
+    </Tooltip>
   );
 }
 
@@ -255,37 +278,40 @@ export default function AdminUsersTable({ users, total, page, totalPages }: Prop
                       {/* Actions */}
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <Link
-                            href={`/admin/users/${user._id}`}
-                            title="ดูข้อมูลส่วนบุคคลและสถิติ"
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white text-slate-400 border border-slate-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-300"
-                          >
-                            <ExternalLink size={13} />
-                          </Link>
-                          
-                          <button
-                            onClick={() => toggleRole(user._id, user.role)}
-                            disabled={togglingId === user._id}
-                            title={user.role === "admin" ? "ลด Role เป็น Member" : "เลื่อนขึ้นเป็น Admin"}
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-40 border ${
-                              user.role === "admin"
-                                ? "bg-slate-900 text-white border-slate-900 hover:bg-red-600 hover:border-red-600"
-                                : "bg-white text-slate-400 border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600"
-                            }`}
-                          >
-                            {togglingId === user._id
-                              ? <RefreshCw size={13} className="animate-spin" />
-                              : user.role === "admin" ? <ShieldCheck size={13} /> : <ShieldOff size={13} />
-                            }
-                          </button>
+                          <Tooltip label="ดูโปรไฟล์และสถิติการใช้งาน">
+                            <Link
+                              href={`/admin/users/${user.slug || user._id}`}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white text-slate-400 border border-slate-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-300"
+                            >
+                              <ExternalLink size={13} />
+                            </Link>
+                          </Tooltip>
 
-                          <button
-                            onClick={() => setDeleteModal({ isOpen: true, user })}
-                            title="ลบบัญชีนี้"
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all border bg-white text-slate-400 border-slate-200 hover:bg-red-600 hover:text-white hover:border-red-600"
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          <Tooltip label={user.role === "admin" ? "ถอด Admin → เป็น Member" : "เลื่อนขึ้นเป็น Admin"}>
+                            <button
+                              onClick={() => toggleRole(user._id, user.role)}
+                              disabled={togglingId === user._id}
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-40 border ${
+                                user.role === "admin"
+                                  ? "bg-slate-900 text-white border-slate-900 hover:bg-red-600 hover:border-red-600"
+                                  : "bg-white text-slate-400 border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                              }`}
+                            >
+                              {togglingId === user._id
+                                ? <RefreshCw size={13} className="animate-spin" />
+                                : user.role === "admin" ? <ShieldCheck size={13} /> : <ShieldOff size={13} />
+                              }
+                            </button>
+                          </Tooltip>
+
+                          <Tooltip label="ลบบัญชีนี้ออกจากระบบ">
+                            <button
+                              onClick={() => setDeleteModal({ isOpen: true, user })}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all border bg-white text-slate-400 border-slate-200 hover:bg-red-600 hover:text-white hover:border-red-600"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

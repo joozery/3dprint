@@ -285,7 +285,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     <UserIcon size={18} className="text-blue-500" /> ข้อมูลลูกค้า
                 </h3>
                 {user ? (
-                    <Link href={`/admin/users/${user._id}`} className="group block">
+                    <Link href={`/admin/users/${(user as any).slug || user._id}`} className="group block">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 group-hover:scale-105 transition-transform">
                                 {user.name?.charAt(0).toUpperCase()}
