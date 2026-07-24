@@ -42,7 +42,7 @@ export default function EmailCheckModal() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [session, session?.user?.email]);
+    }, [session]);
 
     const handleUpdateEmail = async (e: React.FormEvent) => {
         e.preventDefault();
