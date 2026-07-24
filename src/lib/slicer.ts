@@ -6,6 +6,10 @@ import { updateJob } from "@/lib/slicerQueue";
 
 const execPromise = promisify(exec);
 
+// PrusaSlicer can be verbose during slicing (progress, warnings) — default 1MB would overflow on complex models.
+// 3 slice passes on a dense mesh (370K+ triangles) can take 3–8 min, so give each pass 10 min.
+const EXEC_OPTS = { maxBuffer: 64 * 1024 * 1024, timeout: 600_000 } as const;
+
 const PRUSA_SLICER_PATH =
     process.env.PRUSA_SLICER_PATH ||
     "/Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer";
@@ -30,7 +34,8 @@ async function runInfo(filePath: string): Promise<{
     isManifold: boolean;
 }> {
     const { stdout } = await execPromise(
-        `"${PRUSA_SLICER_PATH}" --info "${filePath}" 2>&1`
+        `"${PRUSA_SLICER_PATH}" --info "${filePath}" 2>&1`,
+        EXEC_OPTS
     );
 
     const volumeMatch  = stdout.match(/volume\s*=\s*([\d.]+)/);
@@ -67,14 +72,22 @@ async function runSlice(
         ? `--support-material --support-material-threshold ${supportAngle}`
         : "";
     await execPromise(
-        `"${PRUSA_SLICER_PATH}" --export-gcode --fill-density ${fillDensity}% ${supportFlags} --output "${tempGcode}" "${filePath}" 2>&1`
+        `"${PRUSA_SLICER_PATH}" --export-gcode --fill-density ${fillDensity}% ${supportFlags} --output "${tempGcode}" "${filePath}" 2>&1`,
+        EXEC_OPTS
     );
 
-    const gcode = await fs.promises.readFile(tempGcode, "utf-8");
+    // grep only the 2 comment lines we need — avoids loading a potentially 100–500 MB gcode file into RAM
+    let timeMatch: RegExpMatchArray | null = null;
+    let volumeMatch: RegExpMatchArray | null = null;
+    try {
+        const { stdout: grepOut } = await execPromise(
+            `grep -E "; estimated printing time|; filament used \\[cm3\\]" "${tempGcode}"`,
+            { maxBuffer: 64 * 1024 }
+        );
+        timeMatch   = grepOut.match(/; estimated printing time \(normal mode\) = (.+)/);
+        volumeMatch = grepOut.match(/; filament used \[cm3\] = ([\d.]+)/);
+    } catch { /* grep exits 1 if no match — treat as no data */ }
     try { await fs.promises.unlink(tempGcode); } catch { }
-
-    const timeMatch   = gcode.match(/; estimated printing time \(normal mode\) = (.+)/);
-    const volumeMatch = gcode.match(/; filament used \[cm3\] = ([\d.]+)/);
 
     return {
         printTime: timeMatch ? timeMatch[1].trim() : "N/A",
