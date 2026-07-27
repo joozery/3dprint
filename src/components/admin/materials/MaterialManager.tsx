@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Plus, Edit, Trash2, Settings, Save, X, ExternalLink, Link as LinkIcon, DollarSign, Palette, Settings2, FolderOpen, Ruler, Coins, Sparkles, ChevronDown } from "lucide-react";
+import { Box, Plus, Edit, Trash2, Settings, Save, X, ExternalLink, Link as LinkIcon, DollarSign, Palette, Settings2, FolderOpen, Ruler, Coins, Sparkles, ChevronDown, Star } from "lucide-react";
 import { toast } from "sonner";
 
 const DEFAULT_TECHS = ["SLA", "FDM", "MJF", "SLS", "DLP"];
@@ -24,7 +24,8 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
     supportSettings: { density: 15, angle: 45 },
     colors: "",
     colorOptions: [] as { name: string, hex: string }[],
-    postProcessing: [] as { name: string, costPrice: number, sellPrice: number }[]
+    postProcessing: [] as { name: string, costPrice: number, sellPrice: number }[],
+    isDefault: false,
   });
 
   const uniqueTechs = Array.from(new Set([...DEFAULT_TECHS, ...materials.map(m => (m.technology || "").toUpperCase())])).filter(Boolean).sort();
@@ -35,7 +36,7 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       maxPrintSize: { width: 0, length: 0, height: 0 },
       pricing: { costPerGram: 0, sellPerGram: 0, costPerMinute: 0, sellPerMinute: 0 },
       supportSettings: { density: 15, angle: 45 },
-      colors: "", colorOptions: [], postProcessing: []
+      colors: "", colorOptions: [], postProcessing: [], isDefault: false,
     });
     setEditingId(null);
     setShowCustomTech(false);
@@ -53,7 +54,8 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
       supportSettings: m.supportSettings || { density: 15, angle: 45 },
       colors: m.colors ? m.colors.join(", ") : "",
       colorOptions: m.colorOptions && m.colorOptions.length > 0 ? m.colorOptions : (m.colors || []).map((c: string) => ({ name: c, hex: "#ffffff" })),
-      postProcessing: m.postProcessing || []
+      postProcessing: m.postProcessing || [],
+      isDefault: m.isDefault || false,
     });
     setEditingId(m._id);
     setIsModalOpen(true);
@@ -172,6 +174,11 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
                           <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                              <div className="flex items-center gap-3">
                                 <h3 className="font-bold text-slate-800 text-lg uppercase tracking-tight">{m.name}</h3>
+                                {m.isDefault && (
+                                   <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
+                                      <Star size={9} className="fill-amber-500 text-amber-500" /> DEFAULT
+                                   </span>
+                                )}
                              </div>
                              <div className="flex items-center gap-2">
                                 <button onClick={() => handleEdit(m)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16} /></button>
@@ -247,6 +254,18 @@ export default function MaterialManager({ initialMaterials }: { initialMaterials
                     <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 flex items-center gap-2">
                        <FolderOpen size={16} className="text-slate-400" /> ข้อมูลทั่วไป
                     </h3>
+                    <label className="flex items-center gap-3 cursor-pointer bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 hover:bg-amber-100 transition-colors">
+                       <input
+                          type="checkbox"
+                          checked={formData.isDefault}
+                          onChange={e => setFormData({ ...formData, isDefault: e.target.checked })}
+                          className="accent-amber-500 w-4 h-4"
+                       />
+                       <div>
+                          <p className="text-sm font-bold text-amber-800 flex items-center gap-1"><Star size={13} className="fill-amber-500 text-amber-500" /> ใช้เป็น Default Material</p>
+                          <p className="text-[11px] text-amber-600">วัสดุนี้จะถูกเลือกอัตโนมัติเมื่อ user อัปโหลดไฟล์ใหม่</p>
+                       </div>
+                    </label>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">เทคโนโลยี (Technology)</label>

@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
 
         // โหลด MaterialConfig สำหรับ supportSettings และ pricing
         const MaterialConfig = require("@/models/MaterialConfig").default;
-        const defaultMat = await MaterialConfig.findOne({ isActive: true }).sort({ createdAt: 1 });
+        const defaultMat =
+            (await MaterialConfig.findOne({ isActive: true, isDefault: true })) ??
+            (await MaterialConfig.findOne({ isActive: true }).sort({ createdAt: 1 }));
         const supportDensity = defaultMat?.supportSettings?.density ?? 15;
         const supportAngle   = defaultMat?.supportSettings?.angle   ?? 45;
 

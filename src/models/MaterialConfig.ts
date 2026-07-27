@@ -34,6 +34,7 @@ const MaterialConfigSchema = new mongoose.Schema({
     angle:   { type: Number, default: 45 },  // องศา เช่น 45
   },
   isActive: { type: Boolean, default: true },
+  isDefault: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default (mongoose.models.MaterialConfig as mongoose.Model<any>) || mongoose.model("MaterialConfig", MaterialConfigSchema);
