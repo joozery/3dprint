@@ -35,10 +35,10 @@ export async function PATCH(
         const MaterialConfig = require("@/models/MaterialConfig").default;
         const matConfig = await MaterialConfig.findById(material || quote.material).catch(() => null);
 
-        const density       = matConfig?.density                 || 1.15;
-        const sellPerGram   = matConfig?.pricing?.sellPerGram    || 1;
-        const sellPerMinute = matConfig?.pricing?.sellPerMinute  || 0;
-        const setupFee      = matConfig?.pricing?.setupFee       || 0;
+        const density       = matConfig?.density                 ?? 1.15;
+        const sellPerGram   = matConfig?.pricing?.sellPerGram   ?? 0;
+        const sellPerMinute = matConfig?.pricing?.sellPerMinute ?? 0;
+        const setupFee      = matConfig?.pricing?.setupFee      ?? 0;
 
         // หา finish price จาก postProcessing ของ material
         const finalFinish = finish || quote.finish || "standard";

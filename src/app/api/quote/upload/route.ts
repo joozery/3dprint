@@ -130,10 +130,10 @@ export async function POST(req: NextRequest) {
         let selMat = "";
         let selColor = "ขาวด้าน (Matte White)";
 
-        const density       = defaultMat?.density || 1.15;
-        const sellPerGram   = defaultMat?.pricing?.sellPerGram   || 1;
-        const sellPerMinute = defaultMat?.pricing?.sellPerMinute || 0;
-        const setupFee      = defaultMat?.pricing?.setupFee      || 0;
+        const density       = defaultMat?.density                 ?? 1.15;
+        const sellPerGram   = defaultMat?.pricing?.sellPerGram   ?? 0;
+        const sellPerMinute = defaultMat?.pricing?.sellPerMinute ?? 0;
+        const setupFee      = defaultMat?.pricing?.setupFee      ?? 0;
 
         let selMatName = "";
         if (defaultMat) {
