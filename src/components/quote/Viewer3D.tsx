@@ -161,8 +161,17 @@ export const Viewer3D = React.forwardRef<ViewerRef, Viewer3DProps>(({ fileUrl, f
 
     useEffect(() => {
         setError(null);
+        const name = file?.name || fileName || "";
+        const ext = name.split('.').pop()?.toLowerCase();
+
+        // STEP/STP เป็น CAD format — ไม่มี Three.js loader รองรับ
+        // STLLoader จะอ่านขยะเป็น triangle count แล้ว crash (RangeError)
+        if (ext === "step" || ext === "stp") {
+            setError("STEP_FORMAT");
+            return;
+        }
+
         if (file) {
-            // Validate file size/type before loading
             if (file.size > 100 * 1024 * 1024) {
                 setError("ไฟล์มีขนาดใหญ่เกินกว่าจะแสดงผลพรีวิวได้ (Max 100MB)");
                 return;
@@ -172,9 +181,26 @@ export const Viewer3D = React.forwardRef<ViewerRef, Viewer3DProps>(({ fileUrl, f
             return () => URL.revokeObjectURL(url);
         }
         if (fileUrl) {
+            const urlExt = fileUrl.split('.').pop()?.toLowerCase().split('?')[0];
+            if (urlExt === "step" || urlExt === "stp") {
+                setError("STEP_FORMAT");
+                return;
+            }
             setObjectUrl(fileUrl);
         }
-    }, [file, fileUrl]);
+    }, [file, fileUrl, fileName]);
+
+    if (error === "STEP_FORMAT") {
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                <svg className="w-8 h-8 text-slate-300 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25" />
+                </svg>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">STEP / CAD</p>
+                <p className="text-[9px] text-slate-300 mt-0.5">Preview ไม่รองรับ</p>
+            </div>
+        );
+    }
 
     if (error) {
         return (
