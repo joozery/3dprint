@@ -189,7 +189,7 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                   <p className="text-sm font-bold text-slate-800 truncate">{f.originalName}</p>
                   <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                     {f.volumeCm3 ? `${f.volumeCm3.toFixed(2)} cm³` : "—"}
-                    {f.priceDetail?.totalPrice ? ` · ฿${f.priceDetail.totalPrice.toLocaleString("th-TH", { minimumFractionDigits: 2 })}` : ""}
+                    {f.priceDetail?.totalPrice ? ` · ฿${f.priceDetail.totalPrice.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}
                   </p>
                 </div>
                 {f.fileUrl ? (
@@ -433,13 +433,13 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                       {/* File count / weight */}
                       <td className="px-6 py-4 text-center">
                         <p className="text-slate-700 font-bold text-sm">{q.fileCount || 1} ไฟล์</p>
-                        <p className="text-slate-400 text-[11px] mt-0.5">{q.weightGrams ? `${q.weightGrams} g` : "—"}</p>
+                        <p className="text-slate-400 text-[11px] mt-0.5">{q.weightGrams ? `${q.weightGrams.toFixed(2)} g` : "—"}</p>
                       </td>
 
                       {/* Item price (products only, as before) */}
                       <td className="px-6 py-4 text-right">
                         <p className="text-slate-800 font-bold text-sm">
-                          ฿{(q.totalPrice ?? q.priceDetail?.totalPrice ?? 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                          ฿{(q.totalPrice ?? q.priceDetail?.totalPrice ?? 0).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                         {(q.fileCount || 0) > 1 && (
                           <p className="text-slate-400 text-[10px] mt-0.5">รวม {q.fileCount} ไฟล์</p>
@@ -451,7 +451,7 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                         {q.shippingFee != null ? (
                           <>
                             <p className="text-slate-800 font-bold text-sm">
-                              ฿{q.shippingFee.toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                              ฿{q.shippingFee.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                             {q.shippingCourierName && (
                               <p className="text-slate-400 text-[10px] mt-0.5 truncate max-w-[110px] ml-auto">{q.shippingCourierName}</p>
@@ -465,7 +465,7 @@ export default function AdminQuotesTable({ quotes, total, page, totalPages, curr
                       {/* Grand total (items + shipping) */}
                       <td className="px-6 py-4 text-right">
                         <p className="text-slate-800 font-black text-sm">
-                          ฿{((q.totalPrice ?? q.priceDetail?.totalPrice ?? 0) + (q.shippingFee || 0)).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                          ฿{((q.totalPrice ?? q.priceDetail?.totalPrice ?? 0) + (q.shippingFee || 0)).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                         <p className="text-slate-400 text-[10px] mt-0.5">
                           {q.shippingFee != null ? "รวมค่าจัดส่ง" : "ยังไม่รวมค่าจัดส่ง"}

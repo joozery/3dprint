@@ -239,14 +239,14 @@ export default function AdminCouponsTable() {
                   </td>
                   <td className="px-6 py-4">
                     <span className="font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded text-sm border border-orange-100">
-                      {coupon.discountType === "percentage" ? `ลด ${coupon.discountValue}%` : `ลด ฿${coupon.discountValue}`}
+                      {coupon.discountType === "percentage" ? `ลด ${coupon.discountValue}%` : `ลด ฿${coupon.discountValue.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     </span>
                     {coupon.maxDiscount && (
-                      <div className="text-xs text-slate-400 mt-1">สูงสุด ฿{coupon.maxDiscount}</div>
+                      <div className="text-xs text-slate-400 mt-1">สูงสุด ฿{coupon.maxDiscount?.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-xs text-slate-600">
-                    <div>ขั้นต่ำ ฿{coupon.minOrderValue}</div>
+                    <div>ขั้นต่ำ ฿{coupon.minOrderValue?.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   </td>
                   <td className="px-6 py-4 text-xs">
                     <div className="font-medium text-slate-700">

@@ -74,7 +74,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   }));
 
   const totalApproxMb = fileDetails.reduce((sum, f) => sum + parseFloat(f.estimatedMb), 0);
-  const totalApproxGb = (totalApproxMb / 1024).toFixed(3);
+  const totalApproxGb = (totalApproxMb / 1024).toFixed(2);
 
   // Addresses fallback
   const billing = user.billing || quotes.find((q: any) => q.billing?.firstName)?.billing || null;

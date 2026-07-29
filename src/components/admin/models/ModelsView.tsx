@@ -363,7 +363,7 @@ export default function ModelsView({ initialModels }: ModelsViewProps) {
                  <div className="grid grid-cols-2 gap-2 text-[10px] font-black bg-slate-50 p-2 rounded-lg border border-slate-100">
                     <div>
                        <p className="text-slate-400 text-[7px] uppercase tracking-widest leading-none">น้ำหนัก</p>
-                       <p className="text-slate-900 mt-1">{m.weightGrams}g</p>
+                       <p className="text-slate-900 mt-1">{m.weightGrams?.toFixed(2)}g</p>
                     </div>
                     <div>
                        <p className="text-slate-400 text-[7px] uppercase tracking-widest leading-none text-right">ปริมาตร</p>
@@ -420,7 +420,7 @@ export default function ModelsView({ initialModels }: ModelsViewProps) {
                               <p className="text-slate-500 text-[11px] mt-0.5">{m.userId?.name || 'Guest'}</p>
                            </td>
                            <td className="px-6 py-3 text-center text-slate-700 text-xs font-bold w-24">
-                              {m.weightGrams}g
+                              {m.weightGrams?.toFixed(2)}g
                            </td>
                            <td className="px-6 py-3 text-center text-slate-700 text-xs w-32">
                               {m.volumeCm3?.toFixed(1)} cm³ <br/><span className="text-[9px] text-slate-400">~{((m.volumeCm3 || 0) * 0.45).toFixed(2)} MB</span>

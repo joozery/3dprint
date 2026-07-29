@@ -1097,7 +1097,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="text-[12px] font-mono font-black text-slate-800">฿{q.priceDetail?.totalPrice?.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                                        <div className="text-[12px] font-mono font-black text-slate-800">฿{q.priceDetail?.totalPrice?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                                     </div>
                                     <div className="flex justify-between items-center text-[9px] font-bold text-slate-300 mt-1">
                                         <span>฿{q.priceDetail?.pricePerUnit?.toLocaleString() || "0"}{t.quote.perPiece}</span>
@@ -1108,12 +1108,12 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                         </div>
 
                         <div className="px-4 space-y-1.5 font-mono text-[11px] font-black">
-                            <div className="flex justify-between text-slate-700"><span>Subtotal</span><span>฿{totalPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
+                            <div className="flex justify-between text-slate-700"><span>Subtotal</span><span>฿{totalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
                             <div className="flex justify-between text-slate-300 font-bold"><span>{t.quote.setupFee}</span><span>฿{SETUP_FEE.toFixed(2)}</span></div>
                             {appliedCoupon && (
-                                <div className="flex justify-between text-[#2563eb]"><span>{appliedCoupon.code} {t.quote.coupon}</span><span>-฿{appliedCoupon.discountValue.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
+                                <div className="flex justify-between text-[#2563eb]"><span>{appliedCoupon.code} {t.quote.coupon}</span><span>-฿{appliedCoupon.discountValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
                             )}
-                            <div className="flex justify-between text-slate-300 font-bold"><span>VAT 7%</span><span>฿{vat.toLocaleString(undefined, {minimumFractionDigits: 2})}</span></div>
+                            <div className="flex justify-between text-slate-300 font-bold"><span>VAT 7%</span><span>฿{vat.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
                         </div>
 
                         <div className="p-3 mt-2">
@@ -1322,7 +1322,7 @@ export function QuoteApp({ quotes, onAdd, onUpdate, onRemove }: QuoteAppProps) {
                                 <div className="text-[10px] font-black tracking-[0.2em] uppercase opacity-40">TOTAL · {t.quote.total}</div>
                                 <div className="text-[8px] font-black opacity-30 mt-0.5 tracking-widest uppercase">{t.quote.inclVat}</div>
                             </div>
-                            <div className="text-[26px] font-mono font-black tracking-tighter relative z-10 leading-none">฿{finalPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                            <div className="text-[26px] font-mono font-black tracking-tighter relative z-10 leading-none">฿{finalPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                         </div>
                         <div className="p-3 bg-white border-t border-slate-100">
                             <div className="flex items-start gap-2 text-[10px] text-slate-400 mb-3 cursor-pointer group">

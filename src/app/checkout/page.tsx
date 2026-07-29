@@ -720,7 +720,7 @@ function SummaryPanel({ shipping, quotes, address }: { shipping: any; quotes: an
     const grandTotal  = subtotal + vat + (shipFee ?? 0);
     const netPayable  = grandTotal - wht;
 
-    const fmt = (n: number) => n.toLocaleString("th-TH", { minimumFractionDigits: 2 });
+    const fmt = (n: number) => n.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     return (
         <div className="bg-white border rounded-2xl shadow-sm p-6 sticky top-24">

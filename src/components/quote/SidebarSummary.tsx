@@ -164,7 +164,7 @@ export function SidebarSummary({ quotes }: SidebarSummaryProps) {
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-slate-900">{t.quote.netPrice}</span>
                     <span className="text-2xl font-bold text-orange-600">
-                        {totalPrice > 0 ? `฿${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : "--"}
+                        {totalPrice > 0 ? `฿${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "--"}
                     </span>
                 </div>
                 {quotes.length > 1 && (

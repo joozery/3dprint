@@ -326,7 +326,7 @@ export default function IShipPanel({ orderId, shippingAddress, quotesData, exist
                                                 <p className="text-sm font-bold text-slate-800">{r.courier_name}</p>
                                                 <p className="text-[10px] text-slate-400">~{r.estimate_days} วัน</p>
                                             </div>
-                                            <p className="text-sm font-black text-slate-800 shrink-0">฿{r.total_price}</p>
+                                            <p className="text-sm font-black text-slate-800 shrink-0">฿{Number(r.total_price).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                         </button>
                                     ))}
                                 </div>

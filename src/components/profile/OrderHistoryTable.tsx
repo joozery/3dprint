@@ -187,7 +187,7 @@ export function OrderHistoryTable({ orders }: OrderHistoryTableProps) {
                                 {/* 5. Price & Expand */}
                                 <div className="w-full md:w-[20%] flex items-center justify-end gap-3 pr-2">
                                     <div className="text-[14px] font-black text-slate-900 font-mono tracking-tighter">
-                                        ฿{(order.pricing?.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        ฿{(order.pricing?.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </div>
                                     {isExpanded
                                         ? <ChevronUp className="w-4 h-4 text-slate-300" />
