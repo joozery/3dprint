@@ -34,7 +34,7 @@ async function runInfo(filePath: string): Promise<{
     isManifold: boolean;
 }> {
     const { stdout } = await execPromise(
-        `"${PRUSA_SLICER_PATH}" --max-print-height 2000 --info "${filePath}" 2>&1`,
+        `"${PRUSA_SLICER_PATH}" --max-print-height 1000 --info "${filePath}" 2>&1`,
         EXEC_OPTS
     );
 
@@ -72,7 +72,7 @@ async function runSlice(
         ? `--support-material --support-material-threshold ${supportAngle}`
         : "";
     await execPromise(
-        `"${PRUSA_SLICER_PATH}" --max-print-height 2000 --export-gcode --fill-density ${fillDensity}% ${supportFlags} --output "${tempGcode}" "${filePath}" 2>&1`,
+        `"${PRUSA_SLICER_PATH}" --max-print-height 1000 --export-gcode --fill-density ${fillDensity}% ${supportFlags} --output "${tempGcode}" "${filePath}" 2>&1`,
         EXEC_OPTS
     );
 
