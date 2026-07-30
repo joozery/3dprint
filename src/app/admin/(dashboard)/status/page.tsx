@@ -36,7 +36,7 @@ interface StatusData {
     node_version: string;
   };
   services: {
-    cloudinary: boolean;
+    r2: boolean;
     mongodb: boolean;
   };
   timestamp: string;
@@ -167,12 +167,12 @@ export default function AdminStatusPage() {
                        </p>
                     </div>
                  </div>
-                 <div className={`p-5 rounded-2xl border flex items-center gap-4 ${data?.services.cloudinary ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-                    <Cloud size={24} className={data?.services.cloudinary ? 'text-emerald-500' : 'text-red-500'} />
+                 <div className={`p-5 rounded-2xl border flex items-center gap-4 ${data?.services.r2 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+                    <Cloud size={24} className={data?.services.r2 ? 'text-emerald-500' : 'text-red-500'} />
                     <div>
-                       <p className="text-slate-900 text-[11px] font-black uppercase">Cloudinary</p>
-                       <p className={`text-[10px] font-bold ${data?.services.cloudinary ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {data?.services.cloudinary ? 'Configured' : 'Missing'}
+                       <p className="text-slate-900 text-[11px] font-black uppercase">Cloudflare R2</p>
+                       <p className={`text-[10px] font-bold ${data?.services.r2 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {data?.services.r2 ? 'Configured' : 'Missing'}
                        </p>
                     </div>
                  </div>

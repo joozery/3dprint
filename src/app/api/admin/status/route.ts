@@ -36,7 +36,7 @@ export async function GET() {
         uptime: `${process.uptime().toFixed(0)}s`,
       },
       services: {
-        cloudinary: !!process.env.CLOUDINARY_URL || !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+        r2: !!process.env.R2_ACCESS_KEY_ID,
         mongodb: !!process.env.MONGODB_URI,
       },
       timestamp: new Date().toISOString(),
