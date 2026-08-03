@@ -35,15 +35,20 @@ export async function POST(req: Request) {
     user.adminOTPExpires = expires;
     await user.save();
 
-    // 5. ส่งอีเมล (Mock ให้สำเร็จ)
+    // 5. ส่งอีเมล
     try {
       await sendOTPEmail(user.email, otp);
       return NextResponse.json({ success: true, message: "OTP ถูกส่งไปยังอีเมลของคุณเรียบร้อยแล้ว" });
     } catch (mailErr: any) {
       console.error("Mail Send Error:", mailErr);
-      return NextResponse.json({ 
-        error: "ไม่สามารถส่งอีเมล OTP ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง", 
-        debug: mailErr.message 
+      // Dev fallback: log OTP to console so login still works without valid SMTP
+      if (process.env.NODE_ENV === "development") {
+        console.warn(`\n⚠️  DEV MODE — OTP for ${user.email}: ${otp}\n`);
+        return NextResponse.json({ success: true, message: `[DEV] OTP: ${otp}` });
+      }
+      return NextResponse.json({
+        error: "ไม่สามารถส่งอีเมล OTP ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
+        debug: mailErr.message
       }, { status: 500 });
     }
 
